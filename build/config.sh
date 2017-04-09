@@ -1,1 +1,2 @@
-cmake ../src
+cmake -DCMAKE_BUILD_TYPE=Debug \
+../../
