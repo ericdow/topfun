@@ -2,4 +2,13 @@
 
 A (very) simple flight simulator written in C++. The main objective is learn about OpenGL, Boost, etc.
 
-You will need the Boost math libraries installed to be able to compile
+# Dependencies
+
+libboost-math-dev
+
+libglm-dev
+libglfw3-dev
+freeglut3-dev
+libglew-dev
+libxmu-dev
+libxi-dev
