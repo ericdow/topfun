@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.5.1)
 
 project(TopFun)
 
-add_subdirectory(src)
-
 # set various compiler flags
 add_compile_options(-std=c++11)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall")
@@ -21,4 +19,6 @@ find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
+
+add_subdirectory(src)
 
