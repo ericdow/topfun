@@ -1,0 +1,31 @@
+PHYSICS
+=======
+- probably want to integrate the positions of all dynamic objects simultaneously to improve vectorization/reduce number of function calls
+  - create a single state vector for all dynamic objects just before integrating
+- units: use SI for everything
+- allow floats or doubles for math (via macro)
+
+Terrain:
+- model as a height-map z(x,y)
+  - collision detection: test if lowest point of dynamic object bounding box is below elevation
+- somehow needs to be made a singleton
+
+Dynamic objects:
+- rigid body
+- spring
+- consider having a "manager" class for dynamic objects that handles collisions, etc.
+  - dynamic objects may or may not be collidable with each other/stationary objects
+
+ORGANIZATION
+============
+Terrain
+StationaryEntity
+DynamicEntity
+ - RigidBody (position/orientation)
+ - PointBody (position)
+ - Spring
+
+Object properties
+- drawable
+- collidable (with DynamicObjects)
+

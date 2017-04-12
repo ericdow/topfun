@@ -13,6 +13,9 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)  
 set(Boost_USE_STATIC_RUNTIME ON)
 
+# make sure that Eigen 3 is found
+find_package(Eigen3 REQUIRED)
+
 # make sure that OpenGL stuff is found
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
