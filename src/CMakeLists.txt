@@ -6,6 +6,4 @@ add_executable(eigen_test eigen_test.cpp)
 target_include_directories(eigen_test PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(eigen_test ${EIGEN_LIBRARIES})
 
-add_executable(opengl_test opengl_test.cpp)
-target_include_directories(opengl_test PRIVATE ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS})
-target_link_libraries(opengl_test ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES})
+add_subdirectory(learnopengl)
