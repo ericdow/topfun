@@ -19,9 +19,11 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 const GLchar* defaultVertexShaderSource = 
     "#version 330 core\n"
     "layout (location = 0) in vec3 position;\n"
+    // "out vec3 ourPosition;\n"
     "void main()\n"
     "{\n"
-    "gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+    "gl_Position = vec4(position, 1.0);\n"
+    // "ourPosition = position;\n"
     "}\0";
 const GLchar* rainbowVertexShaderSource = 
     "#version 330 core\n"
@@ -30,7 +32,7 @@ const GLchar* rainbowVertexShaderSource =
     "out vec3 ourColor;\n"
     "void main()\n"
     "{\n"
-    "gl_Position = vec4(position, 1.0f);\n"
+    "gl_Position = vec4(position, 1.0);\n"
     "ourColor = color;\n"
     "}\0";
 
@@ -38,9 +40,11 @@ const GLchar* rainbowVertexShaderSource =
 const GLchar* defaultFragmentShaderSource = 
     "#version 330 core\n"
     "out vec4 color;\n"
+    // "in vec3 ourPosition;\n"
     "void main()\n"
     "{\n"
     "color = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
+    // "color = vec4(ourPosition, 1.0f);\n"
     "}\n\0";
 const GLchar* sinusoidFragmentShaderSource = 
     "#version 330 core\n"
@@ -192,10 +196,6 @@ int main(int argc, char *argv[])
       glEnableVertexAttribArray(1);
       break;
     }
-    case 3: {
-      
-      break;
-    }
   }
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -226,19 +226,14 @@ int main(int argc, char *argv[])
           glGetUniformLocation(sinusoidShaderProgram, "ourColor");
         glUseProgram(sinusoidShaderProgram);
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-        break;
       }
       case 2: {
         //-> rainbow!!!
         glUseProgram(rainbowShaderProgram);
         break;
       }
-      case 3: {
-        
-        break;
-      }
       default: {
-        
+        glUseProgram(defaultShaderProgram);
         break;
       }
     }
