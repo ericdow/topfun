@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 // Other Libs
-#include </usr/include/SOIL/SOIL.h>
+#include "SOIL.h"
 // GLM Mathematics
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
