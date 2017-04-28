@@ -2,6 +2,8 @@
 set(FILES_TO_SEND
   textures.vs
   textures.frag
+  transformations.vs
+  transformations.frag
   awesomeface.png
   container.jpg
 ) 
@@ -40,3 +42,7 @@ target_link_libraries(shader_tutorial ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW
 add_executable(texture_tutorial texture_tutorial.cpp)
 target_include_directories(texture_tutorial PRIVATE ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SOIL_INCLUDE_DIRS})
 target_link_libraries(texture_tutorial ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY})
+
+add_executable(glm_tutorial glm_tutorial.cpp)
+target_include_directories(glm_tutorial PRIVATE ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SOIL_INCLUDE_DIRS})
+target_link_libraries(glm_tutorial ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY})

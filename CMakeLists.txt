@@ -27,6 +27,8 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 find_package(SOIL REQUIRED)
 
+include_directories(${CMAKE_SOURCE_DIR}/includes)
+
 add_subdirectory(external)
 add_subdirectory(src)
 
