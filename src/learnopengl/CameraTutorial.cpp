@@ -281,7 +281,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 // Update the camera position based on key presses
 void do_movement() {
-    GLfloat cameraSpeed = 5.0f * deltaTime; // Ensure uniform movement speed
+    GLfloat cameraSpeed = 10.0f * deltaTime; // Ensure uniform movement speed
     if(keys[GLFW_KEY_W])
         cameraPos += cameraSpeed * cameraFront;
     else if(keys[GLFW_KEY_S])
@@ -307,7 +307,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   lastX = xpos;
   lastY = ypos;
 
-  GLfloat sensitivity = 0.005f;
+  GLfloat sensitivity = 0.2f;
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
@@ -324,7 +324,4 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   front.y = sin(glm::radians(pitch));
   front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   cameraFront = glm::normalize(front);
-  std::cout << cameraFront.x << " " 
-            << cameraFront.y << " "
-            << cameraFront.z << std::endl;
 }  
