@@ -28,6 +28,7 @@ set(EXECUTABLES
   TextureTutorial.cpp
   glmTutorial.cpp
   CoordinatesTutorial.cpp
+  CameraTutorial.cpp
 )
 
 set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY})

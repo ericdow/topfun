@@ -5,19 +5,28 @@ PHYSICS
 - units: use SI for everything
 - allow floats or doubles for math (via macro)
 
-Terrain:
-- model as a height-map z(x,y)
-  - collision detection: test if lowest point of dynamic object bounding box is below elevation
-- somehow needs to be made a singleton
-
 Dynamic objects:
 - rigid body
 - spring (damped)
 - consider having a "manager" class for dynamic objects that handles collisions, etc.
   - dynamic objects may or may not be collidable with each other/stationary objects
 
-ORGANIZATION
-============
+TERRAIN
+=======
+- model as a height-map z(x,y)
+  - collision detection: test if lowest point of dynamic object bounding box is below elevation
+- use adaptive LOD (via quadtree) with adaptation near (x,y) position of the camera
+  - should be 3D: resolution should also decrease when your z position is large
+- use adaptive LOD for object collisions
+  - locally adapt terrain when any collidable object gets close
+- procedural terrain:
+  - periodic background mesh (read in or generated)
+  - procedural "noise"
+  - GetHeight(std::vector<<array<float,2>> const& xy_coords)
+
+
+CODE STRUCTURE
+==============
 Terrain
 StationaryEntity
 DynamicEntity (template on n-dof)
