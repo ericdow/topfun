@@ -68,70 +68,69 @@ int main()
   // Define the viewport dimensions
   glViewport(0, 0, WIDTH, HEIGHT);
 
-  // Build and compile our shader program
-  Shader ourShader("coordinates.vs", "transformations.frag");
+  // Build and compile our shader programs
+  Shader boxShader("box.vs", "box.frag");
+  Shader lampShader("lamp.vs", "lamp.frag");
 
   // Set up vertex data (and buffer(s)) and attribute pointers
   GLfloat vertices[] = {
-      // Positions  // Texture Coords
-  -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-   0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-   0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-   0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-  -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+      // Positions
+  -0.5f, -0.5f, -0.5f, 
+   0.5f, -0.5f, -0.5f, 
+   0.5f,  0.5f, -0.5f, 
+   0.5f,  0.5f, -0.5f, 
+  -0.5f,  0.5f, -0.5f, 
+  -0.5f, -0.5f, -0.5f, 
 
-  -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-   0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-  -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-  -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+  -0.5f, -0.5f,  0.5f, 
+   0.5f, -0.5f,  0.5f, 
+   0.5f,  0.5f,  0.5f, 
+   0.5f,  0.5f,  0.5f, 
+  -0.5f,  0.5f,  0.5f, 
+  -0.5f, -0.5f,  0.5f, 
 
-  -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-  -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-  -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-  -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+  -0.5f,  0.5f,  0.5f, 
+  -0.5f,  0.5f, -0.5f, 
+  -0.5f, -0.5f, -0.5f, 
+  -0.5f, -0.5f, -0.5f, 
+  -0.5f, -0.5f,  0.5f, 
+  -0.5f,  0.5f,  0.5f, 
 
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-   0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-   0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-   0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-   0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 
+   0.5f,  0.5f, -0.5f, 
+   0.5f, -0.5f, -0.5f, 
+   0.5f, -0.5f, -0.5f, 
+   0.5f, -0.5f,  0.5f, 
+   0.5f,  0.5f,  0.5f, 
 
-  -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-   0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-   0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-   0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-  -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 
+   0.5f, -0.5f, -0.5f, 
+   0.5f, -0.5f,  0.5f, 
+   0.5f, -0.5f,  0.5f, 
+  -0.5f, -0.5f,  0.5f, 
+  -0.5f, -0.5f, -0.5f, 
 
-  -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-   0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-  -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-  -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+  -0.5f,  0.5f, -0.5f, 
+   0.5f,  0.5f, -0.5f, 
+   0.5f,  0.5f,  0.5f, 
+   0.5f,  0.5f,  0.5f, 
+  -0.5f,  0.5f,  0.5f, 
+  -0.5f,  0.5f, -0.5f 
   };
-  GLuint VBO, VAO;
-  glGenVertexArrays(1, &VAO);
+ 
+  // Set up a VBO with box coordinate data 
+  GLuint VBO;
   glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+  // Set up VAO for boxes
+  GLuint boxVAO;
+  glGenVertexArrays(1, &boxVAO);
+  glBindVertexArray(boxVAO);
   // Position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
-  // TexCoord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(1);
-
   glBindVertexArray(0); // Unbind VAO
   
   // Specify positions to render multiple cubes
@@ -148,44 +147,16 @@ int main()
     glm::vec3(-1.3f,  1.0f, -1.5f)  
   };
 
-  // Load and create a texture 
-  GLuint texture1;
-  GLuint texture2;
-  // ====================
-  // Texture 1
-  // ====================
-  glGenTextures(1, &texture1);
-  glBindTexture(GL_TEXTURE_2D, texture1); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
-  // Set our texture parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // Set texture filtering
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // Load, create texture and generate mipmaps
-  int width, height;
-  unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  SOIL_free_image_data(image);
-  glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-  // ===================
-  // Texture 2
-  // ===================
-  glGenTextures(1, &texture2);
-  glBindTexture(GL_TEXTURE_2D, texture2);
-  // Set our texture parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // Set texture filtering
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // Load, create texture and generate mipmaps
-  image = SOIL_load_image("awesomeface.png", &width, &height, 0, SOIL_LOAD_RGB);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  SOIL_free_image_data(image);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  // Set up VAO for lamp
+	GLuint lampVAO;
+  glGenVertexArrays(1, &lampVAO);
+  glBindVertexArray(lampVAO);
+  // We only need to bind to the VBO, since the VBO data already contains the correct data.
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  // Set the vertex attributes (only position data for our lamp)
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+  glEnableVertexAttribArray(0);
+  glBindVertexArray(0); 
 
   // Make sure z-buffering is enabled
   glEnable(GL_DEPTH_TEST);
@@ -213,17 +184,6 @@ int main()
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind Textures using texture units
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture2"), 1);
-
-    // Activate shader
-    ourShader.Use();       
-
     // View transformation moves the camera to its location in the world
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
@@ -232,16 +192,22 @@ int main()
     projection = glm::perspective(glm::radians(60.0f), 
       (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
-    // Get transformations uniform location and set matrrices
-    GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
-    // glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    // Get transformations uniform location and set matrices for drawing boxes
+    GLint modelLoc_box = glGetUniformLocation(boxShader.Program, "model");
+    GLint viewLoc_box = glGetUniformLocation(boxShader.Program, "view");
+    GLint projLoc_box = glGetUniformLocation(boxShader.Program, "projection");
+    glUniformMatrix4fv(viewLoc_box, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc_box, 1, GL_FALSE, glm::value_ptr(projection));
     
-    // Draw containers
-    glBindVertexArray(VAO);
+    // Activate shader for drawing boxes and set uniforms
+    boxShader.Use();       
+    GLint objectColorLoc = glGetUniformLocation(boxShader.Program, "objectColor");
+    GLint lightColorLoc  = glGetUniformLocation(boxShader.Program, "lightColor");
+    glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
+    glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f); // Also set light's color (white) 
+    
+    // Draw boxes
+    glBindVertexArray(boxVAO);
     for(GLuint i = 0; i < 10; i++)
     {
       // Model transformation moves the object model to its location/orientation in the world
@@ -249,17 +215,38 @@ int main()
       model = glm::translate(model, cubePositions[i]);
       GLfloat angle = 1.0f * i * (GLfloat)glfwGetTime();
       model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    
+      glUniformMatrix4fv(modelLoc_box, 1, GL_FALSE, glm::value_ptr(model));
       glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+    glBindVertexArray(0);
+    
+    // Get transformations uniform location and set matrices for drawing a lamp
+    GLint modelLoc_lamp = glGetUniformLocation(lampShader.Program, "model");
+    GLint viewLoc_lamp = glGetUniformLocation(lampShader.Program, "view");
+    GLint projLoc_lamp = glGetUniformLocation(lampShader.Program, "projection");
+    glUniformMatrix4fv(viewLoc_lamp, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc_lamp, 1, GL_FALSE, glm::value_ptr(projection));
+    
+    // Activate shader for drawing lamp and set uniforms
+    lampShader.Use();
+    
+    // Draw lamp
+    glBindVertexArray(lampVAO);
+    // Model transformation moves the object model to its location/orientation in the world
+    glm::vec3 lampPos(1.2f, 1.0f, 2.0f);
+    glm::mat4 model;
+    model = glm::translate(model, lampPos);
+    model = glm::scale(model, glm::vec3(0.2f));
+    glUniformMatrix4fv(modelLoc_lamp, 1, GL_FALSE, glm::value_ptr(model));
+    glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
 
     // Swap the screen buffers
     glfwSwapBuffers(window);
   }
   // Properly de-allocate all resources once they've outlived their purpose
-  glDeleteVertexArrays(1, &VAO);
+  glDeleteVertexArrays(1, &boxVAO);
+  glDeleteVertexArrays(1, &lampVAO);
   glDeleteBuffers(1, &VBO);
   // Terminate GLFW, clearing any resources allocated by GLFW.
   glfwTerminate();

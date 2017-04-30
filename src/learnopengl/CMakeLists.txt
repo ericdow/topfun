@@ -8,6 +8,10 @@ set(FILES_TO_SEND
   transformations.frag
   coordinates.vs
   coordinates.frag
+  box.vs
+  box.frag
+  lamp.vs
+  lamp.frag
 ) 
 
 # this sends files over if they have changed
@@ -29,6 +33,7 @@ set(EXECUTABLES
   glmTutorial.cpp
   CoordinatesTutorial.cpp
   CameraTutorial.cpp
+  LightingTutorial.cpp
 )
 
 set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY})

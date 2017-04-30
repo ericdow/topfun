@@ -19,6 +19,8 @@ TERRAIN
   - should be 3D: resolution should also decrease when your z position is large
 - use adaptive LOD for object collisions
   - locally adapt terrain when any collidable object gets close
+  - look into geomipmap concept
+- only render what is in camera perspective frustrum
 - procedural terrain:
   - periodic background mesh (read in or generated)
   - procedural "noise"
