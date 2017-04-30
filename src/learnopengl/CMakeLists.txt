@@ -10,6 +10,8 @@ set(FILES_TO_SEND
   coordinates.frag
   box.vs
   box.frag
+  box_gouraud.vs
+  box_gouraud.frag
   lamp.vs
   lamp.frag
 ) 

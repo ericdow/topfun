@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 // GLEW
 #define GLEW_STATIC
@@ -42,6 +43,8 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 GLfloat lastX = WIDTH/2, lastY = HEIGHT/2;
 GLfloat yaw = -90.0f, pitch = 0.0f;
 
+std::shared_ptr<Shader> boxShader, boxShaderPhong, boxShaderGouraud;
+
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
@@ -68,10 +71,6 @@ int main()
 
   // Define the viewport dimensions
   glViewport(0, 0, WIDTH, HEIGHT);
-
-  // Build and compile our shader programs
-  Shader boxShader("box.vs", "box.frag");
-  Shader lightShader("lamp.vs", "lamp.frag");
 
   // Set up vertex data (and buffer(s)) and attribute pointers
   GLfloat vertices[] = {
@@ -133,7 +132,7 @@ int main()
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(1);
   glBindVertexArray(0); // Unbind VAO
   
   // Specify positions to render multiple cubes
@@ -160,6 +159,12 @@ glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
   glBindVertexArray(0); 
+
+  // Build and compile our shader programs
+  boxShaderPhong = std::make_shared<Shader>("box.vs", "box.frag");
+  boxShaderGouraud = std::make_shared<Shader>("box_gouraud.vs", "box_gouraud.frag");
+  boxShader = boxShaderPhong;
+  Shader lightShader("lamp.vs", "lamp.frag");
 
   // Make sure z-buffering is enabled
   glEnable(GL_DEPTH_TEST);
@@ -199,22 +204,24 @@ glEnableVertexAttribArray(1);
     glm::vec3 lightPos(cameraPos + glm::vec3(2.0f) * cameraFront);
     
     // Get transformations uniform location and set matrices for drawing boxes
-    GLint modelLoc_box = glGetUniformLocation(boxShader.Program, "model");
-    GLint viewLoc_box = glGetUniformLocation(boxShader.Program, "view");
-    GLint projLoc_box = glGetUniformLocation(boxShader.Program, "projection");
+    GLint modelLoc_box = glGetUniformLocation(boxShader->Program, "model");
+    GLint viewLoc_box = glGetUniformLocation(boxShader->Program, "view");
+    GLint projLoc_box = glGetUniformLocation(boxShader->Program, "projection");
     glUniformMatrix4fv(viewLoc_box, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc_box, 1, GL_FALSE, glm::value_ptr(projection));
     
     // Activate shader for drawing boxes and set uniforms
-    boxShader.Use();       
-    GLint objectColorLoc = glGetUniformLocation(boxShader.Program, "objectColor");
-    GLint lightColorLoc  = glGetUniformLocation(boxShader.Program, "lightColor");
+    boxShader->Use();       
+    GLint objectColorLoc = glGetUniformLocation(boxShader->Program, "objectColor");
+    GLint lightColorLoc  = glGetUniformLocation(boxShader->Program, "lightColor");
     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
     glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f); // Also set light's color (white) 
     
-		// Send the position of the light to the box fragment shader
-		GLint lightPosLoc = glGetUniformLocation(boxShader.Program, "lightPos");
+		// Send the position of the light and camera to the box fragment shader
+		GLint lightPosLoc = glGetUniformLocation(boxShader->Program, "lightPos");
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+    GLint viewPosLoc = glGetUniformLocation(boxShader->Program, "viewPos");
+    glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
     
     // Draw boxes
     glBindVertexArray(boxVAO);
@@ -264,6 +271,9 @@ glEnableVertexAttribArray(1);
 
 // Is called whenever a key is pressed/released via GLFW
 bool isWireFrame = false;
+bool isPhong = true;
+float last_w_press_time = -100.0f;
+bool w_double_pressed = false;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
   // Close by pressing escape key
@@ -273,7 +283,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   if(action == GLFW_PRESS)
     keys[key] = true;
   else if(action == GLFW_RELEASE)
-    keys[key] = false;  
+    keys[key] = false;
+  // Check for double press on W
+  if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+    float w_press_time = glfwGetTime();
+    if (w_press_time - last_w_press_time < 0.2f) {
+      w_double_pressed = true;
+    }
+    else {
+      w_double_pressed = false;
+    }
+    last_w_press_time = w_press_time;
+  }
   // Pressing F1 toggles wireframe mode
   if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
     if (isWireFrame) {
@@ -285,13 +306,30 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
       isWireFrame = true;
     }
   }
+  // Pressing F2 toggles Phong/Gouraud
+  if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+    if (isPhong) {
+      boxShader = boxShaderGouraud;
+      isPhong = false;
+    }
+    else {
+      boxShader = boxShaderPhong;
+      isPhong = true;
+    }
+  }
 }
 
 // Update the camera position based on key presses
 void do_movement() {
   GLfloat cameraSpeed = 10.0f * deltaTime; // Ensure uniform movement speed
-  if(keys[GLFW_KEY_W])
-    cameraPos += cameraSpeed * cameraFront;
+  if(keys[GLFW_KEY_W]) {
+    if (w_double_pressed) {
+      cameraPos += 3.0f * cameraSpeed * cameraFront;
+    }
+    else {
+      cameraPos += cameraSpeed * cameraFront;
+    }
+  }
   if(keys[GLFW_KEY_S])
     cameraPos -= cameraSpeed * cameraFront;
   if(keys[GLFW_KEY_A])
