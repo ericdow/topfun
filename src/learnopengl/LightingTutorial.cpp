@@ -10,7 +10,9 @@
 // Other Libs
 #include "SOIL.h"
 // GLM Mathematics
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -38,7 +40,6 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 
 // Starting position for the mouse cursor
 GLfloat lastX = WIDTH/2, lastY = HEIGHT/2;
-bool firstMouse = true;
 GLfloat yaw = -90.0f, pitch = 0.0f;
 
 // The MAIN function, from here we start the application and run the game loop
@@ -70,53 +71,53 @@ int main()
 
   // Build and compile our shader programs
   Shader boxShader("box.vs", "box.frag");
-  Shader lampShader("lamp.vs", "lamp.frag");
+  Shader lightShader("lamp.vs", "lamp.frag");
 
   // Set up vertex data (and buffer(s)) and attribute pointers
   GLfloat vertices[] = {
-      // Positions
-  -0.5f, -0.5f, -0.5f, 
-   0.5f, -0.5f, -0.5f, 
-   0.5f,  0.5f, -0.5f, 
-   0.5f,  0.5f, -0.5f, 
-  -0.5f,  0.5f, -0.5f, 
-  -0.5f, -0.5f, -0.5f, 
+       // Positions         // Normals
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
 
-  -0.5f, -0.5f,  0.5f, 
-   0.5f, -0.5f,  0.5f, 
-   0.5f,  0.5f,  0.5f, 
-   0.5f,  0.5f,  0.5f, 
-  -0.5f,  0.5f,  0.5f, 
-  -0.5f, -0.5f,  0.5f, 
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-  -0.5f,  0.5f,  0.5f, 
-  -0.5f,  0.5f, -0.5f, 
-  -0.5f, -0.5f, -0.5f, 
-  -0.5f, -0.5f, -0.5f, 
-  -0.5f, -0.5f,  0.5f, 
-  -0.5f,  0.5f,  0.5f, 
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-   0.5f,  0.5f,  0.5f, 
-   0.5f,  0.5f, -0.5f, 
-   0.5f, -0.5f, -0.5f, 
-   0.5f, -0.5f, -0.5f, 
-   0.5f, -0.5f,  0.5f, 
-   0.5f,  0.5f,  0.5f, 
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-  -0.5f, -0.5f, -0.5f, 
-   0.5f, -0.5f, -0.5f, 
-   0.5f, -0.5f,  0.5f, 
-   0.5f, -0.5f,  0.5f, 
-  -0.5f, -0.5f,  0.5f, 
-  -0.5f, -0.5f, -0.5f, 
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-  -0.5f,  0.5f, -0.5f, 
-   0.5f,  0.5f, -0.5f, 
-   0.5f,  0.5f,  0.5f, 
-   0.5f,  0.5f,  0.5f, 
-  -0.5f,  0.5f,  0.5f, 
-  -0.5f,  0.5f, -0.5f 
-  };
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+};
  
   // Set up a VBO with box coordinate data 
   GLuint VBO;
@@ -129,8 +130,10 @@ int main()
   glGenVertexArrays(1, &boxVAO);
   glBindVertexArray(boxVAO);
   // Position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+glEnableVertexAttribArray(1);
   glBindVertexArray(0); // Unbind VAO
   
   // Specify positions to render multiple cubes
@@ -147,14 +150,14 @@ int main()
     glm::vec3(-1.3f,  1.0f, -1.5f)  
   };
 
-  // Set up VAO for lamp
-	GLuint lampVAO;
-  glGenVertexArrays(1, &lampVAO);
-  glBindVertexArray(lampVAO);
+  // Set up VAO for light
+	GLuint lightVAO;
+  glGenVertexArrays(1, &lightVAO);
+  glBindVertexArray(lightVAO);
   // We only need to bind to the VBO, since the VBO data already contains the correct data.
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  // Set the vertex attributes (only position data for our lamp)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+  // Set the vertex attributes (only position data for our light)
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
   glBindVertexArray(0); 
 
@@ -166,7 +169,7 @@ int main()
 
   // Set callback function for mouse movement
   glfwSetCursorPosCallback(window, mouse_callback);
-
+  
   // Game loop
   while (!glfwWindowShouldClose(window))
   {
@@ -191,7 +194,10 @@ int main()
     glm::mat4 projection;
     projection = glm::perspective(glm::radians(60.0f), 
       (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
-
+    
+    // Update the position of the light
+    glm::vec3 lightPos(cameraPos + glm::vec3(2.0f) * cameraFront);
+    
     // Get transformations uniform location and set matrices for drawing boxes
     GLint modelLoc_box = glGetUniformLocation(boxShader.Program, "model");
     GLint viewLoc_box = glGetUniformLocation(boxShader.Program, "view");
@@ -205,6 +211,10 @@ int main()
     GLint lightColorLoc  = glGetUniformLocation(boxShader.Program, "lightColor");
     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
     glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f); // Also set light's color (white) 
+    
+		// Send the position of the light to the box fragment shader
+		GLint lightPosLoc = glGetUniformLocation(boxShader.Program, "lightPos");
+		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
     
     // Draw boxes
     glBindVertexArray(boxVAO);
@@ -220,33 +230,32 @@ int main()
     }
     glBindVertexArray(0);
     
-    // Get transformations uniform location and set matrices for drawing a lamp
-    GLint modelLoc_lamp = glGetUniformLocation(lampShader.Program, "model");
-    GLint viewLoc_lamp = glGetUniformLocation(lampShader.Program, "view");
-    GLint projLoc_lamp = glGetUniformLocation(lampShader.Program, "projection");
-    glUniformMatrix4fv(viewLoc_lamp, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projLoc_lamp, 1, GL_FALSE, glm::value_ptr(projection));
+    // Get transformations uniform location and set matrices for drawing a light
+    GLint modelLoc_light = glGetUniformLocation(lightShader.Program, "model");
+    GLint viewLoc_light = glGetUniformLocation(lightShader.Program, "view");
+    GLint projLoc_light = glGetUniformLocation(lightShader.Program, "projection");
+    glUniformMatrix4fv(viewLoc_light, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc_light, 1, GL_FALSE, glm::value_ptr(projection));
     
-    // Activate shader for drawing lamp and set uniforms
-    lampShader.Use();
+    // Activate shader for drawing light and set uniforms
+    lightShader.Use();
     
-    // Draw lamp
-    glBindVertexArray(lampVAO);
+    // Draw light
+    glBindVertexArray(lightVAO);
     // Model transformation moves the object model to its location/orientation in the world
-    glm::vec3 lampPos(1.2f, 1.0f, 2.0f);
     glm::mat4 model;
-    model = glm::translate(model, lampPos);
+    model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
-    glUniformMatrix4fv(modelLoc_lamp, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(modelLoc_light, 1, GL_FALSE, glm::value_ptr(model));
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
-
+  
     // Swap the screen buffers
     glfwSwapBuffers(window);
   }
   // Properly de-allocate all resources once they've outlived their purpose
   glDeleteVertexArrays(1, &boxVAO);
-  glDeleteVertexArrays(1, &lampVAO);
+  glDeleteVertexArrays(1, &lightVAO);
   glDeleteBuffers(1, &VBO);
   // Terminate GLFW, clearing any resources allocated by GLFW.
   glfwTerminate();
@@ -254,32 +263,45 @@ int main()
 }
 
 // Is called whenever a key is pressed/released via GLFW
+bool isWireFrame = false;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
   // Close by pressing escape key
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-      glfwSetWindowShouldClose(window, GL_TRUE);
+    glfwSetWindowShouldClose(window, GL_TRUE);
   // Update the state machine of which keys are pressed
   if(action == GLFW_PRESS)
     keys[key] = true;
   else if(action == GLFW_RELEASE)
     keys[key] = false;  
+  // Pressing F1 toggles wireframe mode
+  if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+    if (isWireFrame) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      isWireFrame = false;
+    }
+    else {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      isWireFrame = true;
+    }
+  }
 }
 
 // Update the camera position based on key presses
 void do_movement() {
-    GLfloat cameraSpeed = 10.0f * deltaTime; // Ensure uniform movement speed
-    if(keys[GLFW_KEY_W])
-        cameraPos += cameraSpeed * cameraFront;
-    if(keys[GLFW_KEY_S])
-        cameraPos -= cameraSpeed * cameraFront;
-    if(keys[GLFW_KEY_A])
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if(keys[GLFW_KEY_D])
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+  GLfloat cameraSpeed = 10.0f * deltaTime; // Ensure uniform movement speed
+  if(keys[GLFW_KEY_W])
+    cameraPos += cameraSpeed * cameraFront;
+  if(keys[GLFW_KEY_S])
+    cameraPos -= cameraSpeed * cameraFront;
+  if(keys[GLFW_KEY_A])
+    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+  if(keys[GLFW_KEY_D])
+    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 // Update the camera target based on mouse input
+bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   // Check if this is the time the mouse enters the screen to prevent jumps
   if(firstMouse)
