@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <string>
 
 // GLEW
 #define GLEW_STATIC
@@ -46,7 +47,7 @@ GLfloat yaw = -90.0f, pitch = 0.0f;
 std::shared_ptr<Shader> boxShader, boxShaderPhong, boxShaderGouraud;
 
 // The MAIN function, from here we start the application and run the game loop
-int main()
+int main(int argc, char* argv[])
 {
   // Init GLFW
   glfwInit();
@@ -191,6 +192,9 @@ int main()
     // Clear the colorbuffer and depthbuffer
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // Write the current FPS
+    // TODO
 
     // View transformation moves the camera to its location in the world
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
