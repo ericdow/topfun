@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 // GLEW
 #define GLEW_STATIC
@@ -38,7 +39,23 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void do_movement();
 
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1200, HEIGHT = 800;
+
+// Size of the world
+const float world_size = 10;
+
+// Flag for if warp drive is engaged
+bool warping = false;
+
+// Time since warp was engaged/disengaged
+float warp_start_time = 100.0f;
+float warp_stop_time = -100.0f;
+
+// FOV angles at different speeds
+float fov;
+const float fov_normal = 60.0f;
+const float fov_warp = 160.0f;
+const float fov_inc_rate = 0.8f; // rate of increase while warping
 
 // Starting position for the mouse cursor
 GLfloat lastX = WIDTH/2, lastY = HEIGHT/2;
@@ -72,6 +89,18 @@ int main(int argc, char* argv[])
 
   // Define the viewport dimensions
   glViewport(0, 0, WIDTH, HEIGHT);
+
+  // Displacements to generate a periodic view of cubes
+  int n_rep = 4; // (2*n_rep + 1)^2 total repetitions
+  std::vector<glm::vec3> periodic_displacements;
+  for (int i = -n_rep; i <= n_rep; i++) {
+    for (int j = -n_rep; j <= n_rep; j++) {
+      for (int k = -n_rep; k <= n_rep; k++) {
+        periodic_displacements.push_back(
+          world_size * glm::vec3(i, j, k));
+      }
+    }
+  }
 
   // Set up vertex data (and buffer(s)) and attribute pointers
   GLfloat vertices[] = {
@@ -137,18 +166,20 @@ int main(int argc, char* argv[])
   glBindVertexArray(0); // Unbind VAO
   
   // Specify positions to render multiple cubes
-  glm::vec3 cubePositions[] = {
+  std::vector<glm::vec3> cubePositions = {
     glm::vec3( 0.0f,  0.0f,  0.0f), 
-    glm::vec3( 2.0f,  5.0f, -15.0f), 
-    glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3( 2.0f,  5.0f, -10.0f), 
+    glm::vec3(-4.5f, -2.2f, -2.5f),  
+    glm::vec3(-5.8f, -6.0f, -8.3f),  
     glm::vec3( 2.4f, -0.4f, -3.5f),  
-    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3(-1.7f,  3.0f,  7.5f),  
     glm::vec3( 1.3f, -2.0f, -2.5f),  
-    glm::vec3( 1.5f,  2.0f, -2.5f), 
-    glm::vec3( 1.5f,  0.2f, -1.5f), 
-    glm::vec3(-1.3f,  1.0f, -1.5f)  
-  };
+    glm::vec3( 7.5f,  7.0f, -5.5f), 
+    glm::vec3( 3.5f,  0.2f, -1.5f), 
+    glm::vec3(-1.3f,  4.0f,  4.5f)};
+  
+  // std::vector<glm::vec3> cubePositions = {
+  //   glm::vec3( 0.0f,  0.0f,  0.0f)}; 
 
   // Set up VAO for light
 	GLuint lightVAO;
@@ -165,7 +196,6 @@ int main(int argc, char* argv[])
   boxShaderPhong = std::make_shared<Shader>("box.vs", "box.frag");
   boxShaderGouraud = std::make_shared<Shader>("box_gouraud.vs", "box_gouraud.frag");
   boxShader = boxShaderPhong;
-  Shader lightShader("lamp.vs", "lamp.frag");
 
   // Make sure z-buffering is enabled
   glEnable(GL_DEPTH_TEST);
@@ -190,19 +220,25 @@ int main(int argc, char* argv[])
 
     // Render
     // Clear the colorbuffer and depthbuffer
-    // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // Write the current FPS
-    // TODO
-
     // View transformation moves the camera to its location in the world
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
+    // Determine the current FOV
+    if (warping) {
+      fov += fov_inc_rate * (currentFrame - warp_start_time);
+      fov = std::min(fov_warp, fov); 
+    }
+    else {
+      fov -= 10.0f * fov_inc_rate * (currentFrame - warp_stop_time);
+      fov = std::max(fov_normal, fov); 
+    }
+
     // Projection transformation defines the clipping frustrum
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(60.0f), 
+    projection = glm::perspective(glm::radians(fov), 
       (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
     
     // Update the position of the light
@@ -230,38 +266,19 @@ int main(int argc, char* argv[])
     
     // Draw boxes
     glBindVertexArray(boxVAO);
-    for(GLuint i = 0; i < 10; i++)
-    {
-      // Model transformation moves the object model to its location/orientation in the world
-      glm::mat4 model;
-      model = glm::translate(model, cubePositions[i]);
-      GLfloat angle = 1.0f * i * (GLfloat)glfwGetTime();
-      model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
-      glUniformMatrix4fv(modelLoc_box, 1, GL_FALSE, glm::value_ptr(model));
-      glDrawArrays(GL_TRIANGLES, 0, 36);
+    for(GLuint i = 0; i < cubePositions.size(); i++) {
+      GLfloat angle = (1.0f + 0.2f * i) * (GLfloat)glfwGetTime();
+      for (GLuint p = 0; p < periodic_displacements.size(); p++) {
+        // Model transformation moves the object model to its location/orientation in the world
+        glm::mat4 model;
+        model = glm::translate(model, cubePositions[i] + periodic_displacements[p]);
+        model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+        glUniformMatrix4fv(modelLoc_box, 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+      }
     }
     glBindVertexArray(0);
     
-    // Get transformations uniform location and set matrices for drawing a light
-    GLint modelLoc_light = glGetUniformLocation(lightShader.Program, "model");
-    GLint viewLoc_light = glGetUniformLocation(lightShader.Program, "view");
-    GLint projLoc_light = glGetUniformLocation(lightShader.Program, "projection");
-    glUniformMatrix4fv(viewLoc_light, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projLoc_light, 1, GL_FALSE, glm::value_ptr(projection));
-    
-    // Activate shader for drawing light and set uniforms
-    lightShader.Use();
-    
-    // Draw light
-    glBindVertexArray(lightVAO);
-    // Model transformation moves the object model to its location/orientation in the world
-    glm::mat4 model;
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f));
-    glUniformMatrix4fv(modelLoc_light, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-  
     // Swap the screen buffers
     glfwSwapBuffers(window);
   }
@@ -278,7 +295,6 @@ int main(int argc, char* argv[])
 bool isWireFrame = false;
 bool isPhong = true;
 float last_w_press_time = -100.0f;
-bool w_double_pressed = false;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
   // Close by pressing escape key
@@ -293,12 +309,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   if (key == GLFW_KEY_W && action == GLFW_PRESS) {
     float w_press_time = glfwGetTime();
     if (w_press_time - last_w_press_time < 0.2f) {
-      w_double_pressed = true;
-    }
-    else {
-      w_double_pressed = false;
+      warping = true;
+      warp_start_time = glfwGetTime(); 
     }
     last_w_press_time = w_press_time;
+  }
+  if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
+    if (warping) {
+      warp_stop_time = glfwGetTime();
+    }
+    warping = false;
   }
   // Pressing F1 toggles wireframe mode
   if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
@@ -328,8 +348,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void do_movement() {
   GLfloat cameraSpeed = 10.0f * deltaTime; // Ensure uniform movement speed
   if(keys[GLFW_KEY_W]) {
-    if (w_double_pressed) {
-      cameraPos += 3.0f * cameraSpeed * cameraFront;
+    if (warping) {
+      cameraPos += 2.0f * cameraSpeed * cameraFront;
     }
     else {
       cameraPos += cameraSpeed * cameraFront;
@@ -341,6 +361,20 @@ void do_movement() {
     cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
   if(keys[GLFW_KEY_D])
     cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+  // Make the movement periodic
+  if (cameraPos.x > world_size / 2)
+    cameraPos.x = -world_size / 2;
+  if (cameraPos.x < -world_size / 2)
+    cameraPos.x = world_size / 2;
+  if (cameraPos.y > world_size / 2)
+    cameraPos.y = -world_size / 2;
+  if (cameraPos.y < -world_size / 2)
+    cameraPos.y = world_size / 2;
+  if (cameraPos.z > world_size / 2)
+    cameraPos.z = -world_size / 2;
+  if (cameraPos.z < -world_size / 2)
+    cameraPos.z = world_size / 2;
 }
 
 // Update the camera target based on mouse input
@@ -364,8 +398,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   yoffset *= sensitivity;
 
   yaw = glm::mod(yaw + xoffset, 360.0f);
+  
   pitch += yoffset;
-
   if(pitch > 89.0f)
       pitch = 89.0f;
   if(pitch < -89.0f)
