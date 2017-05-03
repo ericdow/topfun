@@ -26,9 +26,10 @@ find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 find_package(SOIL REQUIRED)
+find_package(ASSIMP REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 
-add_subdirectory(external)
+add_subdirectory(externals)
 add_subdirectory(src)
 

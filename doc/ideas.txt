@@ -1,15 +1,6 @@
 PHYSICS
 =======
-- probably want to integrate the positions of all dynamic objects simultaneously to improve vectorization/reduce number of function calls
-  - create a single state vector for all dynamic objects just before integrating
 - units: use SI for everything
-- allow floats or doubles for math (via macro)
-
-Dynamic objects:
-- rigid body
-- spring (damped)
-- consider having a "manager" class for dynamic objects that handles collisions, etc.
-  - dynamic objects may or may not be collidable with each other/stationary objects
 
 TERRAIN
 =======
@@ -39,4 +30,59 @@ DynamicEntity (template on n-dof)
 Object properties
 - drawable
 - collidable (with DynamicObjects)
+- audible
+
+Components: for each object property, make a class
+- GameObject is a composition of component objects
+- Use a factory to build GameObjects based on properties
+- Camera could be a GameObject, since it might be collidable
+
+RenderComponent
+DynamicsComponent - update position/orientation of object
+CollideComponent - determine if collision occurs, compute resulting forces
+SoundComponent
+AIComponent
+
+ComponentManagers:
+- Great for multi-threading: give each domain (rendering, physics, audio) a different thread
+- GameObject base class gets reference to all ComponentManagers, registers appropriate component
+
+RenderComponentManager
+- loops through GameObjects, figures out which should be drawn (e.g. based on camera frustrum), and calls Render() if they are visible
+
+DynamicsComponentManager
+- loops through GameObjects, and updates positions/orientations (e.g. using RK4)
+- probably should vectorize RK4, i.e. move all state vector to contiguous memory and update, then move data back
+
+Data Locality: store all components of a given type in a long STATIC vector
+- active components at the front, inactive at the back
+- when a component becomes inactive, switch positions with last active component:
+- loops over active components will touch contiguous memory
+
+Keep track of first inactive index:
+[a][a][a][a][a][i][i][i][i]
+                ^
+                FI
+
+Component 3 becomes inactive:
+[a][a][i][a][a][i][i][i][i]
+
+Swap with last active component:
+[a][a][i][a][a][i][i][i][i]
+       ^     ^
+       |_____|
+
+Update first inactive index:
+[a][a][a][a][i][i][i][i][i]
+             ^
+             FI
+
+        
+
+
+
+
+
+
+
 

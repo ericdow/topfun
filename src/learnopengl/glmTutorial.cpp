@@ -148,10 +148,10 @@ int main()
         // Bind Textures using texture units
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+        glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture1"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-        glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture2"), 1);
+        glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture2"), 1);
 
         // Activate shader
         ourShader.Use();       
@@ -162,7 +162,7 @@ int main()
         transform = glm::rotate(transform, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
         // Get matrix's uniform location and set matrix
-        GLint transformLoc = glGetUniformLocation(ourShader.Program, "transform");
+        GLint transformLoc = glGetUniformLocation(ourShader.GetProgram(), "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         
         // Draw container

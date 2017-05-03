@@ -216,10 +216,10 @@ int main()
     // Bind Textures using texture units
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);
-    glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+    glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture1"), 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
-    glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture2"), 1);
+    glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture2"), 1);
 
     // Activate shader
     ourShader.Use();       
@@ -233,11 +233,11 @@ int main()
       (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
     // Get transformations uniform location and set matrrices
-    GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
+    GLint modelLoc = glGetUniformLocation(ourShader.GetProgram(), "model");
     // glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
+    GLint viewLoc = glGetUniformLocation(ourShader.GetProgram(), "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
+    GLint projLoc = glGetUniformLocation(ourShader.GetProgram(), "projection");
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
     
     // Draw containers

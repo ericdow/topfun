@@ -209,23 +209,23 @@ int main(int argc, char* argv[])
     glm::vec3 lightPos(cameraPos + glm::vec3(2.0f) * cameraFront);
     
     // Get transformations uniform location and set matrices for drawing boxes
-    GLint modelLoc_box = glGetUniformLocation(boxShader->Program, "model");
-    GLint viewLoc_box = glGetUniformLocation(boxShader->Program, "view");
-    GLint projLoc_box = glGetUniformLocation(boxShader->Program, "projection");
+    GLint modelLoc_box = glGetUniformLocation(boxShader->GetProgram(), "model");
+    GLint viewLoc_box = glGetUniformLocation(boxShader->GetProgram(), "view");
+    GLint projLoc_box = glGetUniformLocation(boxShader->GetProgram(), "projection");
     glUniformMatrix4fv(viewLoc_box, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc_box, 1, GL_FALSE, glm::value_ptr(projection));
     
     // Activate shader for drawing boxes and set uniforms
     boxShader->Use();       
-    GLint objectColorLoc = glGetUniformLocation(boxShader->Program, "objectColor");
-    GLint lightColorLoc  = glGetUniformLocation(boxShader->Program, "lightColor");
+    GLint objectColorLoc = glGetUniformLocation(boxShader->GetProgram(), "objectColor");
+    GLint lightColorLoc  = glGetUniformLocation(boxShader->GetProgram(), "lightColor");
     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
     glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f); // Also set light's color (white) 
     
 		// Send the position of the light and camera to the box fragment shader
-		GLint lightPosLoc = glGetUniformLocation(boxShader->Program, "lightPos");
+		GLint lightPosLoc = glGetUniformLocation(boxShader->GetProgram(), "lightPos");
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-    GLint viewPosLoc = glGetUniformLocation(boxShader->Program, "viewPos");
+    GLint viewPosLoc = glGetUniformLocation(boxShader->GetProgram(), "viewPos");
     glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
     
     // Draw boxes
@@ -243,9 +243,9 @@ int main(int argc, char* argv[])
     glBindVertexArray(0);
     
     // Get transformations uniform location and set matrices for drawing a light
-    GLint modelLoc_light = glGetUniformLocation(lightShader.Program, "model");
-    GLint viewLoc_light = glGetUniformLocation(lightShader.Program, "view");
-    GLint projLoc_light = glGetUniformLocation(lightShader.Program, "projection");
+    GLint modelLoc_light = glGetUniformLocation(lightShader.GetProgram(), "model");
+    GLint viewLoc_light = glGetUniformLocation(lightShader.GetProgram(), "view");
+    GLint projLoc_light = glGetUniformLocation(lightShader.GetProgram(), "projection");
     glUniformMatrix4fv(viewLoc_light, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc_light, 1, GL_FALSE, glm::value_ptr(projection));
     

@@ -64,8 +64,7 @@ GLfloat yaw = -90.0f, pitch = 0.0f;
 std::shared_ptr<Shader> boxShader, boxShaderPhong, boxShaderGouraud;
 
 // The MAIN function, from here we start the application and run the game loop
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
   // Init GLFW
   glfwInit();
   
@@ -91,7 +90,7 @@ int main(int argc, char* argv[])
   glViewport(0, 0, WIDTH, HEIGHT);
 
   // Displacements to generate a periodic view of cubes
-  int n_rep = 4; // (2*n_rep + 1)^2 total repetitions
+  int n_rep = 3; // (2*n_rep + 1)^2 total repetitions
   std::vector<glm::vec3> periodic_displacements;
   for (int i = -n_rep; i <= n_rep; i++) {
     for (int j = -n_rep; j <= n_rep; j++) {
@@ -146,7 +145,7 @@ int main(int argc, char* argv[])
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-};
+  };
  
   // Set up a VBO with box coordinate data 
   GLuint VBO;
@@ -177,9 +176,6 @@ int main(int argc, char* argv[])
     glm::vec3( 7.5f,  7.0f, -5.5f), 
     glm::vec3( 3.5f,  0.2f, -1.5f), 
     glm::vec3(-1.3f,  4.0f,  4.5f)};
-  
-  // std::vector<glm::vec3> cubePositions = {
-  //   glm::vec3( 0.0f,  0.0f,  0.0f)}; 
 
   // Set up VAO for light
 	GLuint lightVAO;
@@ -207,8 +203,7 @@ int main(int argc, char* argv[])
   glfwSetCursorPosCallback(window, mouse_callback);
   
   // Game loop
-  while (!glfwWindowShouldClose(window))
-  {
+  while (!glfwWindowShouldClose(window)) {
     // Compute dt from last render
     GLfloat currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -245,23 +240,23 @@ int main(int argc, char* argv[])
     glm::vec3 lightPos(cameraPos + glm::vec3(2.0f) * cameraFront);
     
     // Get transformations uniform location and set matrices for drawing boxes
-    GLint modelLoc_box = glGetUniformLocation(boxShader->Program, "model");
-    GLint viewLoc_box = glGetUniformLocation(boxShader->Program, "view");
-    GLint projLoc_box = glGetUniformLocation(boxShader->Program, "projection");
+    GLint modelLoc_box = glGetUniformLocation(boxShader->GetProgram(), "model");
+    GLint viewLoc_box = glGetUniformLocation(boxShader->GetProgram(), "view");
+    GLint projLoc_box = glGetUniformLocation(boxShader->GetProgram(), "projection");
     glUniformMatrix4fv(viewLoc_box, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc_box, 1, GL_FALSE, glm::value_ptr(projection));
     
     // Activate shader for drawing boxes and set uniforms
     boxShader->Use();       
-    GLint objectColorLoc = glGetUniformLocation(boxShader->Program, "objectColor");
-    GLint lightColorLoc  = glGetUniformLocation(boxShader->Program, "lightColor");
+    GLint objectColorLoc = glGetUniformLocation(boxShader->GetProgram(), "objectColor");
+    GLint lightColorLoc  = glGetUniformLocation(boxShader->GetProgram(), "lightColor");
     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
     glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f); // Also set light's color (white) 
     
 		// Send the position of the light and camera to the box fragment shader
-		GLint lightPosLoc = glGetUniformLocation(boxShader->Program, "lightPos");
+		GLint lightPosLoc = glGetUniformLocation(boxShader->GetProgram(), "lightPos");
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-    GLint viewPosLoc = glGetUniformLocation(boxShader->Program, "viewPos");
+    GLint viewPosLoc = glGetUniformLocation(boxShader->GetProgram(), "viewPos");
     glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
     
     // Draw boxes
@@ -295,8 +290,7 @@ int main(int argc, char* argv[])
 bool isWireFrame = false;
 bool isPhong = true;
 float last_w_press_time = -100.0f;
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
   // Close by pressing escape key
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
@@ -381,8 +375,7 @@ void do_movement() {
 bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   // Check if this is the time the mouse enters the screen to prevent jumps
-  if(firstMouse)
-  {
+  if(firstMouse) {
     lastX = xpos;
     lastY = ypos;
     firstMouse = false;

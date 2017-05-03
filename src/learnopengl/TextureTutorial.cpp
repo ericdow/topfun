@@ -146,10 +146,10 @@ int main()
         // Bind Textures using texture units
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+        glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture1"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-        glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture2"), 1);  
+        glUniform1i(glGetUniformLocation(ourShader.GetProgram(), "ourTexture2"), 1);  
         
         // Draw container
         glBindVertexArray(VAO);

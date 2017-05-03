@@ -10,7 +10,6 @@
 
 class Shader {
  public:
-  GLuint Program;
   // Constructor generates the shader on the fly
   Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
   {
@@ -86,11 +85,19 @@ class Shader {
     glDeleteShader(vertex);
     glDeleteShader(fragment);
   }
+  
   // Uses the current shader
   void Use() 
   { 
     glUseProgram(this->Program); 
   }
+
+  // Gets the shaders program ID
+  GLuint GetProgram() {
+    return Program;
+  }
+ private:
+  GLuint Program;
 };
 
 #endif
