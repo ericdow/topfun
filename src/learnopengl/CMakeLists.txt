@@ -14,6 +14,8 @@ set(FILES_TO_SEND
   box_gouraud.frag
   lamp.vs
   lamp.frag
+  model_loading.vs
+  model_loading.frag
 ) 
 
 # this sends files over if they have changed
@@ -36,11 +38,12 @@ set(EXECUTABLES
   CoordinatesTutorial.cpp
   CameraTutorial.cpp
   LightingTutorial.cpp
+  ModelLoadingTutorial.cpp
   WarpCubes.cpp
 )
 
-set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY})
-set(include_dirs ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SOIL_INCLUDE_DIRS})
+set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY} ${ASSIMP_LIBRARIES})
+set(include_dirs ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SOIL_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIR})
 
 foreach(exec ${EXECUTABLES})
   get_filename_component(EXEC_NAME ${exec} NAME_WE)
