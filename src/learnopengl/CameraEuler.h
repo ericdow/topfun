@@ -7,8 +7,6 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 
 // Defines several possible options for camera movement. 
 // Used as abstraction to stay away from window-system specific input methods
@@ -20,11 +18,16 @@ enum Camera_Movement {
 };
 
 // Default camera values
+const GLfloat YAW        = -90.0f;
+const GLfloat PITCH      =  0.0f;
 const GLfloat SPEED      =  3.0f;
 const GLfloat SENSITIVTY =  0.25f;
 const GLfloat ZOOM       =  45.0f;
 
-class Camera {
+
+// An abstract camera class that processes input and calculates the 
+// corresponding Eular Angles, Vectors and Matrices for use in OpenGL
+class Camera_Euler {
  public:
   // Camera Attributes
   glm::vec3 Position;
@@ -32,28 +35,36 @@ class Camera {
   glm::vec3 Up;
   glm::vec3 Right;
   glm::vec3 WorldUp;
+  // Eular Angles
+  GLfloat Yaw;
+  GLfloat Pitch;
   // Camera options
   GLfloat MovementSpeed;
   GLfloat MouseSensitivity;
   GLfloat Zoom;
 
   // Constructor with vectors
-  Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
+  Camera_Euler(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, 
+    GLfloat pitch = PITCH) : 
     Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
     MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
     this->Position = position;
     this->WorldUp = up;
-    this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
+    this->Yaw = yaw;
+    this->Pitch = pitch;
+    this->updateCameraVectors();
   }
   // Constructor with scalar values
-  Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, 
-    GLfloat upZ) : 
+  Camera_Euler(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, 
+    GLfloat upZ, GLfloat yaw, GLfloat pitch) : 
     Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
     MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
     this->Position = glm::vec3(posX, posY, posZ);
     this->WorldUp = glm::vec3(upX, upY, upZ);
-    this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
+    this->Yaw = yaw;
+    this->Pitch = pitch;
+    this->updateCameraVectors();
   }
 
   // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
@@ -83,21 +94,19 @@ class Camera {
     xoffset *= this->MouseSensitivity;
     yoffset *= this->MouseSensitivity;
 
-    // Make sure that when pitch is out of bounds, screen doesn't get flipped
-    // TODO
-    // if (constrainPitch) {
-    //   if (this->Pitch > 89.0f)
-    //     this->Pitch = 89.0f;
-    //   if (this->Pitch < -89.0f)
-    //     this->Pitch = -89.0f;
-    // }
+    this->Yaw   += xoffset;
+    this->Pitch += yoffset;
 
-    glm::vec3 axis = glm::cross(Front - Position, Up);
-    axis = glm::normalize(axis);
+    // Make sure that when pitch is out of bounds, screen doesn't get flipped
+    if (constrainPitch) {
+      if (this->Pitch > 89.0f)
+        this->Pitch = 89.0f;
+      if (this->Pitch < -89.0f)
+        this->Pitch = -89.0f;
+    }
 
     // Update Front, Right and Up Vectors using the updated Eular angles
-    updateCameraVectors(glm::radians(yoffset), axis);
-    updateCameraVectors(glm::radians(-xoffset), {0.0, 1.0, 0.0});
+    this->updateCameraVectors();
   }
 
   // Processes input received from a mouse scroll-wheel event. Only requires 
@@ -113,28 +122,17 @@ class Camera {
 
  private:
   // Calculates the front vector from the Camera's (updated) Eular Angles
-  void updateCameraVectors(GLfloat angle, glm::vec3 axis) {
-    glm::quat tmp, quat_view, result;
-    tmp.x = axis.x * sin(angle/2);
-    tmp.y = axis.y * sin(angle/2);
-    tmp.z = axis.z * sin(angle/2);
-    tmp.w = cos(angle/2);
-
-    quat_view.x = Front.x;
-    quat_view.y = Front.y;
-    quat_view.z = Front.z;
-    quat_view.w = 0.0;
-  
-    result = tmp * quat_view * glm::conjugate(tmp);
-  
-    Front.x = result.x;
-    Front.y = result.y;
-    Front.z = result.z;
-     
+  void updateCameraVectors() {
+    // Calculate the new Front vector
+    glm::vec3 front;
+    front.x = cos(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
+    front.y = sin(glm::radians(this->Pitch));
+    front.z = sin(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
+    this->Front = glm::normalize(front);
     // Also re-calculate the Right and Up vector
+    this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));  
     // Normalize the vectors, because their length gets closer to 0 the more you
     // look up or down which results in slower movement.
-    this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));  
     this->Up    = glm::normalize(glm::cross(this->Right, this->Front));
   }
 };
