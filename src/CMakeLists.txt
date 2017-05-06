@@ -1,9 +1,9 @@
-add_executable(quat_test quaternion_test.cpp) 
-target_include_directories(quat_test PRIVATE ${Boost_INCLUDE_DIRS}) 
-target_link_libraries(quat_test ${Boost_LIBRARIES})
+add_executable(TopFun TopFun.cpp) 
+target_include_directories(TopFun PUBLIC terrain utils) 
+target_link_libraries(TopFun terrain utils)
 
-add_executable(eigen_test eigen_test.cpp) 
-target_include_directories(eigen_test PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(eigen_test ${EIGEN_LIBRARIES})
-
+add_subdirectory(tests)
 add_subdirectory(learnopengl)
+add_subdirectory(utils)
+add_subdirectory(terrain)
+add_subdirectory(shaders)

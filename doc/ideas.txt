@@ -8,10 +8,9 @@ TERRAIN
   - collision detection: test if lowest point of dynamic object bounding box is below elevation
 - use adaptive LOD (via quadtree) with adaptation near (x,y) position of the camera
   - should be 3D: resolution should also decrease when your z position is large
-- use adaptive LOD for object collisions
-  - locally adapt terrain when any collidable object gets close
   - look into geomipmap concept
-- only render what is in camera perspective frustrum
+- object collisions only require query of heightmap at arbitrary points
+- only Draw what is in camera perspective frustrum
 - procedural terrain:
   - periodic background mesh (read in or generated)
   - procedural "noise"
@@ -31,24 +30,25 @@ Object properties
 - drawable
 - collidable (with DynamicObjects)
 - audible
+- controllable (by AI or player)
 
 Components: for each object property, make a class
 - GameObject is a composition of component objects
 - Use a factory to build GameObjects based on properties
 - Camera could be a GameObject, since it might be collidable
 
-RenderComponent
+DrawComponent
 DynamicsComponent - update position/orientation of object
 CollideComponent - determine if collision occurs, compute resulting forces
 SoundComponent
 AIComponent
 
 ComponentManagers:
-- Great for multi-threading: give each domain (rendering, physics, audio) a different thread
+- Great for multi-threading: give each domain (Drawing, physics, audio) a different thread
 - GameObject base class gets reference to all ComponentManagers, registers appropriate component
 
-RenderComponentManager
-- loops through GameObjects, figures out which should be drawn (e.g. based on camera frustrum), and calls Render() if they are visible
+DrawComponentManager
+- loops through GameObjects, figures out which should be drawn (e.g. based on camera frustrum), and calls Draw() if they are visible
 
 DynamicsComponentManager
 - loops through GameObjects, and updates positions/orientations (e.g. using RK4)

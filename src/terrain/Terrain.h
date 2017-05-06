@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 
+#include "shaders/Shader.h"
+
 namespace TopFun {
 
 class Terrain {
@@ -25,7 +27,13 @@ class Terrain {
   std::vector<float> GetHeight(std::vector<std::array<float,2>> const& xy) 
     const;
 
+  //**************************************************************************80
+  //! \brief Draw - draws the terrain
+  //**************************************************************************80
+  void Draw();
+
  private:
+  Shader shader_;
 
 };
 } // End namespace TopFun

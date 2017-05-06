@@ -29,6 +29,7 @@ find_package(SOIL REQUIRED)
 find_package(ASSIMP REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/includes)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(externals)
 add_subdirectory(src)
