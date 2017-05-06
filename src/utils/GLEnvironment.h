@@ -11,9 +11,6 @@
 namespace TopFun {
 namespace GLEnvironment {
 
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, 
-  int mode);
-
 GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight);
 
 void TearDown();

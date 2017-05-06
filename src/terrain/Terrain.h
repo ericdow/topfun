@@ -4,7 +4,11 @@
 #include <vector>
 #include <array>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shaders/Shader.h"
+#include "utils/Camera.h"
 
 namespace TopFun {
 
@@ -19,7 +23,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
   //**************************************************************************80
-  ~Terrain();
+  ~Terrain() = default;
   
   //**************************************************************************80
   //! \brief GetHeight - Get the terrain height at a bunch of (x,y) locations
@@ -30,7 +34,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw();
+  void Draw(Camera const& camera);
 
  private:
   Shader shader_;

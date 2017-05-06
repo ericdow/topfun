@@ -1,27 +1,10 @@
+#ifndef GLENVIRONMENT_H
+#define GLENVIRONMENT_H
+
 #include "utils/GLEnvironment.h"
 
 namespace TopFun {
 namespace GLEnvironment {
-
-//****************************************************************************80
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, 
-  int mode) {
-  // Close by pressing escape key
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, GL_TRUE);
-
-  // Switch between fill and line rendering
-  if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-    GLint state[2];
-    glGetIntegerv(GL_POLYGON_MODE, state);
-    if (state[0] == GL_LINE) {
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    else {
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-  }
-}
 
 //****************************************************************************80
 GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight) {
@@ -46,9 +29,6 @@ GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight) {
   // Define the viewport dimensions
   glViewport(0, 0, screenWidth, screenHeight);
   
-  // Set the required callback functions
-  glfwSetKeyCallback(window, KeyCallback);
-  
   // Setup some OpenGL options
   glEnable(GL_DEPTH_TEST);
 
@@ -62,3 +42,5 @@ void TearDown() {
 
 } // End namespace GLEnvironment
 } // End namespace TopFun
+
+#endif

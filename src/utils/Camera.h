@@ -4,6 +4,7 @@
 #include <vector>
 
 // GL Includes
+#include <GLFW/glfw3.h>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,6 +13,7 @@
 
 // Defines several possible options for camera movement. 
 // Used as abstraction to stay away from window-system specific input methods
+// TODO move
 enum Camera_Movement {
   FORWARD,
   BACKWARD,
@@ -20,50 +22,54 @@ enum Camera_Movement {
 };
 
 // Default camera values
+// TODO move
 const GLfloat SPEED      =  3.0f;
 const GLfloat SENSITIVTY =  0.25f;
 const GLfloat ZOOM       =  45.0f;
 
 class Camera {
  public:
-  // Camera Attributes
-  glm::vec3 Position;
-  glm::vec3 Front;
-  glm::vec3 Up;
-  glm::vec3 Right;
-  glm::vec3 WorldUp;
-  // Camera options
-  GLfloat MovementSpeed;
-  GLfloat MouseSensitivity;
-  GLfloat Zoom;
-
   // Constructor with vectors
-  Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
-    Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
-    MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
+  Camera(GLuint sw, GLuint sh, 
+      glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
+      glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
+      ScreenWidth(sw), ScreenHeight(sh), Front(glm::vec3(0.0f, 0.0f, -1.0f)), 
+      MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
     this->Position = position;
     this->WorldUp = up;
     this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
   }
-  // Constructor with scalar values
-  Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, 
-    GLfloat upZ) : 
-    Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
-    MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
-    this->Position = glm::vec3(posX, posY, posZ);
-    this->WorldUp = glm::vec3(upX, upY, upZ);
-    this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
+
+  // Returns the current position of the camera
+  inline glm::vec3 GetPosition() const {
+    return Position;
   }
 
   // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-  glm::mat4 GetViewMatrix() {
+  glm::mat4 GetViewMatrix() const {
     return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
   }
+  
+  // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
+  glm::mat4 GetProjectionMatrix() const {
+    return glm::perspective(glm::radians(Zoom), 
+        (GLfloat)ScreenWidth / (GLfloat)ScreenHeight, 0.1f, 100.0f);
+  }
 
-  // Processes input received from any keyboard-like input system. Accepts input 
-  // parameter in the form of camera defined ENUM (to abstract it from windowing 
-  // systems)
+  // Moves/alters the camera positions based on user input
+  void Move(std::vector<bool> const& keys, GLfloat deltaTime) {
+    // Camera controls
+    if(keys[GLFW_KEY_W])
+      ProcessKeyboard(FORWARD, deltaTime);
+    if(keys[GLFW_KEY_S])
+      ProcessKeyboard(BACKWARD, deltaTime);
+    if(keys[GLFW_KEY_A])
+      ProcessKeyboard(LEFT, deltaTime);
+    if(keys[GLFW_KEY_D])
+      ProcessKeyboard(RIGHT, deltaTime);
+  }
+
+  // Processes input received from any keyboard-like input system
   void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime) {
     GLfloat velocity = this->MovementSpeed * deltaTime;
     if (direction == FORWARD)
@@ -112,6 +118,19 @@ class Camera {
   }
 
  private:
+  // Camera Attributes
+  GLuint ScreenWidth, ScreenHeight;
+  glm::vec3 Position;
+  glm::vec3 Front;
+  glm::vec3 Up;
+  glm::vec3 Right;
+  glm::vec3 WorldUp;
+  
+  // Camera options
+  GLfloat MovementSpeed;
+  GLfloat MouseSensitivity;
+  GLfloat Zoom; // FOV
+
   // Calculates the front vector from the Camera's (updated) Eular Angles
   void updateCameraVectors(GLfloat angle, glm::vec3 axis) {
     glm::quat tmp, quat_view, result;

@@ -1,11 +1,26 @@
+#include <iostream>
+
 #include "utils/GLEnvironment.h"
+#include "utils/Camera.h"
+#include "utils/KeyState.h"
 #include "terrain/Terrain.h"
 
-// The MAIN function, from here we start our application and run our Game loop
+// TODO move
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+GLuint width(800), height(600);
+GLFWwindow* window = TopFun::GLEnvironment::SetUp(width, height);
+TopFun::KeyState key_state(window);
+Camera camera(width, height);
+GLfloat lastX = width/2, lastY = height/2;
+bool firstMouse = true;
+
 int main(int argc, char* argv[]) {
   using namespace TopFun;
 
-  GLFWwindow* window = GLEnvironment::SetUp(800, 600);
+  // TODO move
+  glfwSetCursorPosCallback(window, mouse_callback);
+  
+  Terrain terrain;
 
   // Game loop
   GLfloat deltaTime = 0.0f;
@@ -18,15 +33,14 @@ int main(int argc, char* argv[]) {
 
     // Check and call events
     glfwPollEvents();
+    camera.Move(key_state.Get(), deltaTime);
 
     // Clear the colorbuffer
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-    
-    Terrain terrain;
-    terrain.Draw();
-  
+    // Draw the scene 
+    terrain.Draw(camera);
 
     // Swap the buffers
     glfwSwapBuffers(window);
@@ -35,3 +49,20 @@ int main(int argc, char* argv[]) {
   GLEnvironment::TearDown();
   return 0;
 }
+
+// TODO move
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+  if(firstMouse) {
+    lastX = xpos;
+    lastY = ypos;
+    firstMouse = false;
+  }
+
+  GLfloat xoffset = xpos - lastX;
+  GLfloat yoffset = lastY - ypos; 
+  
+  lastX = xpos;
+  lastY = ypos;
+
+  camera.ProcessMouseMovement(xoffset, yoffset);
+}	
