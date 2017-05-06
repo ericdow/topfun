@@ -1,24 +1,25 @@
 #include <iostream>
 
 #include "utils/GLEnvironment.h"
+#include "utils/CallBackWorld.h"
 #include "utils/Camera.h"
-#include "utils/KeyState.h"
 #include "terrain/Terrain.h"
 
+
 // TODO move
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-GLuint width(800), height(600);
-GLFWwindow* window = TopFun::GLEnvironment::SetUp(width, height);
-TopFun::KeyState key_state(window);
-Camera camera(width, height);
-GLfloat lastX = width/2, lastY = height/2;
-bool firstMouse = true;
+// GLfloat lastX = width/2, lastY = height/2;
+
 
 int main(int argc, char* argv[]) {
   using namespace TopFun;
 
-  // TODO move
-  glfwSetCursorPosCallback(window, mouse_callback);
+  // Set up objects that will be modified during input callbacks 
+  GLuint width(800), height(600);
+  Camera camera(width, height);
+  CallBackWorld call_back_world(camera);
+
+  // Setup the GL/GLFW environment
+  GLFWwindow* window = GLEnvironment::SetUp(width, height, call_back_world);
   
   Terrain terrain;
 
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     // Check and call events
     glfwPollEvents();
-    camera.Move(key_state.Get(), deltaTime);
+    camera.Move(call_back_world.GetKeyState(), deltaTime);
 
     // Clear the colorbuffer
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -49,20 +50,3 @@ int main(int argc, char* argv[]) {
   GLEnvironment::TearDown();
   return 0;
 }
-
-// TODO move
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-  if(firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-
-  GLfloat xoffset = xpos - lastX;
-  GLfloat yoffset = lastY - ypos; 
-  
-  lastX = xpos;
-  lastY = ypos;
-
-  camera.ProcessMouseMovement(xoffset, yoffset);
-}	

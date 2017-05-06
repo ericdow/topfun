@@ -1,7 +1,7 @@
 # build the utils library
 set(SOURCES
   GLEnvironment.cpp
-  KeyState.cpp
+  CallBackWorld.cpp
 )
 
 set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES})

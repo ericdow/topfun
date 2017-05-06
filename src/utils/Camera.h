@@ -4,12 +4,12 @@
 #include <vector>
 
 // GL Includes
-#include <GLFW/glfw3.h>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
+#include <GLFW/glfw3.h>
 
 // Defines several possible options for camera movement. 
 // Used as abstraction to stay away from window-system specific input methods
