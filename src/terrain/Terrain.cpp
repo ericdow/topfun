@@ -8,74 +8,97 @@ Terrain::Terrain() : shader_("shaders/terrain.vs", "shaders/terrain.frag") {}
 
 //****************************************************************************80
 void Terrain::Draw(Camera const& camera) {
+  
   // Generate triangle data
-  GLfloat vertices[] = {
-       // Positions         // Normals
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+  int n_vert_attrib = 6; // positions, normals, texture coords, etc...
+  GLuint nvx(10), nvz(10);
+  GLuint nex(nvx-1), nez(nvz-1);
+  std::vector<GLfloat> vertices(n_vert_attrib*nvx*nvz);
+  std::vector<GLuint> indices(6*nex*nez);
 
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+  // Vertex coordinates
+  GLfloat dx(1.0f), dz(1.0f);
+  for (GLuint i = 0; i < nvx; ++i) {
+    for (GLuint j = 0; j < nvz; ++j) {
+      GLuint offset = n_vert_attrib*(nvx*j + i);
+      vertices[offset    ] = dx*i;
+      vertices[offset + 1] = 0.0f;
+      vertices[offset + 2] = dz*j;
+    }
+  }
 
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+  // Vertex normals
+  for (GLuint i = 0; i < nvx; ++i) {
+    for (GLuint j = 0; j < nvz; ++j) {
+      GLuint offset = n_vert_attrib*(nvx*j + i) + 3;
+      vertices[offset    ] = dx*i;
+      vertices[offset + 1] = 0.0f;
+      vertices[offset + 2] = dz*j;
+    }
+  }
 
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+  for (GLuint i = 0; i < nex; ++i) {
+    for (GLuint j = 0; j < nez; ++j) {
+      GLuint offset = 6*(nex*j + i);
+      // first triangle in this face
+      indices[offset    ] = nvx*j + i;
+      indices[offset + 1] = nvx*j + i + 1;
+      indices[offset + 2] = nvx*(j + 1) + i;
+      // second triangle in this face
+      indices[offset + 3] = nvx*j + i + 1;
+      indices[offset + 4] = nvx*(j + 1) + i + 1;
+      indices[offset + 5] = nvx*(j + 1) + i;
+    }
+  }
 
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-  };
- 
-  // Set up a VBO with coordinate data 
-  GLuint VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  // Set up VAO
-  GLuint VAO;
+  GLuint VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO);
+  
   glBindVertexArray(VAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), 
+      vertices.data(), GL_STATIC_DRAW); // TODO static or dynamic???
+  
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), 
+      indices.data(), GL_STATIC_DRAW); //  TODO static or dynamic???
+
   // Position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 
-      (GLvoid*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+      n_vert_attrib * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 
-      (GLvoid*)0);
+  // Normal attribute
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+      n_vert_attrib * sizeof(GLfloat), (GLvoid*)0);
   glEnableVertexAttribArray(1);
-  glBindVertexArray(0); // Unbind VAO
+  
+  glBindBuffer(GL_ARRAY_BUFFER, 0); 
+  glBindVertexArray(0); 
     
   // Activate shader
   shader_.Use();
 
+  // Send data to the shaders
+  SetShaderData(camera);
+  
+  // Render
+  glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+
+  // Clean up
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
+  glDeleteBuffers(1, &EBO); 
+}
+
+//****************************************************************************80
+// PRIVATE FUNCTIONS
+//****************************************************************************80
+void Terrain::SetShaderData(Camera const& camera) {
   // Set model/view/projection uniforms  
   glm::mat4 model; // TODO this is all zeros
   GLint modelLoc = glGetUniformLocation(shader_.GetProgram(), "model");
@@ -113,14 +136,6 @@ void Terrain::Draw(Camera const& camera) {
   glm::vec3 camera_pos = camera.GetPosition();
   GLint viewPosLoc = glGetUniformLocation(shader_.GetProgram(), "viewPos");
   glUniform3f(viewPosLoc, camera_pos.x, camera_pos.y, camera_pos.z);
-
-  // Render
-  glBindVertexArray(VAO);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-  
-  // Clean up
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
 }
 
 } // End namespace TopFun

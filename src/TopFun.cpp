@@ -10,7 +10,8 @@ int main(int argc, char* argv[]) {
 
   // Set up objects that will be modified during input callbacks 
   GLuint width(1200), height(800);
-  Camera camera(width, height);
+  glm::vec3 start_pos(0.0f, 0.0f, 0.0f);
+  Camera camera(width, height, start_pos);
   CallBackWorld call_back_world(camera);
 
   // Set up the GL/GLFW environment

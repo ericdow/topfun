@@ -38,6 +38,11 @@ class Terrain {
 
  private:
   Shader shader_;
+  
+  //**************************************************************************80
+  //! \brief SetShaderData - sends the uniforms required by the shader
+  //**************************************************************************80
+  void SetShaderData(Camera const& camera);
 
 };
 } // End namespace TopFun
