@@ -9,9 +9,11 @@ Terrain::Terrain() : shader_("shaders/terrain.vs", "shaders/terrain.frag") {}
 //****************************************************************************80
 void Terrain::Draw(Camera const& camera) {
   
-  // Generate triangle data
-  int n_vert_attrib = 6; // positions, normals, texture coords, etc...
-  GLuint nvx(10), nvz(10);
+  // Data packing:
+  // - 3 floats (position)
+  // - 3 floats (normal)
+  int n_vert_attrib = 6;
+  GLuint nvx(100), nvz(100);
   GLuint nex(nvx-1), nez(nvz-1);
   std::vector<GLfloat> vertices(n_vert_attrib*nvx*nvz);
   std::vector<GLuint> indices(6*nex*nez);
@@ -22,21 +24,22 @@ void Terrain::Draw(Camera const& camera) {
     for (GLuint j = 0; j < nvz; ++j) {
       GLuint offset = n_vert_attrib*(nvx*j + i);
       vertices[offset    ] = dx*i;
-      vertices[offset + 1] = 0.0f;
+      // TODO insert heightmap calc here
+      vertices[offset + 1] = 0.05*dx*nvx*sin(20*dx*i/nvx)*sin(20*dz*j/nvz);
       vertices[offset + 2] = dz*j;
     }
   }
-
-  // Vertex normals
-  for (GLuint i = 0; i < nvx; ++i) {
-    for (GLuint j = 0; j < nvz; ++j) {
-      GLuint offset = n_vert_attrib*(nvx*j + i) + 3;
-      vertices[offset    ] = dx*i;
-      vertices[offset + 1] = 0.0f;
-      vertices[offset + 2] = dz*j;
-    }
-  }
-
+ 
+  // Element defitions 
+  /*
+    v2   v2   v1
+     o    o---o
+     |\    \t1|
+     | \    \ |
+     |t0\    \|
+     o---o    o
+    v0   v1   v0
+  */
   for (GLuint i = 0; i < nex; ++i) {
     for (GLuint j = 0; j < nez; ++j) {
       GLuint offset = 6*(nex*j + i);
@@ -50,6 +53,54 @@ void Terrain::Draw(Camera const& camera) {
       indices[offset + 5] = nvx*(j + 1) + i;
     }
   }
+  
+  // Vertex normals
+  for (GLuint i = 0; i < nex; ++i) {
+    for (GLuint j = 0; j < nez; ++j) {
+      GLuint ind_offset = 6*(nex*j + i);
+      // first triangle in this face
+      GLuint v0_ix = n_vert_attrib*indices[ind_offset    ];
+      GLuint v1_ix = n_vert_attrib*indices[ind_offset + 1];
+      GLuint v2_ix = n_vert_attrib*indices[ind_offset + 2];
+      glm::vec3 v0(vertices[v0_ix],vertices[v0_ix+1],vertices[v0_ix+2]);
+      glm::vec3 v1(vertices[v1_ix],vertices[v1_ix+1],vertices[v1_ix+2]);
+      glm::vec3 v2(vertices[v2_ix],vertices[v2_ix+1],vertices[v2_ix+2]);
+      glm::vec3 normal = cross(v1 - v0, v2 - v0);
+      GLuint offset = n_vert_attrib*(nvx*j + i);
+      vertices[offset + 3] = normal.x;
+      vertices[offset + 4] = normal.y;
+      vertices[offset + 5] = normal.z;
+      // second triangle in this face
+      v0_ix = n_vert_attrib*indices[ind_offset + 3];
+      v1_ix = n_vert_attrib*indices[ind_offset + 4];
+      v2_ix = n_vert_attrib*indices[ind_offset + 5];
+      v0 = glm::vec3(vertices[v0_ix],vertices[v0_ix+1],vertices[v0_ix+2]);
+      v1 = glm::vec3(vertices[v1_ix],vertices[v1_ix+1],vertices[v1_ix+2]);
+      v2 = glm::vec3(vertices[v2_ix],vertices[v2_ix+1],vertices[v2_ix+2]);
+      normal = cross(v1 - v0, v2 - v0);
+      offset = n_vert_attrib*(nvx*j + i);
+      vertices[offset + 3] = normal.x;
+      vertices[offset + 4] = normal.y;
+      vertices[offset + 5] = normal.z;
+    }
+  }
+
+  // Smooth the (interior) normals
+  // for (GLuint i = 1; i < nvx-1; ++i) {
+  //   for (GLuint j = 1; j < nvz-1; ++j) {
+  //     GLuint n_ix = n_vert_attrib*(nvx*(j+1) + i) + 3;
+  //     GLuint s_ix = n_vert_attrib*(nvx*(j-1) + i) + 3;
+  //     GLuint e_ix = n_vert_attrib*(nvx*j + i + 1) + 3;
+  //     GLuint w_ix = n_vert_attrib*(nvx*j + i - 1) + 3;
+  //     GLuint offset = n_vert_attrib*(nvx*j + i);
+  //     vertices[offset + 3] = vertices[n_ix    ] + vertices[s_ix    ] 
+  //                          + vertices[e_ix    ] + vertices[w_ix    ];
+  //     vertices[offset + 4] = vertices[n_ix + 1] + vertices[s_ix + 1] 
+  //                          + vertices[e_ix + 1] + vertices[w_ix + 1];
+  //     vertices[offset + 5] = vertices[n_ix + 2] + vertices[s_ix + 2] 
+  //                          + vertices[e_ix + 2] + vertices[w_ix + 2];
+  //   }
+  // }
 
   GLuint VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
@@ -66,14 +117,17 @@ void Terrain::Draw(Camera const& camera) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), 
       indices.data(), GL_STATIC_DRAW); //  TODO static or dynamic???
 
+  GLint pos_loc = glGetAttribLocation(shader_.GetProgram(), "position");
+  GLint norm_loc = glGetAttribLocation(shader_.GetProgram(), "normal");
+
   // Position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+  glEnableVertexAttribArray(pos_loc);
+  glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
       n_vert_attrib * sizeof(GLfloat), (GLvoid*)0);
-  glEnableVertexAttribArray(0);
   // Normal attribute
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-      n_vert_attrib * sizeof(GLfloat), (GLvoid*)0);
-  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(norm_loc);
+  glVertexAttribPointer(norm_loc, 3, GL_FLOAT, GL_FALSE,
+      n_vert_attrib * sizeof(GLfloat), (GLvoid*)12);
   
   glBindBuffer(GL_ARRAY_BUFFER, 0); 
   glBindVertexArray(0); 
@@ -116,7 +170,7 @@ void Terrain::SetShaderData(Camera const& camera) {
   GLint matShininessLoc = glGetUniformLocation(shader_.GetProgram(), 
       "material.shininess");
   glUniform3f(matColorLoc, 0.3f, 1.0f, 0.3f);
-  glUniform1f(matShininessLoc,  64.0f);
+  glUniform1f(matShininessLoc, 2.0f);
 
   // Set lighting uniforms
   GLint lightDirectionLoc = glGetUniformLocation(shader_.GetProgram(), 
@@ -127,7 +181,8 @@ void Terrain::SetShaderData(Camera const& camera) {
       "light.diffuse");
   GLint lightSpecularLoc = glGetUniformLocation(shader_.GetProgram(), 
       "light.specular");
-  glUniform3f(lightDirectionLoc, -1.0f, -1.0f, 0.0f);
+  // TODO move light direction definition to somewhere higher up
+  glUniform3f(lightDirectionLoc, 0.2f, -1.0f, 0.0f);
   glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
   glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f);
   glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);

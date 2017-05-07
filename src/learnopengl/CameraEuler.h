@@ -24,10 +24,9 @@ const GLfloat SPEED      =  3.0f;
 const GLfloat SENSITIVTY =  0.25f;
 const GLfloat ZOOM       =  45.0f;
 
-
 // An abstract camera class that processes input and calculates the 
 // corresponding Eular Angles, Vectors and Matrices for use in OpenGL
-class Camera_Euler {
+class CameraEuler {
  public:
   // Camera Attributes
   glm::vec3 Position;
@@ -44,7 +43,7 @@ class Camera_Euler {
   GLfloat Zoom;
 
   // Constructor with vectors
-  Camera_Euler(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
+  CameraEuler(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, 
     GLfloat pitch = PITCH) : 
     Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
@@ -56,7 +55,7 @@ class Camera_Euler {
     this->updateCameraVectors();
   }
   // Constructor with scalar values
-  Camera_Euler(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, 
+  CameraEuler(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, 
     GLfloat upZ, GLfloat yaw, GLfloat pitch) : 
     Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
     MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {

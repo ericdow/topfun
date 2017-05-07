@@ -12,7 +12,7 @@ namespace TopFun {
   
 class CallBackWorld {
  public:
-  CallBackWorld(Camera& camera);
+  CallBackWorld(Camera& camera, GLuint screen_width, GLuint screen_height);
 
   ~CallBackWorld() = default;
 

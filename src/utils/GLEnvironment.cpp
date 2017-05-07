@@ -11,7 +11,7 @@ namespace GLEnvironment {
 GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight, 
     CallBackWorld& call_back_world) {
   // Initialize GLFW
-  glfwInit();
+  glfwInit(); // TODO this leaks apparently...
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

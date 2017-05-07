@@ -5,9 +5,11 @@ namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-CallBackWorld::CallBackWorld(Camera& camera) : first_mouse_(true), 
-  last_mouse_pos_({0.0,0.0}), key_state_(1024,false), w_double_pressed_(false),
-  last_w_press_time_(-100.0f), camera_(camera) {}
+CallBackWorld::CallBackWorld(Camera& camera, GLuint screen_width, 
+    GLuint screen_height) : first_mouse_(true), 
+  last_mouse_pos_({(double)screen_width/2, (double)screen_height/2}), 
+  key_state_(1024,false), w_double_pressed_(false), last_w_press_time_(-100.0f),
+  camera_(camera) {}
 
 //****************************************************************************80
 void CallBackWorld::ProcessKeyPress(int key, int scancode, int action, 
@@ -60,10 +62,11 @@ void CallBackWorld::ProcessMouseMovement(double xpos, double ypos) {
 
   GLfloat xoffset = xpos - last_mouse_pos_[0];
   GLfloat yoffset = last_mouse_pos_[1] - ypos; 
-  camera_.ProcessMouseMovement(xoffset, yoffset);
 
   // Update the position state machine  
   last_mouse_pos_ = {xpos, ypos};
+  
+  camera_.ProcessMouseMovement(xoffset, yoffset);
 }
 
 } // End namespace TopFun

@@ -2,6 +2,7 @@
 
 // Std. Includes
 #include <vector>
+#include <iostream>
 
 // GL Includes
 #include <GL/glew.h>
@@ -27,6 +28,9 @@ const GLfloat SPEED      =  3.0f;
 const GLfloat SENSITIVTY =  0.25f;
 const GLfloat ZOOM       =  45.0f;
 
+const GLfloat YAW        = -90.0f;
+const GLfloat PITCH      =  0.0f;
+
 class Camera {
  public:
   // Constructor with vectors
@@ -38,6 +42,9 @@ class Camera {
     this->Position = position;
     this->WorldUp = up;
     this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
+    // TODO remove
+    this->Yaw = YAW;
+    this->Pitch = PITCH;
   }
 
   // Returns the current position of the camera
@@ -93,21 +100,29 @@ class Camera {
     xoffset *= this->MouseSensitivity;
     yoffset *= this->MouseSensitivity;
 
-    // Make sure that when pitch is out of bounds, screen doesn't get flipped
-    // TODO
-    // if (constrainPitch) {
-    //   if (this->Pitch > 89.0f)
-    //     this->Pitch = 89.0f;
-    //   if (this->Pitch < -89.0f)
-    //     this->Pitch = -89.0f;
-    // }
+    ///////////////////////////////////////////////////////////////////////
+    this->Yaw   += xoffset;
+    this->Pitch += yoffset;
 
+    // Make sure that when pitch is out of bounds, screen doesn't get flipped
+    if (constrainPitch) {
+      if (this->Pitch > 89.0f)
+        this->Pitch = 89.0f;
+      if (this->Pitch < -89.0f)
+        this->Pitch = -89.0f;
+    }
+
+    // Update Front, Right and Up Vectors using the updated Eular angles
+    this->updateCameraVectors(0.0f, {0.0f, 0.0f, 0.0f});
+    ///////////////////////////////////////////////////////////////////////
+
+    /*
     glm::vec3 axis = glm::cross(Front - Position, Up);
     axis = glm::normalize(axis);
-
     // Update Front, Right and Up Vectors using the updated Eular angles
     updateCameraVectors(glm::radians(yoffset), axis);
     updateCameraVectors(glm::radians(-xoffset), {0.0, 1.0, 0.0});
+    */
   }
 
   // Processes input received from a mouse scroll-wheel event. Only requires 
@@ -135,8 +150,12 @@ class Camera {
   GLfloat MouseSensitivity;
   GLfloat Zoom; // FOV
 
+  // TODO remove
+  GLfloat Yaw, Pitch;
+
   // Calculates the front vector from the Camera's (updated) Eular Angles
   void updateCameraVectors(GLfloat angle, glm::vec3 axis) {
+    /*
     glm::quat tmp, quat_view, result;
     tmp.x = axis.x * sin(angle/2);
     tmp.y = axis.y * sin(angle/2);
@@ -153,6 +172,19 @@ class Camera {
     Front.x = result.x;
     Front.y = result.y;
     Front.z = result.z;
+
+    glm::vec3 euler_angles = eulerAngles(result);
+    std::cout << euler_angles.x << std::endl;
+    */
+    
+    ///////////////////////////////////////////////////////////////////////
+    // Calculate the new Front vector
+    glm::vec3 front;
+    front.x = cos(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
+    front.y = sin(glm::radians(this->Pitch));
+    front.z = sin(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
+    this->Front = glm::normalize(front);
+    ///////////////////////////////////////////////////////////////////////
      
     // Also re-calculate the Right and Up vector
     // Normalize the vectors, because their length gets closer to 0 the more you

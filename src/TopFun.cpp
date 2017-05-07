@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
   GLuint width(1200), height(800);
   glm::vec3 start_pos(0.0f, 0.0f, 0.0f);
   Camera camera(width, height, start_pos);
-  CallBackWorld call_back_world(camera);
+  CallBackWorld call_back_world(camera, width, height);
 
   // Set up the GL/GLFW environment
   GLFWwindow* window = GLEnvironment::SetUp(width, height, call_back_world);
