@@ -77,6 +77,7 @@ void Terrain::Draw(Camera const& camera) {
   shader_.Use();
 
   // Set model/view/projection uniforms  
+  glm::mat4 model; // TODO this is all zeros
   GLint modelLoc = glGetUniformLocation(shader_.GetProgram(), "model");
   GLint viewLoc = glGetUniformLocation(shader_.GetProgram(), "view");
   GLint projLoc = glGetUniformLocation(shader_.GetProgram(), "projection");
@@ -84,19 +85,33 @@ void Terrain::Draw(Camera const& camera) {
       glm::value_ptr(camera.GetViewMatrix()));
   glUniformMatrix4fv(projLoc, 1, GL_FALSE, 
       glm::value_ptr(camera.GetProjectionMatrix()));
-  
-  glm::mat4 model;
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
- 
-  // Set lighting uniforms 
-  GLint objectColorLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "objectColor");
-  GLint lightColorLoc  = glGetUniformLocation(shader_.GetProgram(), 
-      "lightColor");
-  glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
-  glUniform3f(lightColorLoc,  1.0f, 1.0f, 1.0f);
-  GLint viewPosLoc = glGetUniformLocation(shader_.GetProgram(), "viewPos");
+
+  // Set material uniforms
+  GLint matColorLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "material.color");
+  GLint matShininessLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "material.shininess");
+  glUniform3f(matColorLoc, 0.3f, 1.0f, 0.3f);
+  glUniform1f(matShininessLoc,  64.0f);
+
+  // Set lighting uniforms
+  GLint lightDirectionLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "light.direction");
+  GLint lightAmbientLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "light.ambient");
+  GLint lightDiffuseLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "light.diffuse");
+  GLint lightSpecularLoc = glGetUniformLocation(shader_.GetProgram(), 
+      "light.specular");
+  glUniform3f(lightDirectionLoc, -1.0f, -1.0f, 0.0f);
+  glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
+  glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f);
+  glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
+  
+  // Set the camera position uniform
   glm::vec3 camera_pos = camera.GetPosition();
+  GLint viewPosLoc = glGetUniformLocation(shader_.GetProgram(), "viewPos");
   glUniform3f(viewPosLoc, camera_pos.x, camera_pos.y, camera_pos.z);
 
   // Render

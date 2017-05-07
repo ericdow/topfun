@@ -26,8 +26,10 @@ class CallBackWorld {
 
  private:
   bool first_mouse_;
-  std::vector<bool> key_state_;
   std::array<double,2> last_mouse_pos_;
+  std::vector<bool> key_state_;
+  bool w_double_pressed_;
+  float last_w_press_time_;
   
   Camera& camera_;
   

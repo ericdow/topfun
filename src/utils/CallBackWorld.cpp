@@ -1,11 +1,13 @@
 #include "utils/CallBackWorld.h"
+#include <iostream>
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 CallBackWorld::CallBackWorld(Camera& camera) : first_mouse_(true), 
-  key_state_(1024,false), last_mouse_pos_({0.0,0.0}), camera_(camera) {}
+  last_mouse_pos_({0.0,0.0}), key_state_(1024,false), w_double_pressed_(false),
+  last_w_press_time_(-100.0f), camera_(camera) {}
 
 //****************************************************************************80
 void CallBackWorld::ProcessKeyPress(int key, int scancode, int action, 
@@ -20,6 +22,26 @@ void CallBackWorld::ProcessKeyPress(int key, int scancode, int action,
     else {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+  }
+  
+  // Check for double press on W
+  if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+    float w_press_time = glfwGetTime();
+    if (w_press_time - last_w_press_time_ < 0.2f) {
+      w_double_pressed_ = true;
+    }
+    last_w_press_time_ = w_press_time;
+  }
+  if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
+    w_double_pressed_ = false;
+  }
+
+  // Set camera movement speed
+  if (w_double_pressed_) {
+    camera_.SetMovementSpeed(18.0);
+  }
+  else {
+    camera_.SetMovementSpeed(6.0);
   }
 
   // Update the keys state machine

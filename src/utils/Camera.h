@@ -56,6 +56,10 @@ class Camera {
         (GLfloat)ScreenWidth / (GLfloat)ScreenHeight, 0.1f, 100.0f);
   }
 
+  void SetMovementSpeed(GLfloat speed) {
+    MovementSpeed = speed;
+  }
+
   // Moves/alters the camera positions based on user input
   void Move(std::vector<bool> const& keys, GLfloat deltaTime) {
     // Camera controls
