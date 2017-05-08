@@ -15,7 +15,7 @@ void Terrain::Draw(Camera const& camera) {
   int n_vert_attrib = 6;
   GLuint nvx(100), nvz(100);
   GLuint nex(nvx-1), nez(nvz-1);
-  std::vector<GLfloat> vertices(n_vert_attrib*nvx*nvz);
+  std::vector<GLfloat> vertices(n_vert_attrib*nvx*nvz, 0.0f);
   std::vector<GLuint> indices(6*nex*nez);
 
   // Vertex coordinates
@@ -25,7 +25,7 @@ void Terrain::Draw(Camera const& camera) {
       GLuint offset = n_vert_attrib*(nvx*j + i);
       vertices[offset    ] = dx*i;
       // TODO insert heightmap calc here
-      vertices[offset + 1] = 0.05*dx*nvx*sin(20*dx*i/nvx)*sin(20*dz*j/nvz);
+      vertices[offset + 1] = 0.05*dx*nvx*sin(10*dx*i/nvx)*sin(10*dz*j/nvz);
       vertices[offset + 2] = dz*j;
     }
   }
@@ -54,7 +54,7 @@ void Terrain::Draw(Camera const& camera) {
     }
   }
   
-  // Vertex normals
+  // Vertex normals (smoothed)
   for (GLuint i = 0; i < nex; ++i) {
     for (GLuint j = 0; j < nez; ++j) {
       GLuint ind_offset = 6*(nex*j + i);
@@ -66,10 +66,19 @@ void Terrain::Draw(Camera const& camera) {
       glm::vec3 v1(vertices[v1_ix],vertices[v1_ix+1],vertices[v1_ix+2]);
       glm::vec3 v2(vertices[v2_ix],vertices[v2_ix+1],vertices[v2_ix+2]);
       glm::vec3 normal = cross(v1 - v0, v2 - v0);
-      GLuint offset = n_vert_attrib*(nvx*j + i);
-      vertices[offset + 3] = normal.x;
-      vertices[offset + 4] = normal.y;
-      vertices[offset + 5] = normal.z;
+      
+      vertices[v0_ix + 3] += normal.x;
+      vertices[v0_ix + 4] += normal.y;
+      vertices[v0_ix + 5] += normal.z;
+      
+      vertices[v1_ix + 3] += normal.x;
+      vertices[v1_ix + 4] += normal.y;
+      vertices[v1_ix + 5] += normal.z;
+      
+      vertices[v2_ix + 3] += normal.x;
+      vertices[v2_ix + 4] += normal.y;
+      vertices[v2_ix + 5] += normal.z;
+
       // second triangle in this face
       v0_ix = n_vert_attrib*indices[ind_offset + 3];
       v1_ix = n_vert_attrib*indices[ind_offset + 4];
@@ -78,29 +87,20 @@ void Terrain::Draw(Camera const& camera) {
       v1 = glm::vec3(vertices[v1_ix],vertices[v1_ix+1],vertices[v1_ix+2]);
       v2 = glm::vec3(vertices[v2_ix],vertices[v2_ix+1],vertices[v2_ix+2]);
       normal = cross(v1 - v0, v2 - v0);
-      offset = n_vert_attrib*(nvx*j + i);
-      vertices[offset + 3] = normal.x;
-      vertices[offset + 4] = normal.y;
-      vertices[offset + 5] = normal.z;
+      
+      vertices[v0_ix + 3] += normal.x;
+      vertices[v0_ix + 4] += normal.y;
+      vertices[v0_ix + 5] += normal.z;
+      
+      vertices[v1_ix + 3] += normal.x;
+      vertices[v1_ix + 4] += normal.y;
+      vertices[v1_ix + 5] += normal.z;
+      
+      vertices[v2_ix + 3] += normal.x;
+      vertices[v2_ix + 4] += normal.y;
+      vertices[v2_ix + 5] += normal.z;
     }
   }
-
-  // Smooth the (interior) normals
-  // for (GLuint i = 1; i < nvx-1; ++i) {
-  //   for (GLuint j = 1; j < nvz-1; ++j) {
-  //     GLuint n_ix = n_vert_attrib*(nvx*(j+1) + i) + 3;
-  //     GLuint s_ix = n_vert_attrib*(nvx*(j-1) + i) + 3;
-  //     GLuint e_ix = n_vert_attrib*(nvx*j + i + 1) + 3;
-  //     GLuint w_ix = n_vert_attrib*(nvx*j + i - 1) + 3;
-  //     GLuint offset = n_vert_attrib*(nvx*j + i);
-  //     vertices[offset + 3] = vertices[n_ix    ] + vertices[s_ix    ] 
-  //                          + vertices[e_ix    ] + vertices[w_ix    ];
-  //     vertices[offset + 4] = vertices[n_ix + 1] + vertices[s_ix + 1] 
-  //                          + vertices[e_ix + 1] + vertices[w_ix + 1];
-  //     vertices[offset + 5] = vertices[n_ix + 2] + vertices[s_ix + 2] 
-  //                          + vertices[e_ix + 2] + vertices[w_ix + 2];
-  //   }
-  // }
 
   GLuint VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
@@ -182,7 +182,7 @@ void Terrain::SetShaderData(Camera const& camera) {
   GLint lightSpecularLoc = glGetUniformLocation(shader_.GetProgram(), 
       "light.specular");
   // TODO move light direction definition to somewhere higher up
-  glUniform3f(lightDirectionLoc, 0.2f, -1.0f, 0.0f);
+  glUniform3f(lightDirectionLoc, 0.0f, -1.0f, 0.0f);
   glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
   glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f);
   glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
