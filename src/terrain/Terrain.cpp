@@ -23,10 +23,10 @@ void Terrain::Draw(Camera const& camera) {
   for (GLuint i = 0; i < nvx; ++i) {
     for (GLuint j = 0; j < nvz; ++j) {
       GLuint offset = n_vert_attrib*(nvx*j + i);
-      vertices[offset    ] = dx*i;
+      vertices[offset    ] = -dx*i;
       // TODO insert heightmap calc here
-      vertices[offset + 1] = 0.05*dx*nvx*sin(10*dx*i/nvx)*sin(10*dz*j/nvz);
-      vertices[offset + 2] = dz*j;
+      vertices[offset + 1] = -10+0.05*dx*nvx*sin(15*dx*i/nvx)*sin(15*dz*j/nvz);
+      vertices[offset + 2] = -dz*j;
     }
   }
  

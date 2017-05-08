@@ -28,7 +28,7 @@ const GLfloat SPEED      =  3.0f;
 const GLfloat SENSITIVTY =  0.25f;
 const GLfloat ZOOM       =  45.0f;
 
-const GLfloat YAW        = -90.0f;
+const GLfloat YAW        =  -135.0f;
 const GLfloat PITCH      =  0.0f;
 
 class Camera {
@@ -41,10 +41,10 @@ class Camera {
       MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
     this->Position = position;
     this->WorldUp = up;
-    this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
     // TODO remove
     this->Yaw = YAW;
     this->Pitch = PITCH;
+    this->updateCameraVectors(0.0, {0.0, 0.0, 0.0});
   }
 
   // Returns the current position of the camera
