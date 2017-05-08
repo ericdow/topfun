@@ -38,11 +38,17 @@ class Terrain {
 
  private:
   Shader shader_;
+  GLuint texture_;
   
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
   void SetShaderData(Camera const& camera);
+  
+  //**************************************************************************80
+  //! \brief LoadTexture - loads the texture using SOIL
+  //**************************************************************************80
+  void LoadTexture();
 
 };
 } // End namespace TopFun

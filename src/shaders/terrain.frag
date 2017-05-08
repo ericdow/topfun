@@ -14,9 +14,11 @@ struct Light {
 
 in vec3 FragPos;  
 in vec3 Normal;  
+in vec2 TexCoord;
   
 out vec4 color;
 
+uniform sampler2D grassTexture;
 uniform vec3 viewPos;  
 uniform Material material;
 uniform Light light;
@@ -35,9 +37,9 @@ void main()
   // Specular
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, norm); 
- 
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
   vec3 specular = light.specular * spec * material.color;
           
-  color = vec4(ambient + diffuse + specular, 1.0f);
+  color = vec4(ambient + diffuse + specular, 1.0f)
+        * texture(grassTexture, TexCoord);
 } 
