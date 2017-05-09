@@ -28,6 +28,9 @@ pkg_search_module(GLFW REQUIRED glfw3)
 find_package(SOIL REQUIRED)
 find_package(ASSIMP REQUIRED)
 
+# make sure libnoise is found
+find_package(LIBNOISE REQUIRED)
+
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 

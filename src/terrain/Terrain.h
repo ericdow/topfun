@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <noise/module/perlin.h>
+
 #include "shaders/Shader.h"
 #include "utils/Camera.h"
 
@@ -26,10 +28,9 @@ class Terrain {
   ~Terrain() = default;
   
   //**************************************************************************80
-  //! \brief GetHeight - Get the terrain height at a bunch of (x,y) locations
+  //! \brief GetHeight - Get the terrain height at a some (x,y) location
   //**************************************************************************80
-  std::vector<float> GetHeight(std::vector<std::array<float,2>> const& xy) 
-    const;
+  GLfloat GetHeight(GLfloat x, GLfloat z) const;
 
   //**************************************************************************80
   //! \brief Draw - draws the terrain
@@ -39,6 +40,7 @@ class Terrain {
  private:
   Shader shader_;
   GLuint texture_;
+  noise::module::Perlin perlin_generator_;
   
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader

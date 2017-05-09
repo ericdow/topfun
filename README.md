@@ -16,4 +16,6 @@ libsoil-dev
 
 libeigen3-dev
 
+libnoise-dev
+
 Assimp is used to load meshes. Make sure to add -fPIC to C/C++ flags in CMake when compiling it.

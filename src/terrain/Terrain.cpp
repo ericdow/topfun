@@ -7,6 +7,8 @@ namespace TopFun {
 //****************************************************************************80
 Terrain::Terrain() : shader_("shaders/terrain.vs", "shaders/terrain.frag") {
   LoadTexture();
+  // Set up perlin noise generator
+  perlin_generator_.SetOctaveCount(1);
 }
 
 //****************************************************************************80
@@ -28,8 +30,9 @@ void Terrain::Draw(Camera const& camera) {
     for (GLuint j = 0; j < nvz; ++j) {
       GLuint offset = n_vert_attrib*(nvx*j + i);
       vertices[offset    ] = -dx*i;
-      // TODO insert heightmap calc here
-      vertices[offset + 1] = -10+0.05*dx*nvx*sin(15*dx*i/nvx)*sin(15*dz*j/nvz);
+      // vertices[offset + 1] = 
+      //   -10+0.05*dx*nvx*sin(15*dx*i/nvx)*sin(15*dz*j/nvz);
+      vertices[offset + 1] = GetHeight((GLfloat) i, (GLfloat) j);
       vertices[offset + 2] = -dz*j;
       // texture
       if (i % 2) {
@@ -174,6 +177,11 @@ void Terrain::Draw(Camera const& camera) {
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
   glDeleteBuffers(1, &EBO); 
+}
+
+//****************************************************************************80
+GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
+  return perlin_generator_.GetValue(x, 0.2, z);
 }
 
 //****************************************************************************80
