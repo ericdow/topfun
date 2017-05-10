@@ -1,6 +1,3 @@
-#ifndef GLENVIRONMENT_H
-#define GLENVIRONMENT_H
-
 #include "utils/GLEnvironment.h"
 #include "utils/CallBackWorld.h"
 
@@ -71,5 +68,3 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 } // End namespace GLEnvironment
 } // End namespace TopFun
-
-#endif

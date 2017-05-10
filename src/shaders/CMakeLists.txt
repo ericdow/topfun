@@ -2,6 +2,8 @@
 set(FILES_TO_SEND
   terrain.vs
   terrain.frag
+  text.vs
+  text.frag
 ) 
 
 # this sends files over if they have changed

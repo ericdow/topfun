@@ -1,3 +1,6 @@
+#ifndef GLENVIRONMENT_H
+#define GLENVIRONMENT_H
+
 // Std. Includes
 #include <string>
 
@@ -26,3 +29,5 @@ void TearDown();
 
 } // End namespace GLEnvironment
 } // End namespace TopFun
+
+#endif

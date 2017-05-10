@@ -19,8 +19,10 @@ class Terrain {
  public:
   //**************************************************************************80
   //! \brief Terrain - Constructor for empy terrain object
+  //! \param[in] nvx, nvz - number of vertices in the x/z directions
+  //! \param[in] lx, lz - length of terrain in the x/z directions
   //**************************************************************************80
-  Terrain();
+  Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz);
   
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
@@ -38,9 +40,18 @@ class Terrain {
   void Draw(Camera const& camera);
 
  private:
+  GLuint nvx_, nvz_;
+  GLfloat lx_, lz_;
   Shader shader_;
   GLuint texture_;
   noise::module::Perlin perlin_generator_;
+  // Data packing:
+  // - 3 floats (position)
+  // - 3 floats (normal)
+  // - 2 floats (texture)
+  static const int n_vert_attrib_ = 8;
+  std::vector<GLfloat> vertices_;
+  std::vector<GLuint> indices_;
   
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader

@@ -5,6 +5,9 @@
 #include "utils/Camera.h"
 #include "terrain/Terrain.h"
 
+// TODO
+#include "utils/TextRenderer.h"
+
 int main(int argc, char* argv[]) {
   using namespace TopFun;
 
@@ -18,7 +21,7 @@ int main(int argc, char* argv[]) {
   GLFWwindow* window = GLEnvironment::SetUp(width, height, call_back_world);
   
   // Set up remaining game objects 
-  Terrain terrain;
+  Terrain terrain(100, 100, 100.0f, 100.0f);
 
   // Game loop
   GLfloat delta_time = 0.0f;
@@ -36,9 +39,15 @@ int main(int argc, char* argv[]) {
     // Clear the colorbuffer
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
+    
     // Draw the scene 
     terrain.Draw(camera);
+  
+    // Display the debug console (if visible)
+    // TODO
+    TextRenderer tr(width, height);
+    std::string s = "Draw time: " + std::to_string(delta_time) + " s";
+    tr.Draw(s, 10, 10, 0.7, glm::vec3(1.0,1.0,1.0));
 
     // Swap the buffers
     glfwSwapBuffers(window);
