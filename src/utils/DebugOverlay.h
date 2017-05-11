@@ -27,7 +27,7 @@ class DebugOverlay {
 
   void Draw(Camera const& camera, GLfloat delta_time) {
     if (visible_) {
-      glm::vec3 text_color = glm::vec3(1.0, 1.0, 1.0);
+      glm::vec3 text_color = glm::vec3(0.0, 1.0, 0.0);
       GLfloat scale = 0.4;
       GLfloat xt = 10;
       GLfloat yt = 10;
