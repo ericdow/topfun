@@ -1,20 +1,19 @@
 #include "utils/CallBackWorld.h"
-#include <iostream>
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-CallBackWorld::CallBackWorld(Camera& camera, GLuint screen_width, 
-    GLuint screen_height) : first_mouse_(true), 
-  last_mouse_pos_({(double)screen_width/2, (double)screen_height/2}), 
+CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
+    std::array<GLuint,2> const& screen_size) : first_mouse_(true), 
+  last_mouse_pos_({(double)screen_size[0]/2, (double)screen_size[1]/2}), 
   key_state_(1024,false), w_double_pressed_(false), last_w_press_time_(-100.0f),
-  camera_(camera) {}
+  camera_(camera), debug_overlay_(debug_overlay) {}
 
 //****************************************************************************80
 void CallBackWorld::ProcessKeyPress(int key, int scancode, int action, 
     int mods) {
-  // Switch between fill and line rendering
+  // Switch between fill and line rendering on F1
   if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
     GLint state[2];
     glGetIntegerv(GL_POLYGON_MODE, state);
@@ -24,6 +23,11 @@ void CallBackWorld::ProcessKeyPress(int key, int scancode, int action,
     else {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+  }
+  
+  // Toggle debug overlay on F2
+  if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+    debug_overlay_.ToggleVisible();
   }
   
   // Check for double press on W

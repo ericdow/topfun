@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
+#include <array>
 
 // GLM
 #include <glm/glm.hpp>
@@ -17,12 +18,11 @@
 namespace TopFun {
 class TextRenderer {
  public:
-  //**************************************************************************80
-  TextRenderer(GLuint width, GLuint height) : shader("shaders/text.vs", 
-      "shaders/text.frag") {
-    
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(width), 0.0f, 
-        static_cast<GLfloat>(height));
+  TextRenderer(std::array<GLuint,2> const& screen_size) : 
+    shader("shaders/text.vs", "shaders/text.frag") {
+    glm::mat4 projection = glm::ortho(0.0f, 
+        static_cast<GLfloat>(screen_size[0]), 0.0f, 
+        static_cast<GLfloat>(screen_size[1]));
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.GetProgram(), "projection"), 
         1, GL_FALSE, glm::value_ptr(projection));

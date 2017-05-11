@@ -1,8 +1,8 @@
 #ifndef GLENVIRONMENT_H
 #define GLENVIRONMENT_H
 
-// Std. Includes
 #include <string>
+#include <array>
 
 // GLEW
 #define GLEW_STATIC
@@ -17,8 +17,9 @@ class CallBackWorld;
 
 namespace GLEnvironment {
 
-GLFWwindow* SetUp(GLuint screen_width, GLuint screen_height, 
-    CallBackWorld& call_back_world);
+GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size); 
+ 
+void SetCallback(GLFWwindow* window, CallBackWorld& call_back_world);
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, 
     int mods);

@@ -34,10 +34,10 @@ const GLfloat PITCH      =  0.0f;
 class Camera {
  public:
   // Constructor with vectors
-  Camera(GLuint sw, GLuint sh, 
+  Camera(std::array<GLuint,2> const& screen_size,
       glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
-      glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
-      ScreenWidth(sw), ScreenHeight(sh), Front(glm::vec3(0.0f, 0.0f, -1.0f)), 
+      glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : ScreenWidth(screen_size[0]),
+      ScreenHeight(screen_size[1]), Front(glm::vec3(0.0f, 0.0f, -1.0f)), 
       MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM) {
     this->Position = position;
     this->WorldUp = up;
@@ -50,6 +50,11 @@ class Camera {
   // Returns the current position of the camera
   inline glm::vec3 GetPosition() const {
     return Position;
+  }
+  
+  // Returns the current angle of the camera
+  inline glm::vec2 GetEulerAngles() const {
+    return glm::vec2(Pitch, Yaw);
   }
 
   // Returns the view matrix calculated using Eular Angles and the LookAt Matrix

@@ -1,12 +1,12 @@
 #include "utils/GLEnvironment.h"
 #include "utils/CallBackWorld.h"
+#include <array>
 
 namespace TopFun {
 namespace GLEnvironment {
 
 //****************************************************************************80
-GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight, 
-    CallBackWorld& call_back_world) {
+GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   // Initialize GLFW
   glfwInit(); // TODO this leaks apparently...
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -15,12 +15,9 @@ GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight,
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
   // Create the window
-  GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "TopFun", 
-      nullptr, nullptr);
+  GLFWwindow* window = glfwCreateWindow(screen_size[0], screen_size[1], 
+      "TopFun", nullptr, nullptr);
   glfwMakeContextCurrent(window);
-
-  // Redirect call backs to game classes
-  glfwSetWindowUserPointer(window, &call_back_world);
   
   // Set the required callback functions
   glfwSetKeyCallback(window, KeyCallback);
@@ -34,12 +31,18 @@ GLFWwindow* SetUp(GLuint screenWidth, GLuint screenHeight,
   glewInit();
 
   // Define the viewport dimensions
-  glViewport(0, 0, screenWidth, screenHeight);
+  glViewport(0, 0, screen_size[0], screen_size[1]);
   
   // Setup some OpenGL options
   glEnable(GL_DEPTH_TEST); // enable z-buffering
 
   return window;
+}
+
+//****************************************************************************80
+void SetCallback(GLFWwindow* window, CallBackWorld& callback_world) {
+  // Redirect call backs to game classes
+  glfwSetWindowUserPointer(window, &callback_world);
 }
 
 //****************************************************************************80
@@ -54,16 +57,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
 
-  CallBackWorld* call_back_world = 
+  CallBackWorld* callback_world = 
     reinterpret_cast<CallBackWorld*>(glfwGetWindowUserPointer(window));
-  call_back_world->ProcessKeyPress(key, scancode, action, mods);
+  callback_world->ProcessKeyPress(key, scancode, action, mods);
 }
 
 //****************************************************************************80
 void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
-  CallBackWorld* call_back_world = 
+  CallBackWorld* callback_world = 
     reinterpret_cast<CallBackWorld*>(glfwGetWindowUserPointer(window));
-  call_back_world->ProcessMouseMovement(xpos, ypos);
+  callback_world->ProcessMouseMovement(xpos, ypos);
 }
 
 } // End namespace GLEnvironment

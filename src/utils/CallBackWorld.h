@@ -5,14 +5,16 @@
 #include <array>
 
 #include "utils/Camera.h"
+#include "utils/DebugOverlay.h"
 
-// Manager for objectis that will be modified by input callbacks
+// Manager for objects that will be modified by input callbacks
 
 namespace TopFun {
-  
+
 class CallBackWorld {
  public:
-  CallBackWorld(Camera& camera, GLuint screen_width, GLuint screen_height);
+  CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
+      std::array<GLuint,2> const& screen_size);
 
   ~CallBackWorld() = default;
 
@@ -32,6 +34,7 @@ class CallBackWorld {
   float last_w_press_time_;
   
   Camera& camera_;
+  DebugOverlay& debug_overlay_;
   
 };
 } // End namespace TopFun
