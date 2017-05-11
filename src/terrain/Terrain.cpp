@@ -177,7 +177,6 @@ void Terrain::Draw(Camera const& camera) {
 
 //****************************************************************************80
 GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
-  // TODO use appropriate dimensions for x/z
   return perlin_generator_.GetValue(10*x/lx_, 10*z/lz_, 0.5);
 }
 

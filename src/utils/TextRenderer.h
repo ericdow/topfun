@@ -108,6 +108,11 @@ class TextRenderer {
     // Set OpenGL options
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLint poly_mode[2];
+    glGetIntegerv(GL_POLYGON_MODE, poly_mode);
+    if (poly_mode[0] == GL_LINE) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
     // Activate corresponding render state	
     shader.Use();
@@ -149,7 +154,10 @@ class TextRenderer {
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
-    // glDisable(GL_BLEND);
+    // Restore polygon mode
+    if (poly_mode[0] == GL_LINE) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
   }
 
  private:
