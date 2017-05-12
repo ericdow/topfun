@@ -25,17 +25,21 @@ class DebugOverlay {
     visible_ = !visible_;
   }
 
-  void Draw(Camera const& camera, GLfloat delta_time) {
+  void Draw(Camera const& camera, GLfloat delta_loop_time, 
+      GLfloat delta_draw_time) {
     if (visible_) {
       glm::vec3 text_color = glm::vec3(1.0, 1.0, 1.0);
       GLfloat scale = 0.4;
       GLfloat xt = 10;
       GLfloat yt = 10;
       GLfloat dyt = 50*scale;
-      // Display the time it takes between each frame render 
-      std::string s = "s/frame: " + std::to_string(delta_time);
-      text_renderer_.Draw(s, xt, yt, scale, text_color);
-      yt += dyt;
+
+      std::vector<std::string> debug_strings;
+      // Display the time it takes between each main loop iteration
+      debug_strings.push_back("s/loop: " + std::to_string(delta_loop_time));
+      
+      // Display the FPS
+      debug_strings.push_back("FPS: " + std::to_string(1.0/delta_draw_time));
 
       // Display camera info
       glm::vec3 pos = camera.GetPosition();
@@ -43,17 +47,20 @@ class DebugOverlay {
       x << std::setprecision(1) << std::fixed << pos.x;
       y << std::setprecision(1) << std::fixed << pos.y;
       z << std::setprecision(1) << std::fixed << pos.z;
-      s = "Camera (x,y,z): (" + x.str() + "," + y.str() + "," + z.str() + ")";
-      text_renderer_.Draw(s, xt, yt, scale, text_color);
-      yt += dyt;
+      debug_strings.push_back("Camera (x,y,z): (" + x.str() + "," + 
+          y.str() + "," + z.str() + ")");
       
       glm::vec2 ang = camera.GetEulerAngles();
       std::ostringstream phi, theta;
       phi << std::setprecision(1) << std::fixed << ang.x;
       theta << std::setprecision(1) << std::fixed << ang.y;
-      s = "Camera (a,b): (" + phi.str() + "," + theta.str() + ")";
-      text_renderer_.Draw(s, xt, yt, scale, text_color);
-      yt += dyt;
+      debug_strings.push_back("Camera (a,b): (" + phi.str() + "," + 
+          theta.str() + ")");
+
+      for (auto& s : debug_strings) {
+        text_renderer_.Draw(s, xt, yt, scale, text_color);
+        yt += dyt;
+      }
     }
   }
 

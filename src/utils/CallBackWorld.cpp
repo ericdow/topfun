@@ -7,7 +7,8 @@ namespace TopFun {
 CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
     std::array<GLuint,2> const& screen_size) : first_mouse_(true), 
   last_mouse_pos_({(double)screen_size[0]/2, (double)screen_size[1]/2}), 
-  key_state_(1024,false), w_double_pressed_(false), last_w_press_time_(-100.0f),
+  key_state_(1024,false), fps_locked_(true), w_double_pressed_(false), 
+  last_w_press_time_(-100.0f),
   camera_(camera), debug_overlay_(debug_overlay) {}
 
 //****************************************************************************80
@@ -28,6 +29,11 @@ void CallBackWorld::ProcessKeyPress(int key, int scancode, int action,
   // Toggle debug overlay on F2
   if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
     debug_overlay_.ToggleVisible();
+  }
+  
+  // Toggle FPS lock on F3
+  if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+    fps_locked_ = !fps_locked_;
   }
   
   // Check for double press on W

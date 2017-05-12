@@ -22,14 +22,19 @@ class CallBackWorld {
 
   void ProcessMouseMovement(double xpos, double ypos);
 
-  inline std::vector<bool> const& GetKeyState() {
+  inline std::vector<bool> const& GetKeyState() const {
     return key_state_;
+  }
+  
+  inline bool IsFPSLocked() const {
+    return fps_locked_;
   }
 
  private:
   bool first_mouse_;
   std::array<double,2> last_mouse_pos_;
   std::vector<bool> key_state_;
+  bool fps_locked_;
   bool w_double_pressed_;
   float last_w_press_time_;
   
