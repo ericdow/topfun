@@ -4,6 +4,8 @@ set(FILES_TO_SEND
   terrain.frag
   text.vs
   text.frag
+  skybox.vs
+  skybox.frag
 ) 
 
 # this sends files over if they have changed

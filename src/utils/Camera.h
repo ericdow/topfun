@@ -68,6 +68,8 @@ class Camera {
         (GLfloat)ScreenWidth / (GLfloat)ScreenHeight, 0.1f, 100.0f);
   }
 
+  inline GLfloat GetZoom() const { return Zoom; }
+
   void SetMovementSpeed(GLfloat speed) {
     MovementSpeed = speed;
   }

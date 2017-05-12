@@ -1,6 +1,7 @@
 # build the terrain library
 set(SOURCES
   Terrain.cpp
+  Skybox.cpp
 )
 
 set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY} ${LIBNOISE_LIBRARIES})

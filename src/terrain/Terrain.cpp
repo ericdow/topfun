@@ -5,20 +5,18 @@ namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-  Terrain::Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz) : 
-    nvx_(nvx), nvz_(nvz), lx_(lx), lz_(lz),
-    shader_("shaders/terrain.vs", "shaders/terrain.frag") {
+Terrain::Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz) : 
+  nvx_(nvx), nvz_(nvz), lx_(lx), lz_(lz),
+  shader_("shaders/terrain.vs", "shaders/terrain.frag") {
+  
   vertices_.resize(n_vert_attrib_*nvx_*nvz_);
   indices_.resize(6*(nvx_ - 1)*(nvz_ - 1));
   LoadTexture();
+  
   // Set up perlin noise generator
   perlin_generator_.SetOctaveCount(3);
   perlin_generator_.SetFrequency(0.4);
   perlin_generator_.SetPersistence(0.5);
-}
-
-//****************************************************************************80
-void Terrain::Draw(Camera const& camera) {
 
   // Vertex position and texture coordinates
   GLuint nex(nvx_-1), nez(nvz_-1);
@@ -118,15 +116,13 @@ void Terrain::Draw(Camera const& camera) {
     }
   }
   
-  // Activate shader
-  shader_.Use();
-
-  GLuint VBO, VAO, EBO;
-  glGenVertexArrays(1, &VAO);
+  // Set up VAO
+  GLuint VBO, EBO;
+  glGenVertexArrays(1, &VAO_);
   glGenBuffers(1, &VBO);
   glGenBuffers(1, &EBO);
   
-  glBindVertexArray(VAO);
+  glBindVertexArray(VAO_);
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices_.size(), 
@@ -155,7 +151,20 @@ void Terrain::Draw(Camera const& camera) {
   
   glBindBuffer(GL_ARRAY_BUFFER, 0); 
   glBindVertexArray(0); 
-    
+  glDeleteBuffers(1, &VBO);
+  glDeleteBuffers(1, &EBO); 
+}
+
+//****************************************************************************80
+Terrain::~Terrain() {
+  glDeleteVertexArrays(1, &VAO_);
+}
+
+//****************************************************************************80
+void Terrain::Draw(Camera const& camera) {
+  // Activate shader
+  shader_.Use();
+
   // Send data to the shaders
   SetShaderData(camera);
 
@@ -165,14 +174,9 @@ void Terrain::Draw(Camera const& camera) {
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture"), 0);
   
   // Render
-  glBindVertexArray(VAO);
+  glBindVertexArray(VAO_);
   glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
-
-  // Clean up
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO); 
 }
 
 //****************************************************************************80

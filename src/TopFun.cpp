@@ -5,6 +5,7 @@
 #include "utils/Camera.h"
 #include "utils/DebugOverlay.h"
 #include "terrain/Terrain.h"
+#include "terrain/Skybox.h"
 
 int main(int argc, char* argv[]) {
   using namespace TopFun;
@@ -22,7 +23,8 @@ int main(int argc, char* argv[]) {
   GLEnvironment::SetCallback(window, callback_world);
   
   // Set up remaining game objects 
-  Terrain terrain(100, 100, 100.0f, 100.0f);
+  Terrain terrain(200, 200, 100.0f, 100.0f);
+  Skybox skybox;
 
   // Game loop
   GLfloat delta_time = 0.0f;
@@ -43,6 +45,7 @@ int main(int argc, char* argv[]) {
     
     // Draw the scene 
     terrain.Draw(camera);
+    skybox.Draw(camera, screen_size);
   
     // Display the debug console (if visible)
     debug_overlay.Draw(camera, delta_time);
