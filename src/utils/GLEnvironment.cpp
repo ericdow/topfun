@@ -13,6 +13,7 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+  glfwWindowHint(GLFW_SAMPLES, 4);
 
   // Create the window
   GLFWwindow* window = glfwCreateWindow(screen_size[0], screen_size[1], 
@@ -35,6 +36,7 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   
   // Setup some OpenGL options
   glEnable(GL_DEPTH_TEST); // enable z-buffering
+  glEnable(GL_MULTISAMPLE);
 
   return window;
 }

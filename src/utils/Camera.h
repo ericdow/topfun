@@ -65,7 +65,7 @@ class Camera {
   // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
   glm::mat4 GetProjectionMatrix() const {
     return glm::perspective(glm::radians(Zoom), 
-        (GLfloat)ScreenWidth / (GLfloat)ScreenHeight, 0.1f, 100.0f);
+        (GLfloat)ScreenWidth / (GLfloat)ScreenHeight, 0.1f, 500.0f);
   }
 
   inline GLfloat GetZoom() const { return Zoom; }

@@ -16,13 +16,13 @@ const std::array<GLuint,2> screen_size = {1200, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks 
-glm::vec3 start_pos(0.0f, 0.0f, 0.0f);
+glm::vec3 start_pos(-250.0f, 0.0f, -250.0f);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 CallBackWorld callback_world(camera, debug_overlay, screen_size);
 
 // Set up remaining game objects 
-Terrain terrain(200, 200, 100.0f, 100.0f);
+Terrain terrain(500, 500, 500.0f, 500.0f);
 Skybox skybox;
 
 GLfloat last_draw_time = 0.0f;

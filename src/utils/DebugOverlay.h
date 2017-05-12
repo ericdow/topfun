@@ -39,7 +39,9 @@ class DebugOverlay {
       debug_strings.push_back("s/loop: " + std::to_string(delta_loop_time));
       
       // Display the FPS
-      debug_strings.push_back("FPS: " + std::to_string(1.0/delta_draw_time));
+      std::ostringstream fps;
+      fps << std::setprecision(1) << std::fixed << 1.0/delta_draw_time;
+      debug_strings.push_back("frames/s: " + fps.str());
 
       // Display camera info
       glm::vec3 pos = camera.GetPosition();
