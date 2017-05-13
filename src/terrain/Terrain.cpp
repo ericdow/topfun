@@ -213,7 +213,7 @@ void Terrain::SetShaderData(Camera const& camera) {
 
   // Set fog uniforms
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "fog.Color"),
-      0.441f, 0.438f, 0.457f);
+      183.0/256.0, 213.0/256.0, 219.0/256.0);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.Start"),
       70.0f);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.End"),

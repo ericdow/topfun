@@ -67,12 +67,12 @@ Skybox::Skybox() : shader_("shaders/skybox.vs", "shaders/skybox.frag") {
 
   // Load cubemap textures
   std::vector<const GLchar*> faces;
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_lf.jpg");
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_rt.jpg");
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_up.jpg");
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_dn.jpg");
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_ft.jpg");
-  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_bk.jpg");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayLeft2048.png");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayRight2048.png");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayUp2048.png");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayDown2048.png");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayFront2048.png");
+  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayBack2048.png");
   LoadCubemap(faces);
 }
 
