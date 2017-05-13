@@ -14,7 +14,7 @@ Terrain::Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz) :
   LoadTexture();
   
   // Set up perlin noise generator
-  perlin_generator_.SetOctaveCount(8);
+  perlin_generator_.SetOctaveCount(7);
   perlin_generator_.SetFrequency(0.3);
   perlin_generator_.SetPersistence(0.5);
 
@@ -189,40 +189,42 @@ GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
 //****************************************************************************80
 void Terrain::SetShaderData(Camera const& camera) {
   // Set view/projection uniforms  
-  GLint viewLoc = glGetUniformLocation(shader_.GetProgram(), "view");
-  GLint projLoc = glGetUniformLocation(shader_.GetProgram(), "projection");
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, 
-      glm::value_ptr(camera.GetViewMatrix()));
-  glUniformMatrix4fv(projLoc, 1, GL_FALSE, 
-      glm::value_ptr(camera.GetProjectionMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
+      GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"),
+      1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
 
   // Set material uniforms
-  GLint matColorLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "material.color");
-  GLint matShininessLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "material.shininess");
-  glUniform3f(matColorLoc, 1.0f, 1.0f, 1.0f);
-  glUniform1f(matShininessLoc, 1.0f);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
+        "material.color"), 1.0f, 1.0f, 1.0f);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
+        "material.shininess"), 1.0f);
 
   // Set lighting uniforms
-  GLint lightDirectionLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "light.direction");
-  GLint lightAmbientLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "light.ambient");
-  GLint lightDiffuseLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "light.diffuse");
-  GLint lightSpecularLoc = glGetUniformLocation(shader_.GetProgram(), 
-      "light.specular");
   // TODO move light direction definition to somewhere higher up
-  glUniform3f(lightDirectionLoc, -0.3f, -1.0f, 0.0f);
-  glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
-  glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f);
-  glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.direction"),
+      -0.3f, -1.0f, 0.0f);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.ambient"), 
+      0.2f, 0.2f, 0.2f);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.diffuse"), 
+      0.5f, 0.5f, 0.5f);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.specular"), 
+      1.0f, 1.0f, 1.0f);
+
+  // Set fog uniforms
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "fog.Color"),
+      0.441f, 0.438f, 0.457f);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.Start"),
+      70.0f);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.End"),
+      200.0f);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "fog.Equation"),
+      0);
   
   // Set the camera position uniform
   glm::vec3 camera_pos = camera.GetPosition();
-  GLint viewPosLoc = glGetUniformLocation(shader_.GetProgram(), "viewPos");
-  glUniform3f(viewPosLoc, camera_pos.x, camera_pos.y, camera_pos.z);
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "viewPos"), 
+      camera_pos.x, camera_pos.y, camera_pos.z);
 }
 
 //****************************************************************************80

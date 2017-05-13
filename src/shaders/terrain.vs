@@ -6,13 +6,15 @@ layout (location = 2) in vec2 texCoord;
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoord;
+out vec4 EyeSpacePos;
 
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-  gl_Position = projection * view * vec4(position, 1.0f);
+  EyeSpacePos = view * vec4(position, 1.0f);
+  gl_Position = projection * EyeSpacePos;
   FragPos = position;
   Normal = normal;  
 	// Swap the y-axis since images have inverted y-axis
