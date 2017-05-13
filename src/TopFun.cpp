@@ -69,11 +69,10 @@ void DrawScene() {
   last_draw_time = current_draw_time;
   
   // Clear the colorbuffer
-  glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   terrain.Draw(camera);
-  skybox.Draw(camera, screen_size);
+  skybox.Draw(camera);
   // Display the debug console last
   debug_overlay.Draw(camera, delta_loop_time, delta_draw_time);
       

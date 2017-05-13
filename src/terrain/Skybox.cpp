@@ -67,12 +67,12 @@ Skybox::Skybox() : shader_("shaders/skybox.vs", "shaders/skybox.frag") {
 
   // Load cubemap textures
   std::vector<const GLchar*> faces;
-  faces.push_back("../../../assets/textures/skybox/right.jpg");
-  faces.push_back("../../../assets/textures/skybox/left.jpg");
-  faces.push_back("../../../assets/textures/skybox/top.jpg");
-  faces.push_back("../../../assets/textures/skybox/bottom.jpg");
-  faces.push_back("../../../assets/textures/skybox/back.jpg");
-  faces.push_back("../../../assets/textures/skybox/front.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_lf.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_rt.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_up.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_dn.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_ft.jpg");
+  faces.push_back("../../../assets/textures/ely_cloudtop/cloudtop_bk.jpg");
   LoadCubemap(faces);
 }
 
@@ -82,13 +82,12 @@ Skybox::~Skybox() {
 }
 
 //****************************************************************************80
-void Skybox::Draw(Camera const& camera, 
-    std::array<GLuint,2> const& screen_size) {		
+void Skybox::Draw(Camera const& camera) {		
   // Change depth function so depth test passes when values are equal to 
   // depth buffer's content
   glDepthFunc(GL_LEQUAL);  
   shader_.Use();
-  SetShaderData(camera, screen_size);  
+  SetShaderData(camera);  
   glBindVertexArray(VAO_);
   glActiveTexture(GL_TEXTURE0);
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "skybox"), 0);
@@ -123,16 +122,13 @@ void Skybox::LoadCubemap(std::vector<const GLchar*> const& faces) {
 }
 
 //****************************************************************************80
-void Skybox::SetShaderData(Camera const& camera,
-    std::array<GLuint,2> const& screen_size) {
+void Skybox::SetShaderData(Camera const& camera) {
   // Remove any translation component of the view matrix	
   glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));	
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
       GL_FALSE, glm::value_ptr(view));
-  glm::mat4 projection = glm::perspective(camera.GetZoom(), 
-      (float)screen_size[0]/(float)screen_size[1], 0.1f, 100.0f);
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"), 
-      1, GL_FALSE, glm::value_ptr(projection));
+      1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
 }
 
 } // End namespace TopFun

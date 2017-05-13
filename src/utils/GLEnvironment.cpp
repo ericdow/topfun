@@ -33,7 +33,7 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
 
   // Define the viewport dimensions
   glViewport(0, 0, screen_size[0], screen_size[1]);
-  
+ 
   // Setup some OpenGL options
   glEnable(GL_DEPTH_TEST); // enable z-buffering
   glEnable(GL_MULTISAMPLE);

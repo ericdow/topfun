@@ -28,7 +28,7 @@ class Skybox {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw(Camera const& camera, std::array<GLuint,2> const& screen_size);
+  void Draw(Camera const& camera);
 
  private:
   Shader shader_;
@@ -38,8 +38,7 @@ class Skybox {
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera,
-      std::array<GLuint,2> const& screen_size);
+  void SetShaderData(Camera const& camera);
   
   //**************************************************************************80
   //! \brief LoadCubemap - loads the texture data for the cubemap

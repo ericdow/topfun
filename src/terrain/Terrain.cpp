@@ -14,8 +14,8 @@ Terrain::Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz) :
   LoadTexture();
   
   // Set up perlin noise generator
-  perlin_generator_.SetOctaveCount(3);
-  perlin_generator_.SetFrequency(0.4);
+  perlin_generator_.SetOctaveCount(8);
+  perlin_generator_.SetFrequency(0.3);
   perlin_generator_.SetPersistence(0.5);
 
   // Vertex position and texture coordinates
@@ -189,7 +189,7 @@ GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
 //****************************************************************************80
 void Terrain::SetShaderData(Camera const& camera) {
   // Set model/view/projection uniforms  
-  glm::mat4 model; // TODO this is all zeros
+  glm::mat4 model(1.0); // TODO this is identity
   GLint modelLoc = glGetUniformLocation(shader_.GetProgram(), "model");
   GLint viewLoc = glGetUniformLocation(shader_.GetProgram(), "view");
   GLint projLoc = glGetUniformLocation(shader_.GetProgram(), "projection");
