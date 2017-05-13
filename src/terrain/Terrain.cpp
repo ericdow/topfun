@@ -188,16 +188,13 @@ GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
 // PRIVATE FUNCTIONS
 //****************************************************************************80
 void Terrain::SetShaderData(Camera const& camera) {
-  // Set model/view/projection uniforms  
-  glm::mat4 model(1.0); // TODO this is identity
-  GLint modelLoc = glGetUniformLocation(shader_.GetProgram(), "model");
+  // Set view/projection uniforms  
   GLint viewLoc = glGetUniformLocation(shader_.GetProgram(), "view");
   GLint projLoc = glGetUniformLocation(shader_.GetProgram(), "projection");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, 
       glm::value_ptr(camera.GetViewMatrix()));
   glUniformMatrix4fv(projLoc, 1, GL_FALSE, 
       glm::value_ptr(camera.GetProjectionMatrix()));
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
   // Set material uniforms
   GLint matColorLoc = glGetUniformLocation(shader_.GetProgram(), 
