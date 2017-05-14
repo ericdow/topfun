@@ -1,4 +1,6 @@
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include "utils/GLEnvironment.h"
 #include "utils/CallBackWorld.h"
@@ -56,6 +58,15 @@ int main(int argc, char* argv[]) {
     else {
       DrawScene();
     }
+
+    // Sleep (if possible)
+    GLfloat end_loop_time = glfwGetTime();
+    std::chrono::duration<float> sleep_duration(1.0/120.0 - 
+        (end_loop_time - current_loop_time));
+    if (sleep_duration > std::chrono::duration<float>(0)) {
+      std::this_thread::sleep_for(sleep_duration);
+    }
+    
   } // End game loop
 
   GLEnvironment::TearDown();

@@ -6,16 +6,17 @@ TERRAIN
 =======
 - model as a height-map z(x,y)
   - collision detection: test if lowest point of dynamic object bounding box is below elevation
-- use adaptive LOD (via quadtree) with adaptation near (x,y) position of the camera
-  - should be 3D: resolution should also decrease when your z position is large
-  - look into geomipmap concept
 - object collisions only require query of heightmap at arbitrary points
-- only Draw what is in camera perspective frustrum
 - procedural terrain:
   - periodic background mesh (read in or generated)
   - procedural "noise"
-  - GetHeight(std::vector<<array<float,2>> const& xy_coords)
 
+Geomipmapping:
+
+
+Frustrum Culling:
+- generate 3D AABB around each terrain tile, render tile if AABB is inside camera frustrum
+  - form AABB when generating tile data (rebuild whenever tile is updated)
 
 CODE STRUCTURE
 ==============
