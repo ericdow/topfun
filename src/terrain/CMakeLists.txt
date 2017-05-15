@@ -2,6 +2,7 @@
 set(SOURCES
   Terrain.cpp
   Skybox.cpp
+  TerrainTile.cpp
 )
 
 set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY} ${LIBNOISE_LIBRARIES})
@@ -10,3 +11,7 @@ set(include_dirs ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS}
 add_library(terrain STATIC ${SOURCES})
 target_include_directories(terrain PUBLIC ${include_dirs})
 target_link_libraries(terrain ${libs_to_link})
+
+add_executable(TestTerrainTile TestTerrainTile.cpp) 
+target_include_directories(TestTerrainTile PUBLIC terrain utils) 
+target_link_libraries(TestTerrainTile terrain utils)

@@ -44,7 +44,7 @@ Terrain::Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz) :
     }
   }
  
-  // Element defitions 
+  // Element definitions 
   /*
     v2   v2   v1
      o    o---o

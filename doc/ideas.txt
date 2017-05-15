@@ -12,11 +12,72 @@ TERRAIN
   - procedural "noise"
 
 Geomipmapping:
+- generate terrain tiles such that d_tile < d_view
+  - d_tile is distance from far edge of tile to camera
+  - d_view is maximum view distance determined by min(d_fog, d_frustrum, d_vanish)
+    where d_vanish is the distance such that a terrain tile is < 1 pixel
+- compute (x,z) coordinates once, translate to correct location for each tile
+- compute normals for all coordinates, and sample to coarser grid via restriction
+- precompute triangle-strip indices for all mipmap configurations up to max level
+  - generate C triangles and then NESW triangles around C (see Broderson)
 
+Accessor should look like (int lod, int lod_n, int lod_e, int lod_s, int lod_w)
+
+level 16: 1
+1 all 16
+
+level 8: 12
+1 all 16
+1 all 8
+2 half 16 half 8
+4 three 16 one 8
+4 three 8 one 16
+
+level 4: 33
+1 all 16
+1 all 8
+1 all 4
+2 half 16 half 8
+2 16 4
+2 8 4
+4 three 16 one 8
+4 three 8 one 16
+4 16 4
+4 4 16
+4 8 4
+4 4 8
+
+level 2: 64
+1 all 16
+1 all 8
+1 all 4
+1 all 2
+2 half 16 half 8
+2 half 16 half 4
+2 half 8 half 4
+2 16 2
+2 8 2
+2 4 2
+4 three 16 one 8
+4 three 8 one 16
+4 three 16 one 4
+4 three 4 one 16
+4 three 8 one 4
+4 three 4 one 8
+4 16 2
+4 2 16
+4 8 2
+4 2 8
+4 4 2
+4 2 4
 
 Frustrum Culling:
 - generate 3D AABB around each terrain tile, render tile if AABB is inside camera frustrum
   - form AABB when generating tile data (rebuild whenever tile is updated)
+- use quadtree to quickly determine visible tiles
+  - start from top of tree (entire terrain)
+  - if any vertices of AABB are in frustrum, continue searching depth-first
+  - otherwise, stop searching
 
 CODE STRUCTURE
 ==============
