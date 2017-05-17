@@ -4,11 +4,14 @@
 #include <vector>
 #include <array>
 
+#include <boost/unordered_map.hpp>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shaders/Shader.h"
 #include "utils/Camera.h"
+#include "terrain/NeighborLoD.h"
 
 namespace TopFun {
 
@@ -46,7 +49,7 @@ class TerrainTile {
   //! tiles surrounding this tile
   //! \param[in] lod_nesw - array of LoD values for neighboring tiles
   //**************************************************************************80
-  inline void SetNeighborLoD(const std::array<unsigned int,4>& lod_nesw) {
+  inline void SetNeighborLoD(const std::array<unsigned short,4>& lod_nesw) {
     lod_nesw_ = lod_nesw;
   }
 
@@ -59,15 +62,15 @@ class TerrainTile {
  private:
   Shader shader_;
   // TODO const noise::module::Perlin& perlin_generator_;
-  static const unsigned int lod_max_ = 4; // higher is coarser
-  unsigned int lod_; // current level of detail
-  std::array<unsigned int,4> lod_nesw_; // current LoD for all neighbor tiles
+  static const unsigned short num_lod_ = 4; // higher is coarser
+  unsigned short lod_; // current level of detail
+  std::array<unsigned short,4> lod_nesw_; // current LoD for all neighbor tiles
   // Element-to-node connectivities for all possible combinations of tile LOD
   // and surrounding tile LODs
   static std::vector<GLuint> elem2node_all_;
   // Offsets for where each element-to-node connectivity begins inside of
   // elem2node_all_
-  static std::vector<GLuint> elem2node_all_offsets_;
+  static boost::unordered_map<NeighborLoD, GLuint> elem2node_all_offsets_;
 
   //**************************************************************************80
   //! \brief GetElem2NodeOffsetIndex - TODO
@@ -75,6 +78,13 @@ class TerrainTile {
   static GLuint GetElem2NodeOffsetIndex(unsigned short lod, 
       unsigned short lod_n, unsigned short lod_e, unsigned short lod_s, 
       unsigned short lod_w);
+  
+  //**************************************************************************80
+  //! \brief AddTriangleIndices - helper function to add a new triangle to
+  //! elem2node_all_
+  //**************************************************************************80
+  static void AddTriangleIndices(GLuint i0, GLuint i1, GLuint i2, 
+      GLuint& offset);
   
 };
 } // End namespace TopFun

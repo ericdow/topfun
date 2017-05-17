@@ -29,6 +29,8 @@ Skybox skybox;
 
 GLfloat last_draw_time = 0.0f;
 GLfloat delta_loop_time = 0.0f;
+// Force loop to sleep until this amount of time has passed
+GLfloat loop_lock_time = 1.0/120.0;
 int main(int argc, char* argv[]) {
 
   // Point callback to correct location  
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]) {
 
     // Sleep (if possible)
     GLfloat end_loop_time = glfwGetTime();
-    std::chrono::duration<float> sleep_duration(1.0/120.0 - 
+    std::chrono::duration<float> sleep_duration(loop_lock_time - 
         (end_loop_time - current_loop_time));
     if (sleep_duration > std::chrono::duration<float>(0)) {
       std::this_thread::sleep_for(sleep_duration);

@@ -20,8 +20,11 @@ Geomipmapping:
 - compute normals for all coordinates, and sample to coarser grid via restriction
 - precompute triangle-strip indices for all mipmap configurations up to max level
   - generate C triangles and then NESW triangles around C (see Broderson)
+  - accessor for indices should look like (int lod, int lod_n, int lod_e, int lod_s, int lod_w)
 
-Accessor should look like (int lod, int lod_n, int lod_e, int lod_s, int lod_w)
+(lod, lod_n, lod_e, lod_s, lod_w)
+this is a 5-digit number in base lod_max_
+use boost with tuple as key
 
 level 16: 1
 1 all 16
