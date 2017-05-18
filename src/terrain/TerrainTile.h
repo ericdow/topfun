@@ -45,32 +45,55 @@ class TerrainTile {
   void Draw(Camera const& camera);
   
   //**************************************************************************80
-  //! \brief SetNeighborLoD - updates the current level of detail for all
-  //! tiles surrounding this tile
-  //! \param[in] lod_nesw - array of LoD values for neighboring tiles
+  //! \brief SetNeighborPointer - sets pointers to a neighbor tile
+  //! \param[in] tile - pointer to a tile
+  //! \param[in] ix - index of pointer to set (0:N, 1:E, 2:S, 3:W)
   //**************************************************************************80
-  inline void SetNeighborLoD(const std::array<unsigned short,4>& lod_nesw) {
-    lod_nesw_ = lod_nesw;
+  inline void SetNeighborPointer(const TerrainTile* tile, int ix) {
+    neighbor_tiles_[ix] = tile;
+  }
+  
+  //**************************************************************************80
+  //! \brief GetLoD - returns the current level of detail for this tile
+  //**************************************************************************80
+  inline unsigned short GetLoD() const {
+    return lods_.tuple.get<0>();
   }
 
   //**************************************************************************80
-  //! \brief BuildAllElem2Node - Precomputes all possible element-to-node
+  //! \brief UpdateNeighborLoD - updates the values of neighbor LoDs
+  //**************************************************************************80
+  void UpdateNeighborLoD();
+
+  //**************************************************************************80
+  //! \brief BuildAllElem2Node - precomputes all possible element-to-node
   //! connectivities for all possible tile LODs and surrounding tile LODs 
   //**************************************************************************80
   static void BuildAllElem2Node();
 
+  //**************************************************************************80
+  //! \brief UpdateElem2Node() - updates the element array buffer with the 
+  //! current element-to-node connectivity based on neighbor's LoD values
+  //**************************************************************************80
+  void UpdateElem2Node();
+
  private:
   Shader shader_;
+  GLuint VAO_, EBO_;
+  GLfloat ymax_, ymin_; // for bounding box
   // TODO const noise::module::Perlin& perlin_generator_;
   static const unsigned short num_lod_ = 4; // higher is coarser
-  unsigned short lod_; // current level of detail
-  std::array<unsigned short,4> lod_nesw_; // current LoD for all neighbor tiles
+  std::vector<GLfloat> y_;
+  NeighborLoD lods_; // current level of detail of this tile and neighbors
+  // Pointers to NESW tiles, null if no neighbor exists
+  std::array<const TerrainTile*,4> neighbor_tiles_;
   // Element-to-node connectivities for all possible combinations of tile LOD
   // and surrounding tile LODs
   static std::vector<GLuint> elem2node_all_;
-  // Offsets for where each element-to-node connectivity begins inside of
-  // elem2node_all_
-  static boost::unordered_map<NeighborLoD, GLuint> elem2node_all_offsets_;
+  // Offsets and sizes for where each element-to-node connectivity chunk begins 
+  // and ends inside of elem2node_all_
+  static boost::unordered_map<NeighborLoD, std::array<GLuint,2>> 
+    elem2node_all_offsets_and_sizes_;
 
   //**************************************************************************80
   //! \brief GetElem2NodeOffsetIndex - TODO

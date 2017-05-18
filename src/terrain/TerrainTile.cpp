@@ -11,35 +11,113 @@ namespace TopFun {
 // STATIC MEMBERS
 //****************************************************************************80
 std::vector<GLuint> TerrainTile::elem2node_all_;
-boost::unordered_map<NeighborLoD, GLuint> 
-    TerrainTile::elem2node_all_offsets_;
+boost::unordered_map<NeighborLoD, std::array<GLuint,2>> 
+    TerrainTile::elem2node_all_offsets_and_sizes_;
 
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 TerrainTile::TerrainTile() : 
-  shader_("shaders/terrain.vs", "shaders/terrain.frag") {
+  shader_("shaders/terrain.vs", "shaders/terrain.frag"), 
+  y_(std::pow(std::pow(2,num_lod_),2)), lods_(0,0,0,0,0),
+  neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
+
+  // Set up vertices and normals
+  // TODO
   
+  // Construct the bounding box
+  // TODO  
+  
+  // Set up attribute and buffer objects
+  GLuint VBO;
+  glGenVertexArrays(1, &VAO_);
+  glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO_);
+  
+  glBindVertexArray(VAO_);
+
+  // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  // glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), 
+  //     vertices.data(), GL_STATIC_DRAW);
+  // 
+  // GLuint max_size_indices = 3*2*std::pow(std::pow(2,num_lod_),2);
+  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
+  // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * max_size_indices, 
+  //     indices_.data(), GL_STATIC_DRAW);
 }
 
 //****************************************************************************80
 TerrainTile::~TerrainTile() {
+  glDeleteBuffers(1, &EBO_); 
+  glDeleteVertexArrays(1, &VAO_);
 }
 
 //****************************************************************************80
 void TerrainTile::Draw(Camera const& camera) {
+  // Determine if any vertices of the AABB for this tile are in camera frustrum
+  // TODO
+ 
+  // Update element-to-node connectivity if this tile or neighbor LoD changed
+  NeighborLoD lods_orig = lods_;
+  UpdateNeighborLoD();
+  if (lods_orig == lods_) {
+    UpdateElem2Node();
+  }
+
   // Activate shader
   shader_.Use();
+}
+  
+//****************************************************************************80
+void TerrainTile::UpdateNeighborLoD() {
+  // If neighbor doesn't exist, set neighbor LoD to self LoD 
+  if (neighbor_tiles_[0] != nullptr) {
+    lods_.tuple.get<1>() = (neighbor_tiles_[0])->GetLoD();
+  }
+  else {
+    lods_.tuple.get<1>() = lods_.tuple.get<0>();
+  }
+  if (neighbor_tiles_[1] != nullptr) {
+    lods_.tuple.get<2>() = (neighbor_tiles_[1])->GetLoD();
+  }
+  else {
+    lods_.tuple.get<2>() = lods_.tuple.get<0>();
+  }
+  if (neighbor_tiles_[2] != nullptr) {
+    lods_.tuple.get<3>() = (neighbor_tiles_[2])->GetLoD();
+  }
+  else {
+    lods_.tuple.get<3>() = lods_.tuple.get<0>();
+  }
+  if (neighbor_tiles_[3] != nullptr) {
+    lods_.tuple.get<4>() = (neighbor_tiles_[3])->GetLoD();
+  }
+  else {
+    lods_.tuple.get<4>() = lods_.tuple.get<0>();
+  }
+}
+
+//****************************************************************************80
+void TerrainTile::UpdateElem2Node() {
+  
+  // Update the buffer object with new element indices
+  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
+  // void* ptr = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+  // memcpy(ptr, data, sizeof(data));
+  // glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 }
 
 //****************************************************************************80
 GLfloat TerrainTile::GetHeight(GLfloat x, GLfloat z) {
+  // TODO
   // return perlin_generator_.GetValue(x/10, z/10, 0.5);
+  return 0.0;
 }
 
 //****************************************************************************80
 void TerrainTile::BuildAllElem2Node() {
   GLuint offset = 0;
+  GLuint offset_prev = 0;
   // Indices follow right-hand-rule is out of the page
   GLuint edge_size0 = std::pow(2, num_lod_);
   for (unsigned short c = 0; c < num_lod_; ++c) {
@@ -49,8 +127,6 @@ void TerrainTile::BuildAllElem2Node() {
       for (unsigned short e = 0; e <= c; ++e) {
         for (unsigned short s = 0; s <= c; ++s) {
           for (unsigned short w = 0; w <= c; ++w) {
-            NeighborLoD neigh_lod(c, n, e, s, w);
-            elem2node_all_offsets_[neigh_lod] = offset;
             // Build the north edge
             unsigned short num_edge_splits = c - n + 1;
             GLuint df  = pow2c / (num_edge_splits);
@@ -222,6 +298,11 @@ void TerrainTile::BuildAllElem2Node() {
                 }
               }
             }
+            // Set the offset and size for this chunk
+            NeighborLoD neigh_lod(c, n, e, s, w);
+            elem2node_all_offsets_and_sizes_[neigh_lod] = 
+              {offset_prev, offset - offset_prev};
+            offset_prev = offset;
           }
         }
       }
