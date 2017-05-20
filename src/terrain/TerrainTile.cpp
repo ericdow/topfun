@@ -81,6 +81,9 @@ void TerrainTile::Draw(Camera const& camera) {
     UpdateElem2Node();
   }
 
+  lods_ = NeighborLoD(2,0,1,1,0);
+  UpdateElem2Node();
+
   // Render
   glBindVertexArray(VAO_);
   glDrawElements(GL_TRIANGLES, pelem2node_->size(), GL_UNSIGNED_INT, 0);
@@ -215,7 +218,7 @@ TerrainTile::BuildAllElem2Node() {
           for (unsigned short w = 0; w <= c; ++w) {
             std::vector<GLuint> elem2node;
             // Build the north edge
-            unsigned short num_edge_splits = c - n + 1;
+            unsigned short num_edge_splits = std::pow(2,c-n);
             GLuint df  = pow2c / (num_edge_splits);
             for (GLuint i = 0; i < edge_size; ++i) {
               GLuint j = edge_size - 1;
@@ -253,7 +256,7 @@ TerrainTile::BuildAllElem2Node() {
               }
             }
             // Build the east edge
-            num_edge_splits = c - e + 1;
+            num_edge_splits = std::pow(2,c-e);
             df = pow2c / (num_edge_splits);
             for (GLuint j = 0; j < edge_size; ++j) {
               GLuint i = edge_size - 1;
@@ -291,7 +294,7 @@ TerrainTile::BuildAllElem2Node() {
               }
             }
             // Build the south edge
-            num_edge_splits = c - s + 1;
+            num_edge_splits = std::pow(2,c-s);
             df  = pow2c / (num_edge_splits);
             for (GLuint i = 0; i < edge_size; ++i) {
               GLuint j = 0;
@@ -329,7 +332,7 @@ TerrainTile::BuildAllElem2Node() {
               }
             }
             // Build the west edge
-            num_edge_splits = c - w + 1;
+            num_edge_splits = std::pow(2,c-w);
             df  = pow2c / (num_edge_splits);
             for (GLuint j = 0; j < edge_size; ++j) {
               GLuint i = 0;
