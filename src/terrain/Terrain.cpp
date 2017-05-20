@@ -7,7 +7,7 @@ namespace TopFun {
 Terrain::Terrain(GLfloat lx, GLfloat lz) : lx_(lx), lz_(lz),
   shader_("shaders/terrain.vs", "shaders/terrain.frag") {
   // Set up the tiles
-  TerrainTile::SetTileLength(100.0);
+  TerrainTile::SetTileLength(20.0);
   // TODO
   tiles_.emplace(std::make_pair(0, shader_));
 }

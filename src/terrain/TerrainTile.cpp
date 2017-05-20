@@ -1,6 +1,5 @@
 #include <iostream>
 #include <array>
-#include <boost/assign.hpp>
 
 #include <noise/module/perlin.h>
 
@@ -78,7 +77,7 @@ void TerrainTile::Draw(Camera const& camera) {
   // Update element-to-node connectivity if this tile or neighbor LoD changed
   NeighborLoD lods_orig = lods_;
   UpdateNeighborLoD();
-  if (lods_orig == lods_) {
+  if (lods_orig != lods_) {
     UpdateElem2Node();
   }
 
@@ -115,16 +114,16 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices() const {
       GLuint v0_ix, v1_ix, v2_ix, v3_ix;
       if ((i <  ne/2 && j <  ne/2) ||
           (i >= ne/2 && j >= ne/2)) {
-        v0_ix = ne* j +    i    ;
-        v1_ix = ne* j +    i + 1;
-        v2_ix = ne*(j+1) + i + 1;
-        v3_ix = ne*(j+1) + i    ;
+        v0_ix = nv* j +    i    ;
+        v1_ix = nv* j +    i + 1;
+        v2_ix = nv*(j+1) + i + 1;
+        v3_ix = nv*(j+1) + i    ;
       }
       else {
-        v0_ix = ne*(j+1) + i    ;
-        v1_ix = ne* j +    i    ;
-        v2_ix = ne* j +    i + 1;
-        v3_ix = ne*(j+1) + i + 1;
+        v0_ix = nv*(j+1) + i    ;
+        v1_ix = nv* j +    i    ;
+        v2_ix = nv* j +    i + 1;
+        v3_ix = nv*(j+1) + i + 1;
       }
       glm::vec3 e01(vertices[v1_ix].position[0] - vertices[v0_ix].position[0],
                     vertices[v1_ix].position[1] - vertices[v0_ix].position[1],
@@ -186,13 +185,11 @@ void TerrainTile::UpdateNeighborLoD() {
 //****************************************************************************80
 void TerrainTile::UpdateElem2Node() {
   // Update the buffer object with new element indices
-  glBindVertexArray(VAO_);
   pelem2node_ = &elem2node_all_[lods_];
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
   void* ptr = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
-  std::memcpy(ptr, pelem2node_->data(), pelem2node_->size());
+  std::memcpy(ptr, pelem2node_->data(), sizeof(GLuint) * pelem2node_->size());
   glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-  glBindVertexArray(0); 
 }
 
 //****************************************************************************80
@@ -208,7 +205,7 @@ TerrainTile::BuildAllElem2Node() {
   boost::unordered_map<NeighborLoD, std::vector<GLuint>> 
     elem2node_all;
   // Indices follow right-hand-rule is out of the page
-  GLuint edge_size0 = std::pow(2, num_lod_);
+  GLuint nv0 = std::pow(2, num_lod_) + 1;
   for (unsigned short c = 0; c < num_lod_; ++c) {
     GLuint edge_size = std::pow(2, num_lod_ - c);
     GLuint pow2c = std::pow(2,c);
@@ -224,32 +221,34 @@ TerrainTile::BuildAllElem2Node() {
               GLuint j = edge_size - 1;
               GLuint i0 = i*pow2c;
               GLuint j0 = j*pow2c;
+              GLuint i0p = (i+1)*pow2c;
+              GLuint j0p = (j+1)*pow2c;
               if (i < edge_size/2) {
                 // Add lower triangle
                 if (i > 0) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add upper (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*(f + 1));
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*f);
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back(nv0*j0p + i0 + df*(f + 1));
+                  elem2node.push_back(nv0*j0p + i0 + df*f);
+                  elem2node.push_back(nv0*j0 + i0p);
                 }
               }
               else {
                 // Add lower triangle
                 if (i < edge_size - 1) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*j0p + i0p);
                 }
                 // Add upper (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*(f + 1));
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*f);
-                  elem2node.push_back((edge_size0+1)*j0 + i0);
+                  elem2node.push_back(nv0*j0p + i0 + df*(f + 1));
+                  elem2node.push_back(nv0*j0p + i0 + df*f);
+                  elem2node.push_back(nv0*j0 + i0);
                 }
               }
             }
@@ -260,32 +259,34 @@ TerrainTile::BuildAllElem2Node() {
               GLuint i = edge_size - 1;
               GLuint i0 = i*pow2c;
               GLuint j0 = j*pow2c;
+              GLuint i0p = (i+1)*pow2c;
+              GLuint j0p = (j+1)*pow2c;
               if (j < edge_size/2) {
                 // Add left triangle
                 if (j > 0) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add right (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0 + 1); 
-                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*(j0+df*f) + i0p); 
+                  elem2node.push_back(nv0*(j0+df*(f+1)) + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
               }
               else {
                 // Add left triangle
                 if (j < edge_size - 1) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0p + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add right (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0 + 1); 
-                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*j0 + i0);
+                  elem2node.push_back(nv0*(j0+df*f) + i0p); 
+                  elem2node.push_back(nv0*(j0+df*(f+1)) + i0p);
+                  elem2node.push_back(nv0*j0 + i0);
                 }
               }
             }
@@ -296,32 +297,34 @@ TerrainTile::BuildAllElem2Node() {
               GLuint j = 0;
               GLuint i0 = i*pow2c;
               GLuint j0 = j*pow2c;
+              GLuint i0p = (i+1)*pow2c;
+              GLuint j0p = (j+1)*pow2c;
               if (i < edge_size/2) {
                 // Add upper triangle
                 if (i > 0) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0p + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add lower (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*f); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*(f + 1));
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back(nv0*j0 + i0 + df*f); 
+                  elem2node.push_back(nv0*j0 + i0 + df*(f + 1));
+                  elem2node.push_back(nv0*j0p + i0p);
                 }
               }
               else {
                 // Add upper triangle
                 if (i < edge_size - 1) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1); 
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0p); 
+                  elem2node.push_back(nv0*j0p + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add lower (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*f); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*(f + 1));
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0 + df*f); 
+                  elem2node.push_back(nv0*j0 + i0 + df*(f + 1));
+                  elem2node.push_back(nv0*j0p + i0);
                 }
               }
             }
@@ -332,32 +335,34 @@ TerrainTile::BuildAllElem2Node() {
               GLuint i = 0;
               GLuint i0 = i*pow2c;
               GLuint j0 = j*pow2c;
+              GLuint i0p = (i+1)*pow2c;
+              GLuint j0p = (j+1)*pow2c;
               if (j < edge_size/2) {
                 // Add right triangle
                 if (j > 0) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0); 
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back(nv0*j0 + i0); 
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*j0p + i0p);
                 }
                 // Add left (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0); 
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0);
+                  elem2node.push_back(nv0*(j0+df*f) + i0); 
+                  elem2node.push_back(nv0*j0p + i0p);
+                  elem2node.push_back(nv0*(j0+df*(f+1)) + i0);
                 }
               }
               else {
                 // Add right triangle
                 if (j < edge_size - 1) {
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*j0p + i0p);
+                  elem2node.push_back(nv0*j0p + i0);
                 }
                 // Add left (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0);
-                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0);
+                  elem2node.push_back(nv0*(j0+df*f) + i0);
+                  elem2node.push_back(nv0*j0 + i0p);
+                  elem2node.push_back(nv0*(j0+df*(f+1)) + i0);
                 }
               }
             }
@@ -367,23 +372,25 @@ TerrainTile::BuildAllElem2Node() {
                 for (GLuint j = 1; j < edge_size - 1; ++j) {
                   GLuint i0 = i*pow2c;
                   GLuint j0 = j*pow2c;
+                  GLuint i0p = (i+1)*pow2c;
+                  GLuint j0p = (j+1)*pow2c;
                   // Set diagonal edge orientation
                   if ((i <  edge_size/2 && j <  edge_size/2) ||
                       (i >= edge_size/2 && j >= edge_size/2)) {
-                    elem2node.push_back((edge_size0+1)*j0 + i0);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
-                    elem2node.push_back((edge_size0+1)*j0 + i0);
-                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                    elem2node.push_back(nv0*j0 + i0);
+                    elem2node.push_back(nv0*j0p + i0p);
+                    elem2node.push_back(nv0*j0p + i0);
+                    elem2node.push_back(nv0*j0 + i0);
+                    elem2node.push_back(nv0*j0 + i0p);
+                    elem2node.push_back(nv0*j0p + i0p);
                   }
                   else {
-                    elem2node.push_back((edge_size0+1)*j0 + i0);
-                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
-                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
-                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                    elem2node.push_back(nv0*j0 + i0);
+                    elem2node.push_back(nv0*j0 + i0p);
+                    elem2node.push_back(nv0*j0p + i0);
+                    elem2node.push_back(nv0*j0 + i0p);
+                    elem2node.push_back(nv0*j0p + i0p);
+                    elem2node.push_back(nv0*j0p + i0);
                   }
                 }
               }

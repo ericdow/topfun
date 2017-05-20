@@ -66,7 +66,7 @@ class TerrainTile {
   static GLfloat l_tile_; // length of the tile edge
   GLfloat ymax_, ymin_; // for bounding box
   // TODO const noise::module::Perlin& perlin_generator_;
-  static const unsigned short num_lod_ = 4; // higher is coarser
+  static const unsigned short num_lod_ = 2; // higher is coarser
   std::vector<GLfloat> y_;
   NeighborLoD lods_; // current level of detail of this tile and neighbors
   // Pointers to NESW tiles, null if no neighbor exists

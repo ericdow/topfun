@@ -16,6 +16,10 @@ inline bool operator==(const NeighborLoD &a, const NeighborLoD &b) {
   return a.tuple == b.tuple;
 }
 
+inline bool operator!=(const NeighborLoD &a, const NeighborLoD &b) {
+  return a.tuple != b.tuple;
+}
+
 inline std::size_t hash_value(const NeighborLoD &e) {
   std::size_t seed = 0;
   boost::hash_combine(seed, e.tuple.get<0>());
