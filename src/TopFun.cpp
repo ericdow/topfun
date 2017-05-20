@@ -11,27 +11,27 @@
 
 using namespace TopFun;
 
-void DrawScene();
+void DrawScene(Terrain& terrain, Skybox& skybox);
 
 // Set up the GL/GLFW environment
 const std::array<GLuint,2> screen_size = {1200, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks 
-glm::vec3 start_pos(-250.0f, 0.0f, -250.0f);
+glm::vec3 start_pos(0.0f, 20.0f, 0.0f);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 CallBackWorld callback_world(camera, debug_overlay, screen_size);
-
-// Set up remaining game objects 
-Terrain terrain(500, 500, 500.0f, 500.0f);
-Skybox skybox;
 
 GLfloat last_draw_time = 0.0f;
 GLfloat delta_loop_time = 0.0f;
 // Force loop to sleep until this amount of time has passed
 GLfloat loop_lock_time = 1.0/120.0;
 int main(int argc, char* argv[]) {
+  
+  // Set up remaining game objects (in main due to static members)
+  Terrain terrain(500.0f, 500.0f);
+  Skybox skybox;
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);
@@ -54,11 +54,11 @@ int main(int argc, char* argv[]) {
     if (callback_world.IsFPSLocked()) {
       if (draw_wait_time > 0.01666) {
         draw_wait_time = 0.0;
-        DrawScene();
+        DrawScene(terrain, skybox);
       }
     }
     else {
-      DrawScene();
+      DrawScene(terrain, skybox);
     }
 
     // Sleep (if possible)
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void DrawScene() {
+void DrawScene(Terrain& terrain, Skybox& skybox) {
   // Compute frame time
   GLfloat current_draw_time = glfwGetTime();
   GLfloat delta_draw_time = current_draw_time - last_draw_time;

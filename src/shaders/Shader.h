@@ -83,12 +83,12 @@ class Shader {
   }
   
   // Uses the current shader
-  void Use() { 
+  void Use() const { 
     glUseProgram(this->Program); 
   }
 
   // Gets the shaders program ID
-  GLuint GetProgram() {
+  GLuint GetProgram() const {
     return Program;
   }
  private:

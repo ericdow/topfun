@@ -1,5 +1,6 @@
 #include <iostream>
 #include <array>
+#include <boost/assign.hpp>
 
 #include <noise/module/perlin.h>
 
@@ -10,24 +11,23 @@ namespace TopFun {
 //****************************************************************************80
 // STATIC MEMBERS
 //****************************************************************************80
-std::vector<GLuint> TerrainTile::elem2node_all_;
-boost::unordered_map<NeighborLoD, std::array<GLuint,2>> 
-    TerrainTile::elem2node_all_offsets_and_sizes_;
+GLfloat TerrainTile::l_tile_;
+boost::unordered_map<NeighborLoD, std::vector<GLuint>> 
+    TerrainTile::elem2node_all_ = BuildAllElem2Node();
 
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-TerrainTile::TerrainTile() : 
-  shader_("shaders/terrain.vs", "shaders/terrain.frag"), 
-  y_(std::pow(std::pow(2,num_lod_),2)), lods_(0,0,0,0,0),
-  neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
+TerrainTile::TerrainTile(const Shader& shader) : 
+  shader_(shader), y_(std::pow(std::pow(2,num_lod_),2)), 
+  lods_(0,0,0,0,0), neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
 
   // Set up vertices and normals
-  // TODO
-  
+  std::vector<Vertex> vertices = SetupVertices();
+
   // Construct the bounding box
   // TODO  
-  
+ 
   // Set up attribute and buffer objects
   GLuint VBO;
   glGenVertexArrays(1, &VAO_);
@@ -36,14 +36,32 @@ TerrainTile::TerrainTile() :
   
   glBindVertexArray(VAO_);
 
-  // glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  // glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), 
-  //     vertices.data(), GL_STATIC_DRAW);
-  // 
-  // GLuint max_size_indices = 3*2*std::pow(std::pow(2,num_lod_),2);
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
-  // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * max_size_indices, 
-  //     indices_.data(), GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), 
+      vertices.data(), GL_STATIC_DRAW);
+  
+  // Set up the initial EBO
+  pelem2node_ = &elem2node_all_[lods_];
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * pelem2node_->size(), 
+      pelem2node_->data(), GL_DYNAMIC_DRAW);
+
+  GLint pos_loc = glGetAttribLocation(shader_.GetProgram(), "position");
+  GLint norm_loc = glGetAttribLocation(shader_.GetProgram(), "normal");
+ 
+  // Position attribute
+  glEnableVertexAttribArray(pos_loc);
+  glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+      reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
+  // Normal attribute
+  glEnableVertexAttribArray(norm_loc);
+  glVertexAttribPointer(norm_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+      reinterpret_cast<GLvoid*>(offsetof(Vertex, normal)));
+
+  // Unbind VBO and VAO, but not EBO
+  // The call to glVertexAttribPointer registers VBO to VAO, so safe to unbind
+  glBindBuffer(GL_ARRAY_BUFFER, 0); 
+  glBindVertexArray(0);
 }
 
 //****************************************************************************80
@@ -64,8 +82,76 @@ void TerrainTile::Draw(Camera const& camera) {
     UpdateElem2Node();
   }
 
-  // Activate shader
-  shader_.Use();
+  // Render
+  glBindVertexArray(VAO_);
+  glDrawElements(GL_TRIANGLES, pelem2node_->size(), GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+}
+  
+//****************************************************************************80
+std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices() const {
+  GLuint ne = std::pow(2,num_lod_);
+  GLuint nv = ne+1;
+  std::vector<TerrainTile::Vertex> vertices(std::pow(nv,2));
+
+  // Vertex position
+  GLfloat dx = l_tile_/ne;
+  for (GLuint i = 0; i < nv; ++i) {
+    for (GLuint j = 0; j < nv; ++j) {
+      GLuint ix = nv*j + i;
+      vertices[ix].position[0] = dx*i;
+      vertices[ix].position[1] = 0.0; // TODO
+      vertices[ix].position[2] = dx*j;
+      // Zero out the normals
+      for (int d = 0; d < 3; ++d) {
+        vertices[ix].normal[d] = 0.0;
+      }
+    }
+  }
+ 
+  // Vertex normals (smoothed)
+  for (GLuint i = 0; i < ne; ++i) {
+    for (GLuint j = 0; j < ne; ++j) {
+      GLuint v0_ix, v1_ix, v2_ix, v3_ix;
+      if ((i <  ne/2 && j <  ne/2) ||
+          (i >= ne/2 && j >= ne/2)) {
+        v0_ix = ne* j +    i    ;
+        v1_ix = ne* j +    i + 1;
+        v2_ix = ne*(j+1) + i + 1;
+        v3_ix = ne*(j+1) + i    ;
+      }
+      else {
+        v0_ix = ne*(j+1) + i    ;
+        v1_ix = ne* j +    i    ;
+        v2_ix = ne* j +    i + 1;
+        v3_ix = ne*(j+1) + i + 1;
+      }
+      glm::vec3 e01(vertices[v1_ix].position[0] - vertices[v0_ix].position[0],
+                    vertices[v1_ix].position[1] - vertices[v0_ix].position[1],
+                    vertices[v1_ix].position[2] - vertices[v0_ix].position[2]);
+      glm::vec3 e02(vertices[v2_ix].position[0] - vertices[v0_ix].position[0],
+                    vertices[v2_ix].position[1] - vertices[v0_ix].position[1],
+                    vertices[v2_ix].position[2] - vertices[v0_ix].position[2]);
+      glm::vec3 e03(vertices[v3_ix].position[0] - vertices[v0_ix].position[0],
+                    vertices[v3_ix].position[1] - vertices[v0_ix].position[1],
+                    vertices[v3_ix].position[2] - vertices[v0_ix].position[2]);
+      // First triangle in this face
+      glm::vec3 normal = cross(e01, e02);
+      for (int d = 0; d < 3; ++d) {
+        vertices[v0_ix].normal[d] += normal[d];
+        vertices[v1_ix].normal[d] += normal[d];
+        vertices[v2_ix].normal[d] += normal[d];
+      }
+      // Second triangle in this face
+      normal = cross(e02, e03);
+      for (int d = 0; d < 3; ++d) {
+        vertices[v0_ix].normal[d] += normal[d];
+        vertices[v2_ix].normal[d] += normal[d];
+        vertices[v3_ix].normal[d] += normal[d];
+      }
+    }
+  }
+  return vertices;
 }
   
 //****************************************************************************80
@@ -99,25 +185,28 @@ void TerrainTile::UpdateNeighborLoD() {
 
 //****************************************************************************80
 void TerrainTile::UpdateElem2Node() {
-  
   // Update the buffer object with new element indices
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
-  // void* ptr = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
-  // memcpy(ptr, data, sizeof(data));
-  // glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+  glBindVertexArray(VAO_);
+  pelem2node_ = &elem2node_all_[lods_];
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
+  void* ptr = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+  std::memcpy(ptr, pelem2node_->data(), pelem2node_->size());
+  glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+  glBindVertexArray(0); 
 }
 
 //****************************************************************************80
-GLfloat TerrainTile::GetHeight(GLfloat x, GLfloat z) {
-  // TODO
-  // return perlin_generator_.GetValue(x/10, z/10, 0.5);
-  return 0.0;
+void TerrainTile::SetTileLength(GLfloat l_tile) {
+  l_tile_ = l_tile;
 }
 
 //****************************************************************************80
-void TerrainTile::BuildAllElem2Node() {
-  GLuint offset = 0;
-  GLuint offset_prev = 0;
+// PRIVATE FUNCTIONS
+//****************************************************************************80
+boost::unordered_map<NeighborLoD, std::vector<GLuint>>
+TerrainTile::BuildAllElem2Node() {
+  boost::unordered_map<NeighborLoD, std::vector<GLuint>> 
+    elem2node_all;
   // Indices follow right-hand-rule is out of the page
   GLuint edge_size0 = std::pow(2, num_lod_);
   for (unsigned short c = 0; c < num_lod_; ++c) {
@@ -127,6 +216,7 @@ void TerrainTile::BuildAllElem2Node() {
       for (unsigned short e = 0; e <= c; ++e) {
         for (unsigned short s = 0; s <= c; ++s) {
           for (unsigned short w = 0; w <= c; ++w) {
+            std::vector<GLuint> elem2node;
             // Build the north edge
             unsigned short num_edge_splits = c - n + 1;
             GLuint df  = pow2c / (num_edge_splits);
@@ -137,29 +227,29 @@ void TerrainTile::BuildAllElem2Node() {
               if (i < edge_size/2) {
                 // Add lower triangle
                 if (i > 0) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*j0 + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add upper (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+1) + i0 + df*(f + 1), 
-                                     (edge_size0+1)*(j0+1) + i0 + df*f,
-                                     (edge_size0+1)*j0 + i0 + 1, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*(f + 1));
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*f);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
                 }
               }
               else {
                 // Add lower triangle
                 if (i < edge_size - 1) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*j0 + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0 + 1, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
                 }
                 // Add upper (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+1) + i0 + df*(f + 1), 
-                                     (edge_size0+1)*(j0+1) + i0 + df*f,
-                                     (edge_size0+1)*j0 + i0, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*(f + 1));
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + df*f);
+                  elem2node.push_back((edge_size0+1)*j0 + i0);
                 }
               }
             }
@@ -173,29 +263,29 @@ void TerrainTile::BuildAllElem2Node() {
               if (j < edge_size/2) {
                 // Add left triangle
                 if (j > 0) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*j0 + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add right (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+df*f) + i0 + 1, 
-                                     (edge_size0+1)*(j0+df*(f+1)) + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0 + 1); 
+                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
               }
               else {
                 // Add left triangle
                 if (j < edge_size - 1) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*(j0+1) + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add right (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+df*f) + i0 + 1, 
-                                     (edge_size0+1)*(j0+df*(f+1)) + i0 + 1,
-                                     (edge_size0+1)*j0 + i0, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0 + 1); 
+                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*j0 + i0);
                 }
               }
             }
@@ -209,29 +299,29 @@ void TerrainTile::BuildAllElem2Node() {
               if (i < edge_size/2) {
                 // Add upper triangle
                 if (i > 0) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*(j0+1) + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add lower (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0 + df*f, 
-                                     (edge_size0+1)*j0 + i0 + df*(f + 1),
-                                     (edge_size0+1)*(j0+1) + i0 + 1, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*f); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*(f + 1));
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
                 }
               }
               else {
                 // Add upper triangle
                 if (i < edge_size - 1) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0 + 1, 
-                                     (edge_size0+1)*(j0+1) + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1); 
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add lower (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0 + df*f, 
-                                     (edge_size0+1)*j0 + i0 + df*(f + 1),
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*f); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + df*(f + 1));
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
               }
             }
@@ -245,29 +335,29 @@ void TerrainTile::BuildAllElem2Node() {
               if (j < edge_size/2) {
                 // Add right triangle
                 if (j > 0) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                     (edge_size0+1)*j0 + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0 + 1, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0); 
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
                 }
                 // Add left (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+df*f) + i0, 
-                                     (edge_size0+1)*(j0+1) + i0 + 1,
-                                     (edge_size0+1)*(j0+df*(f+1)) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0); 
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0);
                 }
               }
               else {
                 // Add right triangle
                 if (j < edge_size - 1) {
-                  AddTriangleIndices((edge_size0+1)*j0 + i0 + 1, 
-                                     (edge_size0+1)*(j0+1) + i0 + 1,
-                                     (edge_size0+1)*(j0+1) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                 }
                 // Add left (split) triangles
                 for (GLuint f = 0; f < num_edge_splits; ++f) {
-                  AddTriangleIndices((edge_size0+1)*(j0+df*f) + i0, 
-                                     (edge_size0+1)*j0 + i0 + 1,
-                                     (edge_size0+1)*(j0+df*(f+1)) + i0, offset);
+                  elem2node.push_back((edge_size0+1)*(j0+df*f) + i0);
+                  elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                  elem2node.push_back((edge_size0+1)*(j0+df*(f+1)) + i0);
                 }
               }
             }
@@ -280,45 +370,32 @@ void TerrainTile::BuildAllElem2Node() {
                   // Set diagonal edge orientation
                   if ((i <  edge_size/2 && j <  edge_size/2) ||
                       (i >= edge_size/2 && j >= edge_size/2)) {
-                    AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                       (edge_size0+1)*(j0+1) + i0 + 1,
-                                       (edge_size0+1)*(j0+1) + i0, offset);
-                    AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                       (edge_size0+1)*j0 + i0 + 1,
-                                       (edge_size0+1)*(j0+1) + i0 + 1, offset);
+                    elem2node.push_back((edge_size0+1)*j0 + i0);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                    elem2node.push_back((edge_size0+1)*j0 + i0);
+                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
                   }
                   else {
-                    AddTriangleIndices((edge_size0+1)*j0 + i0, 
-                                       (edge_size0+1)*j0 + i0 + 1,
-                                       (edge_size0+1)*(j0+1) + i0, offset);
-                    AddTriangleIndices((edge_size0+1)*j0 + i0 + 1, 
-                                       (edge_size0+1)*(j0+1) + i0 + 1,
-                                       (edge_size0+1)*(j0+1) + i0, offset);
+                    elem2node.push_back((edge_size0+1)*j0 + i0);
+                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
+                    elem2node.push_back((edge_size0+1)*j0 + i0 + 1);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0 + 1);
+                    elem2node.push_back((edge_size0+1)*(j0+1) + i0);
                   }
                 }
               }
             }
-            // Set the offset and size for this chunk
             NeighborLoD neigh_lod(c, n, e, s, w);
-            elem2node_all_offsets_and_sizes_[neigh_lod] = 
-              {offset_prev, offset - offset_prev};
-            offset_prev = offset;
+            elem2node_all[neigh_lod] = elem2node;
           }
         }
       }
     }
   }
-}
-
-//****************************************************************************80
-// PRIVATE FUNCTIONS
-//****************************************************************************80
-void TerrainTile::AddTriangleIndices(GLuint i0, GLuint i1, GLuint i2, 
-    GLuint& offset) {
-  elem2node_all_.push_back(i0);
-  elem2node_all_.push_back(i1);
-  elem2node_all_.push_back(i2);
-  offset += 3;
+  return elem2node_all;
 }
 
 } // End namespace TopFun

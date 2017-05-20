@@ -15,29 +15,18 @@
 
 namespace TopFun {
 
-namespace noise {
-namespace module {
-class Perlin;
-}
-}
-
 class TerrainTile {
- 
+
  public:
   //**************************************************************************80
   //! \brief TerrainTile - Constructor for empty terrain object
   //**************************************************************************80
-  TerrainTile();
+  TerrainTile(const Shader& shader);
   
   //**************************************************************************80
   //! \brief ~TerrainTile - Destructor
   //**************************************************************************80
   ~TerrainTile();
-  
-  //**************************************************************************80
-  //! \brief GetHeight - Get the terrain height at a some (x,y) location
-  //**************************************************************************80
-  static GLfloat GetHeight(GLfloat x, GLfloat z);
 
   //**************************************************************************80
   //! \brief Draw - Draws the terrain tile
@@ -64,22 +53,17 @@ class TerrainTile {
   //! \brief UpdateNeighborLoD - updates the values of neighbor LoDs
   //**************************************************************************80
   void UpdateNeighborLoD();
-
+  
   //**************************************************************************80
-  //! \brief BuildAllElem2Node - precomputes all possible element-to-node
-  //! connectivities for all possible tile LODs and surrounding tile LODs 
+  //! \brief SetTileLength - sets the physical dimensions of the tiles
+  //! \param[in] l_tile - physical dimension of the tile edges
   //**************************************************************************80
-  static void BuildAllElem2Node();
-
-  //**************************************************************************80
-  //! \brief UpdateElem2Node() - updates the element array buffer with the 
-  //! current element-to-node connectivity based on neighbor's LoD values
-  //**************************************************************************80
-  void UpdateElem2Node();
+  static void SetTileLength(GLfloat l_tile);
 
  private:
-  Shader shader_;
+  const Shader& shader_;
   GLuint VAO_, EBO_;
+  static GLfloat l_tile_; // length of the tile edge
   GLfloat ymax_, ymin_; // for bounding box
   // TODO const noise::module::Perlin& perlin_generator_;
   static const unsigned short num_lod_ = 4; // higher is coarser
@@ -89,25 +73,34 @@ class TerrainTile {
   std::array<const TerrainTile*,4> neighbor_tiles_;
   // Element-to-node connectivities for all possible combinations of tile LOD
   // and surrounding tile LODs
-  static std::vector<GLuint> elem2node_all_;
-  // Offsets and sizes for where each element-to-node connectivity chunk begins 
-  // and ends inside of elem2node_all_
-  static boost::unordered_map<NeighborLoD, std::array<GLuint,2>> 
-    elem2node_all_offsets_and_sizes_;
+  static boost::unordered_map<NeighborLoD, std::vector<GLuint>> elem2node_all_;
+  // Pointer to current elem2node for this tile
+  std::vector<GLuint>* pelem2node_;
+ 
+  // Helper struct for storing vertex attributes 
+  struct Vertex {
+    GLfloat position[3];
+    GLfloat normal[3];
+    // GLubyte color[4];
+  };
 
   //**************************************************************************80
-  //! \brief GetElem2NodeOffsetIndex - TODO
+  //! \brief SetupVertices - computes positions, normals, etc. 
   //**************************************************************************80
-  static GLuint GetElem2NodeOffsetIndex(unsigned short lod, 
-      unsigned short lod_n, unsigned short lod_e, unsigned short lod_s, 
-      unsigned short lod_w);
-  
+  std::vector<Vertex> SetupVertices() const;  
+
   //**************************************************************************80
-  //! \brief AddTriangleIndices - helper function to add a new triangle to
-  //! elem2node_all_
+  //! \brief UpdateElem2Node() - updates the element array buffer with the 
+  //! current element-to-node connectivity based on neighbor's LoD values
   //**************************************************************************80
-  static void AddTriangleIndices(GLuint i0, GLuint i1, GLuint i2, 
-      GLuint& offset);
+  void UpdateElem2Node();
+
+  //**************************************************************************80
+  //! \brief BuildAllElem2Node - precomputes all possible element-to-node
+  //! connectivities for all possible tile LODs and surrounding tile LODs 
+  //**************************************************************************80
+  static boost::unordered_map<NeighborLoD, std::vector<GLuint>> 
+    BuildAllElem2Node();
   
 };
 } // End namespace TopFun

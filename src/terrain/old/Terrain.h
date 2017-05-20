@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <array>
-#include <unordered_map>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -12,7 +11,6 @@
 
 #include "shaders/Shader.h"
 #include "utils/Camera.h"
-#include "terrain/TerrainTile.h"
 
 namespace TopFun {
 
@@ -21,9 +19,10 @@ class Terrain {
  public:
   //**************************************************************************80
   //! \brief Terrain - Constructor for empty terrain object
+  //! \param[in] nvx, nvz - number of vertices in the x/z directions
   //! \param[in] lx, lz - length of terrain in the x/z directions
   //**************************************************************************80
-  Terrain(GLfloat lx, GLfloat lz);
+  Terrain(GLuint nvx, GLuint nvz, GLfloat lx, GLfloat lz);
   
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
@@ -41,15 +40,29 @@ class Terrain {
   void Draw(Camera const& camera);
 
  private:
+  GLuint nvx_, nvz_;
   GLfloat lx_, lz_;
   Shader shader_;
+  GLuint texture_;
   noise::module::Perlin perlin_generator_;
-  std::unordered_map<size_t,TerrainTile> tiles_;
+  // Data packing:
+  // - 3 floats (position)
+  // - 3 floats (normal)
+  // - 2 floats (texture)
+  static const int n_vert_attrib_ = 8;
+  std::vector<GLfloat> vertices_;
+  std::vector<GLuint> indices_;
+  GLuint VAO_;
   
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
   void SetShaderData(Camera const& camera);
+  
+  //**************************************************************************80
+  //! \brief LoadTexture - loads the texture using SOIL
+  //**************************************************************************80
+  void LoadTexture();
   
 };
 } // End namespace TopFun
