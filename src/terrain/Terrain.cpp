@@ -17,7 +17,7 @@ Terrain::Terrain(GLfloat lx, GLfloat lz) : lx_(lx), lz_(lz),
   perlin_generator_.SetPersistence(0.5);
     
   // Set up the tiles
-  GLfloat l_tile = 100.0;
+  GLfloat l_tile = 20.0;
   TerrainTile::SetTileLength(l_tile);
   // TODO
   tiles_.emplace(std::piecewise_construct,

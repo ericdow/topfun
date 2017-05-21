@@ -118,42 +118,37 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
   // Vertex normals (smoothed)
   for (int i = 0; i < ne+2; ++i) {
     for (int j = 0; j < ne+2; ++j) {
-      GLuint v0_ix, v1_ix, v2_ix, v3_ix;
-      if ((i <  (ne+2)/2 && j <  (ne+2)/2) ||
-          (i >= (ne+2)/2 && j >= (ne+2)/2)) {
-        v0_ix = (nv+2)* j +    i    ;
-        v1_ix = (nv+2)* j +    i + 1;
-        v2_ix = (nv+2)*(j+1) + i + 1;
-        v3_ix = (nv+2)*(j+1) + i    ;
-      }
-      else {
-        v0_ix = (nv+2)*(j+1) + i    ;
-        v1_ix = (nv+2)* j +    i    ;
-        v2_ix = (nv+2)* j +    i + 1;
-        v3_ix = (nv+2)*(j+1) + i + 1;
-      }
+      GLuint v0_ix = (nv+2)* j +    i    ;
+      GLuint v1_ix = (nv+2)* j +    i + 1;
+      GLuint v2_ix = (nv+2)*(j+1) + i + 1;
+      GLuint v3_ix = (nv+2)*(j+1) + i    ;
       glm::vec3 e01(vertices[v1_ix].position[0] - vertices[v0_ix].position[0],
                     vertices[v1_ix].position[1] - vertices[v0_ix].position[1],
                     vertices[v1_ix].position[2] - vertices[v0_ix].position[2]);
+      glm::vec3 e12(vertices[v2_ix].position[0] - vertices[v1_ix].position[0],
+                    vertices[v2_ix].position[1] - vertices[v1_ix].position[1],
+                    vertices[v2_ix].position[2] - vertices[v1_ix].position[2]);
+      glm::vec3 e23(vertices[v3_ix].position[0] - vertices[v2_ix].position[0],
+                    vertices[v3_ix].position[1] - vertices[v2_ix].position[1],
+                    vertices[v3_ix].position[2] - vertices[v2_ix].position[2]);
+      glm::vec3 e30(vertices[v0_ix].position[0] - vertices[v3_ix].position[0],
+                    vertices[v0_ix].position[1] - vertices[v3_ix].position[1],
+                    vertices[v0_ix].position[2] - vertices[v3_ix].position[2]);
       glm::vec3 e02(vertices[v2_ix].position[0] - vertices[v0_ix].position[0],
                     vertices[v2_ix].position[1] - vertices[v0_ix].position[1],
                     vertices[v2_ix].position[2] - vertices[v0_ix].position[2]);
-      glm::vec3 e03(vertices[v3_ix].position[0] - vertices[v0_ix].position[0],
-                    vertices[v3_ix].position[1] - vertices[v0_ix].position[1],
-                    vertices[v3_ix].position[2] - vertices[v0_ix].position[2]);
-      // First triangle in this face
-      glm::vec3 normal = cross(e01, e02);
+      glm::vec3 e13(vertices[v3_ix].position[0] - vertices[v1_ix].position[0],
+                    vertices[v3_ix].position[1] - vertices[v1_ix].position[1],
+                    vertices[v3_ix].position[2] - vertices[v1_ix].position[2]);
+      glm::vec3 n0 = cross(e01,  e02) + cross( e02, -e30);
+      glm::vec3 n1 = cross(e12,  e13) + cross( e13, -e01);
+      glm::vec3 n2 = cross(e23, -e02) + cross(-e02, -e12);
+      glm::vec3 n3 = cross(e30, -e13) + cross(-e13, -e23);
       for (int d = 0; d < 3; ++d) {
-        vertices[v0_ix].normal[d] += normal[d];
-        vertices[v1_ix].normal[d] += normal[d];
-        vertices[v2_ix].normal[d] += normal[d];
-      }
-      // Second triangle in this face
-      normal = cross(e02, e03);
-      for (int d = 0; d < 3; ++d) {
-        vertices[v0_ix].normal[d] += normal[d];
-        vertices[v2_ix].normal[d] += normal[d];
-        vertices[v3_ix].normal[d] += normal[d];
+        vertices[v0_ix].normal[d] += n0[d];
+        vertices[v1_ix].normal[d] += n1[d];
+        vertices[v2_ix].normal[d] += n2[d];
+        vertices[v3_ix].normal[d] += n3[d];
       }
     }
   }
