@@ -2,14 +2,49 @@
 
 namespace TopFun {
 //****************************************************************************80
+// STATIC MEMBERS
+//****************************************************************************80
+noise::module::Perlin Terrain::perlin_generator_;
+
+//****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 Terrain::Terrain(GLfloat lx, GLfloat lz) : lx_(lx), lz_(lz),
   shader_("shaders/terrain.vs", "shaders/terrain.frag") {
+  // Set the noise parameters
+  perlin_generator_.SetOctaveCount(7);
+  perlin_generator_.SetFrequency(0.3);
+  perlin_generator_.SetPersistence(0.5);
+    
   // Set up the tiles
-  TerrainTile::SetTileLength(20.0);
+  GLfloat l_tile = 100.0;
+  TerrainTile::SetTileLength(l_tile);
   // TODO
-  tiles_.emplace(std::make_pair(0, shader_));
+  tiles_.emplace(std::piecewise_construct,
+                 std::forward_as_tuple(0),
+                 std::forward_as_tuple(shader_, 0.0, 0.0));
+  tiles_.emplace(std::piecewise_construct,
+                 std::forward_as_tuple(1),
+                 std::forward_as_tuple(shader_, l_tile, 0.0));
+  tiles_.emplace(std::piecewise_construct,
+                 std::forward_as_tuple(2),
+                 std::forward_as_tuple(shader_, 0, l_tile));
+  tiles_.emplace(std::piecewise_construct,
+                 std::forward_as_tuple(3),
+                 std::forward_as_tuple(shader_, l_tile, l_tile));
+  tiles_.at(0).SetNeighborPointer(&tiles_.at(1), 1);
+  tiles_.at(1).SetNeighborPointer(&tiles_.at(0), 3);
+  tiles_.at(0).SetNeighborPointer(&tiles_.at(2), 0);
+  tiles_.at(2).SetNeighborPointer(&tiles_.at(0), 2);
+  tiles_.at(2).SetNeighborPointer(&tiles_.at(3), 1);
+  tiles_.at(3).SetNeighborPointer(&tiles_.at(2), 3);
+  tiles_.at(1).SetNeighborPointer(&tiles_.at(3), 0);
+  tiles_.at(3).SetNeighborPointer(&tiles_.at(1), 2);
+  tiles_.at(0).SetLoD(0);
+  tiles_.at(1).SetLoD(1);
+  tiles_.at(2).SetLoD(2);
+  tiles_.at(3).SetLoD(3);
+
 }
 
 //****************************************************************************80
@@ -30,7 +65,7 @@ void Terrain::Draw(Camera const& camera) {
 }
 
 //****************************************************************************80
-GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) const {
+GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
   return perlin_generator_.GetValue(x/10, z/10, 0.5);
 }
 
@@ -46,7 +81,7 @@ void Terrain::SetShaderData(Camera const& camera) {
 
   // Set material uniforms
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.color"), 0.0f, 1.0f, 0.0f);
+        "material.color"), 0.15f, 0.5f, 0.25f);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
         "material.shininess"), 1.0f);
 

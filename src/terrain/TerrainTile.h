@@ -21,7 +21,7 @@ class TerrainTile {
   //**************************************************************************80
   //! \brief TerrainTile - Constructor for empty terrain object
   //**************************************************************************80
-  TerrainTile(const Shader& shader);
+  TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0);
   
   //**************************************************************************80
   //! \brief ~TerrainTile - Destructor
@@ -48,6 +48,13 @@ class TerrainTile {
   inline unsigned short GetLoD() const {
     return lods_.tuple.get<0>();
   }
+  
+  //**************************************************************************80
+  //! \brief SetLoD - sets the level of detail for this tile
+  //**************************************************************************80
+  inline void SetLoD(unsigned short lod) {
+    lods_.tuple.get<0>() = lod;
+  }
 
   //**************************************************************************80
   //! \brief UpdateNeighborLoD - updates the values of neighbor LoDs
@@ -61,13 +68,11 @@ class TerrainTile {
   static void SetTileLength(GLfloat l_tile);
 
  private:
-  const Shader& shader_;
   GLuint VAO_, EBO_;
   static GLfloat l_tile_; // length of the tile edge
+  std::array<GLfloat,2> centroid_;
   GLfloat ymax_, ymin_; // for bounding box
-  // TODO const noise::module::Perlin& perlin_generator_;
-  static const unsigned short num_lod_ = 4; // higher is coarser
-  std::vector<GLfloat> y_;
+  static const unsigned short num_lod_ = 5; // higher is coarser
   NeighborLoD lods_; // current level of detail of this tile and neighbors
   // Pointers to NESW tiles, null if no neighbor exists
   std::array<const TerrainTile*,4> neighbor_tiles_;
@@ -81,13 +86,12 @@ class TerrainTile {
   struct Vertex {
     GLfloat position[3];
     GLfloat normal[3];
-    // GLubyte color[4];
   };
 
   //**************************************************************************80
   //! \brief SetupVertices - computes positions, normals, etc. 
   //**************************************************************************80
-  std::vector<Vertex> SetupVertices() const;  
+  std::vector<Vertex> SetupVertices(GLfloat x0, GLfloat z0);  
 
   //**************************************************************************80
   //! \brief UpdateElem2Node() - updates the element array buffer with the 

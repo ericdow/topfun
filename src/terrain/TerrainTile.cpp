@@ -1,9 +1,11 @@
 #include <iostream>
+#include <limits>
 #include <array>
 
 #include <noise/module/perlin.h>
 
 #include "terrain/TerrainTile.h"
+#include "terrain/Terrain.h"
 
 namespace TopFun {
 
@@ -17,12 +19,12 @@ boost::unordered_map<NeighborLoD, std::vector<GLuint>>
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-TerrainTile::TerrainTile(const Shader& shader) : 
-  shader_(shader), y_(std::pow(std::pow(2,num_lod_),2)), 
-  lods_(0,0,0,0,0), neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
+TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) : 
+  centroid_({x0, z0}), lods_(0,0,0,0,0), 
+  neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
 
   // Set up vertices and normals
-  std::vector<Vertex> vertices = SetupVertices();
+  std::vector<Vertex> vertices = SetupVertices(x0, z0);
 
   // Construct the bounding box
   // TODO  
@@ -45,8 +47,8 @@ TerrainTile::TerrainTile(const Shader& shader) :
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * pelem2node_->size(), 
       pelem2node_->data(), GL_DYNAMIC_DRAW);
 
-  GLint pos_loc = glGetAttribLocation(shader_.GetProgram(), "position");
-  GLint norm_loc = glGetAttribLocation(shader_.GetProgram(), "normal");
+  GLint pos_loc = glGetAttribLocation(shader.GetProgram(), "position");
+  GLint norm_loc = glGetAttribLocation(shader.GetProgram(), "normal");
  
   // Position attribute
   glEnableVertexAttribArray(pos_loc);
@@ -81,9 +83,6 @@ void TerrainTile::Draw(Camera const& camera) {
     UpdateElem2Node();
   }
 
-  lods_ = NeighborLoD(2,0,1,1,0);
-  UpdateElem2Node();
-
   // Render
   glBindVertexArray(VAO_);
   glDrawElements(GL_TRIANGLES, pelem2node_->size(), GL_UNSIGNED_INT, 0);
@@ -91,19 +90,24 @@ void TerrainTile::Draw(Camera const& camera) {
 }
   
 //****************************************************************************80
-std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices() const {
-  GLuint ne = std::pow(2,num_lod_);
-  GLuint nv = ne+1;
-  std::vector<TerrainTile::Vertex> vertices(std::pow(nv,2));
+std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0, 
+    GLfloat z0) {
+  int ne = std::pow(2,num_lod_);
+  int nv = ne+1;
+  // Generate one layer of halo elements to smooth normals with
+  std::vector<Vertex> vertices(std::pow(nv+2,2));
 
   // Vertex position
+  ymin_ = std::numeric_limits<GLfloat>::max();
+  ymax_ = std::numeric_limits<GLfloat>::min();
   GLfloat dx = l_tile_/ne;
-  for (GLuint i = 0; i < nv; ++i) {
-    for (GLuint j = 0; j < nv; ++j) {
-      GLuint ix = nv*j + i;
-      vertices[ix].position[0] = dx*i;
-      vertices[ix].position[1] = 0.0; // TODO
-      vertices[ix].position[2] = dx*j;
+  for (int i = 0; i < nv+2; ++i) {
+    for (int j = 0; j < nv+2; ++j) {
+      GLuint ix = (nv+2)*j + i;
+      vertices[ix].position[0] = x0 + dx*(i-1);
+      vertices[ix].position[1] = Terrain::GetHeight(x0 + dx*(i-1), 
+          z0 + dx*(j-1));
+      vertices[ix].position[2] = z0 + dx*(j-1);
       // Zero out the normals
       for (int d = 0; d < 3; ++d) {
         vertices[ix].normal[d] = 0.0;
@@ -112,21 +116,21 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices() const {
   }
  
   // Vertex normals (smoothed)
-  for (GLuint i = 0; i < ne; ++i) {
-    for (GLuint j = 0; j < ne; ++j) {
+  for (int i = 0; i < ne+2; ++i) {
+    for (int j = 0; j < ne+2; ++j) {
       GLuint v0_ix, v1_ix, v2_ix, v3_ix;
-      if ((i <  ne/2 && j <  ne/2) ||
-          (i >= ne/2 && j >= ne/2)) {
-        v0_ix = nv* j +    i    ;
-        v1_ix = nv* j +    i + 1;
-        v2_ix = nv*(j+1) + i + 1;
-        v3_ix = nv*(j+1) + i    ;
+      if ((i <  (ne+2)/2 && j <  (ne+2)/2) ||
+          (i >= (ne+2)/2 && j >= (ne+2)/2)) {
+        v0_ix = (nv+2)* j +    i    ;
+        v1_ix = (nv+2)* j +    i + 1;
+        v2_ix = (nv+2)*(j+1) + i + 1;
+        v3_ix = (nv+2)*(j+1) + i    ;
       }
       else {
-        v0_ix = nv*(j+1) + i    ;
-        v1_ix = nv* j +    i    ;
-        v2_ix = nv* j +    i + 1;
-        v3_ix = nv*(j+1) + i + 1;
+        v0_ix = (nv+2)*(j+1) + i    ;
+        v1_ix = (nv+2)* j +    i    ;
+        v2_ix = (nv+2)* j +    i + 1;
+        v3_ix = (nv+2)*(j+1) + i + 1;
       }
       glm::vec3 e01(vertices[v1_ix].position[0] - vertices[v0_ix].position[0],
                     vertices[v1_ix].position[1] - vertices[v0_ix].position[1],
@@ -153,7 +157,26 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices() const {
       }
     }
   }
-  return vertices;
+
+  // Copy interior data out
+  std::vector<Vertex> vertices_out(std::pow(nv,2));
+  ymin_ = std::numeric_limits<GLfloat>::max();
+  ymax_ = std::numeric_limits<GLfloat>::min();
+  for (int i = 0; i < nv; ++i) {
+    for (int j = 0; j < nv; ++j) {
+      GLuint ix = nv*j + i;
+      GLuint ix0 = (nv+2)*(j+1) + i + 1;
+      for (int d = 0; d < 3; ++d) {
+        vertices_out[ix].position[d] = vertices[ix0].position[d];
+        vertices_out[ix].normal[d]   = vertices[ix0].normal[d];
+      }
+      // Set the bounding box
+      ymin_ = std::min(ymin_, vertices_out[ix].position[1]);
+      ymax_ = std::max(ymax_, vertices_out[ix].position[1]);
+    }
+  }
+
+  return vertices_out;
 }
   
 //****************************************************************************80
@@ -187,8 +210,14 @@ void TerrainTile::UpdateNeighborLoD() {
 
 //****************************************************************************80
 void TerrainTile::UpdateElem2Node() {
+  // Ignore coarser neighbor tiles
+  NeighborLoD lods = lods_;
+  lods.tuple.get<1>() = std::min(lods_.tuple.get<1>(), lods_.tuple.get<0>());
+  lods.tuple.get<2>() = std::min(lods_.tuple.get<2>(), lods_.tuple.get<0>());
+  lods.tuple.get<3>() = std::min(lods_.tuple.get<3>(), lods_.tuple.get<0>());
+  lods.tuple.get<4>() = std::min(lods_.tuple.get<4>(), lods_.tuple.get<0>());
+  pelem2node_ = &elem2node_all_[lods];
   // Update the buffer object with new element indices
-  pelem2node_ = &elem2node_all_[lods_];
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
   void* ptr = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
   std::memcpy(ptr, pelem2node_->data(), sizeof(GLuint) * pelem2node_->size());

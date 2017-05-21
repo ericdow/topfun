@@ -33,7 +33,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief GetHeight - Get the terrain height at a some (x,y) location
   //**************************************************************************80
-  GLfloat GetHeight(GLfloat x, GLfloat z) const;
+  static GLfloat GetHeight(GLfloat x, GLfloat z);
 
   //**************************************************************************80
   //! \brief Draw - draws the terrain
@@ -43,7 +43,7 @@ class Terrain {
  private:
   GLfloat lx_, lz_;
   Shader shader_;
-  noise::module::Perlin perlin_generator_;
+  static noise::module::Perlin perlin_generator_;
   std::unordered_map<size_t,TerrainTile> tiles_;
   
   //**************************************************************************80
