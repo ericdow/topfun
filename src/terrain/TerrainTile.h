@@ -50,10 +50,13 @@ class TerrainTile {
   }
   
   //**************************************************************************80
-  //! \brief SetLoD - sets the level of detail for this tile
+  //! \brief UpdateLoD - sets the level of detail for this tile
   //**************************************************************************80
-  inline void SetLoD(unsigned short lod) {
-    lods_.tuple.get<0>() = lod;
+  inline void UpdateLoD(const glm::vec3& camera_pos) {
+    GLfloat r_max = 10*l_tile_;
+    GLfloat d_camera = glm::length(camera_pos - centroid_);
+    GLuint lod = GLuint(d_camera / r_max * num_lod_);
+    lods_.tuple.get<0>() = std::min(lod, GLuint(num_lod_ - 1));
   }
 
   //**************************************************************************80
@@ -70,10 +73,11 @@ class TerrainTile {
  private:
   GLuint VAO_, EBO_;
   static GLfloat l_tile_; // length of the tile edge
-  std::array<GLfloat,2> centroid_;
+  glm::vec3 centroid_;
   GLfloat ymax_, ymin_; // for bounding box
-  static const unsigned short num_lod_ = 5; // higher is coarser
+  static const unsigned short num_lod_ = 6; // higher is coarser
   NeighborLoD lods_; // current level of detail of this tile and neighbors
+  NeighborLoD lods_prev_; // level of detail on last Draw()
   // Pointers to NESW tiles, null if no neighbor exists
   std::array<const TerrainTile*,4> neighbor_tiles_;
   // Element-to-node connectivities for all possible combinations of tile LOD

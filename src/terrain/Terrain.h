@@ -21,9 +21,10 @@ class Terrain {
  public:
   //**************************************************************************80
   //! \brief Terrain - Constructor for empty terrain object
-  //! \param[in] lx, lz - length of terrain in the x/z directions
+  //! \param[in] l - length of terrain in the x/z directions
+  //! \param[in] ntile - number of terrain tiles in the x/z directions
   //**************************************************************************80
-  Terrain(GLfloat lx, GLfloat lz);
+  Terrain(GLfloat lx, GLuint ntile);
   
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
@@ -41,7 +42,6 @@ class Terrain {
   void Draw(Camera const& camera);
 
  private:
-  GLfloat lx_, lz_;
   Shader shader_;
   static noise::module::Perlin perlin_generator_;
   std::unordered_map<size_t,TerrainTile> tiles_;

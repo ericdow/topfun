@@ -20,7 +20,7 @@ boost::unordered_map<NeighborLoD, std::vector<GLuint>>
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) : 
-  centroid_({x0, z0}), lods_(0,0,0,0,0), 
+  lods_(0,0,0,0,0), lods_prev_(0,0,0,0,0),
   neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
 
   // Set up vertices and normals
@@ -77,10 +77,10 @@ void TerrainTile::Draw(Camera const& camera) {
   // TODO
  
   // Update element-to-node connectivity if this tile or neighbor LoD changed
-  NeighborLoD lods_orig = lods_;
   UpdateNeighborLoD();
-  if (lods_orig != lods_) {
+  if (lods_prev_ != lods_) {
     UpdateElem2Node();
+    lods_prev_ = lods_;
   }
 
   // Render
@@ -92,9 +92,9 @@ void TerrainTile::Draw(Camera const& camera) {
 //****************************************************************************80
 std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0, 
     GLfloat z0) {
+  // Generate one layer of halo elements to smooth normals with
   int ne = std::pow(2,num_lod_);
   int nv = ne+1;
-  // Generate one layer of halo elements to smooth normals with
   std::vector<Vertex> vertices(std::pow(nv+2,2));
 
   // Vertex position
@@ -105,7 +105,7 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
     for (int j = 0; j < nv+2; ++j) {
       GLuint ix = (nv+2)*j + i;
       vertices[ix].position[0] = x0 + dx*(i-1);
-      vertices[ix].position[1] = Terrain::GetHeight(x0 + dx*(i-1), 
+      vertices[ix].position[1] = 3.0*Terrain::GetHeight(x0 + dx*(i-1), 
           z0 + dx*(j-1));
       vertices[ix].position[2] = z0 + dx*(j-1);
       // Zero out the normals
@@ -170,6 +170,11 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
       ymax_ = std::max(ymax_, vertices_out[ix].position[1]);
     }
   }
+  
+  // Set the centroid
+  centroid_[0] = x0 + l_tile_/2;
+  centroid_[1] = (ymin_ + ymax_)/2;
+  centroid_[2] = z0 + l_tile_/2;
 
   return vertices_out;
 }

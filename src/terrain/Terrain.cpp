@@ -9,42 +9,40 @@ noise::module::Perlin Terrain::perlin_generator_;
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Terrain::Terrain(GLfloat lx, GLfloat lz) : lx_(lx), lz_(lz),
+Terrain::Terrain(GLfloat l, GLuint ntile) : 
   shader_("shaders/terrain.vs", "shaders/terrain.frag") {
   // Set the noise parameters
-  perlin_generator_.SetOctaveCount(7);
-  perlin_generator_.SetFrequency(0.3);
+  perlin_generator_.SetOctaveCount(5);
+  perlin_generator_.SetFrequency(0.2);
   perlin_generator_.SetPersistence(0.5);
     
   // Set up the tiles
-  GLfloat l_tile = 20.0;
+  GLfloat l_tile = l / ntile;
   TerrainTile::SetTileLength(l_tile);
-  // TODO
-  tiles_.emplace(std::piecewise_construct,
-                 std::forward_as_tuple(0),
-                 std::forward_as_tuple(shader_, 0.0, 0.0));
-  tiles_.emplace(std::piecewise_construct,
-                 std::forward_as_tuple(1),
-                 std::forward_as_tuple(shader_, l_tile, 0.0));
-  tiles_.emplace(std::piecewise_construct,
-                 std::forward_as_tuple(2),
-                 std::forward_as_tuple(shader_, 0, l_tile));
-  tiles_.emplace(std::piecewise_construct,
-                 std::forward_as_tuple(3),
-                 std::forward_as_tuple(shader_, l_tile, l_tile));
-  tiles_.at(0).SetNeighborPointer(&tiles_.at(1), 1);
-  tiles_.at(1).SetNeighborPointer(&tiles_.at(0), 3);
-  tiles_.at(0).SetNeighborPointer(&tiles_.at(2), 0);
-  tiles_.at(2).SetNeighborPointer(&tiles_.at(0), 2);
-  tiles_.at(2).SetNeighborPointer(&tiles_.at(3), 1);
-  tiles_.at(3).SetNeighborPointer(&tiles_.at(2), 3);
-  tiles_.at(1).SetNeighborPointer(&tiles_.at(3), 0);
-  tiles_.at(3).SetNeighborPointer(&tiles_.at(1), 2);
-  tiles_.at(0).SetLoD(0);
-  tiles_.at(1).SetLoD(1);
-  tiles_.at(2).SetLoD(2);
-  tiles_.at(3).SetLoD(3);
-
+  for (GLuint i = 0; i < ntile; ++i) {
+    for (GLuint j = 0; j < ntile; ++j) {
+      tiles_.emplace(std::piecewise_construct,
+                     std::forward_as_tuple(ntile*j + i),
+                     std::forward_as_tuple(shader_, l_tile*i, l_tile*j));
+    }
+  }
+  for (GLuint i = 0; i < ntile; ++i) {
+    for (GLuint j = 0; j < ntile; ++j) {
+      GLuint ix = ntile*j + i;
+      if (i > 0) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*j + i - 1), 3);
+      }
+      if (i < ntile - 1) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*j + i + 1), 1);
+      }
+      if (j > 0) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*(j-1) + i), 2);
+      }
+      if (j < ntile - 1) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*(j+1) + i), 0);
+      }
+    }
+  }
 }
 
 //****************************************************************************80
@@ -57,6 +55,11 @@ void Terrain::Draw(Camera const& camera) {
 
   // Send data to the shaders
   SetShaderData(camera);
+  
+  // Loop over tiles and update LoD
+  for (auto& t : tiles_) {
+    t.second.UpdateLoD(camera.GetPosition());
+  }
 
   // Loop over tiles and draw
   for (auto& t : tiles_) {

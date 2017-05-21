@@ -36,7 +36,8 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
  
   // Setup some OpenGL options
   glEnable(GL_DEPTH_TEST); // enable z-buffering
-  glEnable(GL_MULTISAMPLE);
+  glEnable(GL_MULTISAMPLE); // enable anti-aliasing
+  glShadeModel(GL_SMOOTH);
 
   return window;
 }
