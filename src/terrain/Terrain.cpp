@@ -63,8 +63,14 @@ void Terrain::Draw(Camera const& camera) {
   
   // Bind the texture data
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture_);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture"), 0);
+  glBindTexture(GL_TEXTURE_2D, textures_[0]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, textures_[1]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture1"), 1);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, textures_[2]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
   
   // Loop over tiles and update LoD
   for (auto& t : tiles_) {
@@ -86,28 +92,34 @@ GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
 // PRIVATE FUNCTIONS
 //****************************************************************************80
 void Terrain::LoadTextures() {
-  // Load and create a texture 
-  glGenTextures(1, &texture_);
-  glBindTexture(GL_TEXTURE_2D, texture_); 
-  // Set our texture parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // Set texture filtering
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
-      GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-      GL_LINEAR_MIPMAP_LINEAR);
-  // Load, create texture and generate mipmaps
-  int width, height;
   // TODO give better path...
-  unsigned char* image = SOIL_load_image(
-      "../../../assets/textures/seamless_grass.jpg", &width, &height, 0, 
-      SOIL_LOAD_RGB);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, 
-      GL_UNSIGNED_BYTE, image);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  std::vector<std::string> filepaths = {
+    "../../../assets/textures/seamless_grass2.jpg",
+    "../../../assets/textures/seamless_grass.jpg",
+    "../../../assets/textures/seamless_grassydirt.jpg"};
+  textures_.resize(filepaths.size());
+  for (GLuint i = 0; i < filepaths.size(); ++i) {
+    // Load and create a texture 
+    glGenTextures(1, textures_.data() + i);
+    glBindTexture(GL_TEXTURE_2D, textures_[i]); 
+    // Set our texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+        GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
+        GL_LINEAR_MIPMAP_LINEAR);
+    // Load, create texture and generate mipmaps
+    int width, height;
+    unsigned char* image = SOIL_load_image(filepaths[i].c_str(), &width, 
+        &height, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, 
+        GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+  }
   // Clean up
-  SOIL_free_image_data(image);
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 

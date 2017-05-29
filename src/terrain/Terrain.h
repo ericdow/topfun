@@ -45,7 +45,7 @@ class Terrain {
   Shader shader_;
   static noise::module::Perlin perlin_generator_;
   std::unordered_map<size_t,TerrainTile> tiles_;
-  GLuint texture_;
+  std::vector<GLuint> textures_;
   
   //**************************************************************************80
   //! \brief LoadTextures - load the terrain textures

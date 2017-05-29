@@ -26,7 +26,9 @@ in vec4 EyeSpacePos;
   
 out vec4 color;
 
-uniform sampler2D grassTexture;
+uniform sampler2D grassTexture0;
+uniform sampler2D grassTexture1;
+uniform sampler2D grassTexture2;
 uniform vec3 viewPos;  
 uniform Material material;
 uniform Light light;
@@ -68,9 +70,16 @@ void main()
   vec3 reflectDir = reflect(-lightDir, norm); 
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
   vec3 specular = light.specular * spec * material.color;
+
+  vec4 base = texture(grassTexture0, TexCoord);
+
+  vec4 highlight0 = texture(grassTexture1, TexCoord)*pow(abs(norm.z),1.0f/4) + 
+    base*(1.0f - pow(abs(norm.z),1.0f/4));
   
-  color = vec4(ambient + diffuse + specular, 1.0f)
-        * texture(grassTexture, TexCoord);
+  vec4 highlight1 = texture(grassTexture2, TexCoord)*pow(abs(norm.x),1.0f/4) + 
+    base*(1.0f - pow(abs(norm.x),1.0f/4));
+  
+  color = vec4(ambient + diffuse + specular, 1.0f) * highlight0 * highlight1;
  
   // Add Fog
   float FogCoord = abs(EyeSpacePos.z/EyeSpacePos.w);
