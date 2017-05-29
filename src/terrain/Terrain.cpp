@@ -1,3 +1,5 @@
+#include "SOIL.h"
+
 #include "terrain/Terrain.h"
 
 namespace TopFun {
@@ -15,6 +17,9 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
   perlin_generator_.SetOctaveCount(5);
   perlin_generator_.SetFrequency(0.2);
   perlin_generator_.SetPersistence(0.5);
+
+  // Load the textures
+  LoadTextures();
     
   // Set up the tiles
   GLfloat l_tile = l / ntile;
@@ -56,6 +61,11 @@ void Terrain::Draw(Camera const& camera) {
   // Send data to the shaders
   SetShaderData(camera);
   
+  // Bind the texture data
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture_);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture"), 0);
+  
   // Loop over tiles and update LoD
   for (auto& t : tiles_) {
     t.second.UpdateLoD(camera.GetPosition());
@@ -75,6 +85,33 @@ GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
 //****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
+void Terrain::LoadTextures() {
+  // Load and create a texture 
+  glGenTextures(1, &texture_);
+  glBindTexture(GL_TEXTURE_2D, texture_); 
+  // Set our texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // Set texture filtering
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+      GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
+      GL_LINEAR_MIPMAP_LINEAR);
+  // Load, create texture and generate mipmaps
+  int width, height;
+  // TODO give better path...
+  unsigned char* image = SOIL_load_image(
+      "../../../assets/textures/seamless_grass.jpg", &width, &height, 0, 
+      SOIL_LOAD_RGB);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, 
+      GL_UNSIGNED_BYTE, image);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  // Clean up
+  SOIL_free_image_data(image);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+//****************************************************************************80
 void Terrain::SetShaderData(Camera const& camera) {
   // Set view/projection uniforms  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
@@ -84,7 +121,7 @@ void Terrain::SetShaderData(Camera const& camera) {
 
   // Set material uniforms
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.color"), 0.15f, 0.5f, 0.25f);
+        "material.color"), 1.0f, 1.0f, 1.0f);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
         "material.shininess"), 1.0f);
 

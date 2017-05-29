@@ -90,6 +90,7 @@ class TerrainTile {
   struct Vertex {
     GLfloat position[3];
     GLfloat normal[3];
+    GLfloat texture[2];
   };
 
   //**************************************************************************80

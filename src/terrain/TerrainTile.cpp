@@ -47,8 +47,9 @@ TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) :
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * pelem2node_->size(), 
       pelem2node_->data(), GL_DYNAMIC_DRAW);
 
-  GLint pos_loc = glGetAttribLocation(shader.GetProgram(), "position");
+  GLint pos_loc  = glGetAttribLocation(shader.GetProgram(), "position");
   GLint norm_loc = glGetAttribLocation(shader.GetProgram(), "normal");
+  GLint tex_loc  = glGetAttribLocation(shader.GetProgram(), "texCoord");
  
   // Position attribute
   glEnableVertexAttribArray(pos_loc);
@@ -58,6 +59,10 @@ TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) :
   glEnableVertexAttribArray(norm_loc);
   glVertexAttribPointer(norm_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
       reinterpret_cast<GLvoid*>(offsetof(Vertex, normal)));
+  // Texture attribute
+  glEnableVertexAttribArray(tex_loc);
+  glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+      reinterpret_cast<GLvoid*>(offsetof(Vertex, texture)));
 
   // Unbind VBO and VAO, but not EBO
   // The call to glVertexAttribPointer registers VBO to VAO, so safe to unbind
@@ -82,7 +87,7 @@ void TerrainTile::Draw(Camera const& camera) {
     UpdateElem2Node();
     lods_prev_ = lods_;
   }
-
+  
   // Render
   glBindVertexArray(VAO_);
   glDrawElements(GL_TRIANGLES, pelem2node_->size(), GL_UNSIGNED_INT, 0);
@@ -168,6 +173,15 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
       // Set the bounding box
       ymin_ = std::min(ymin_, vertices_out[ix].position[1]);
       ymax_ = std::max(ymax_, vertices_out[ix].position[1]);
+    }
+  }
+
+  // Set the texture coordinates based on largest tile size
+  for (int i = 0; i < nv; ++i) {
+    for (int j = 0; j < nv; ++j) {
+      GLuint ix = nv*j + i;
+      vertices_out[ix].texture[0] = (GLfloat) i / std::pow(2, num_lod_);
+      vertices_out[ix].texture[1] = (GLfloat) j / std::pow(2, num_lod_);
     }
   }
   
