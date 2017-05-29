@@ -177,11 +177,14 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
   }
 
   // Set the texture coordinates based on largest tile size
+  GLuint nrepeat = 4; // number of texture repetitions per largest tile
+  GLuint denom = std::pow(2, num_lod_ - nrepeat + 1);
+  denom = std::max(denom, 1u);
   for (int i = 0; i < nv; ++i) {
     for (int j = 0; j < nv; ++j) {
       GLuint ix = nv*j + i;
-      vertices_out[ix].texture[0] = (GLfloat) i / std::pow(2, num_lod_);
-      vertices_out[ix].texture[1] = (GLfloat) j / std::pow(2, num_lod_);
+      vertices_out[ix].texture[0] = (GLfloat) i / denom;
+      vertices_out[ix].texture[1] = (GLfloat) j / denom;
     }
   }
   

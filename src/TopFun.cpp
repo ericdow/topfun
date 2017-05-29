@@ -30,7 +30,7 @@ GLfloat loop_lock_time = 1.0/120.0;
 int main(int argc, char* argv[]) {
   
   // Set up remaining game objects (in main due to static members)
-  Terrain terrain(100.0f, 20);
+  Terrain terrain(1000.0f, 20);
   Skybox skybox;
 
   // Point callback to correct location  
