@@ -52,12 +52,13 @@ class DebugOverlay {
       debug_strings.push_back("Camera (x,y,z): (" + x.str() + "," + 
           y.str() + "," + z.str() + ")");
       
-      glm::vec2 ang = camera.GetEulerAngles();
-      std::ostringstream phi, theta;
+      glm::vec3 ang = camera.GetEulerAngles();
+      std::ostringstream phi, theta, psi;
       phi << std::setprecision(1) << std::fixed << ang.x;
       theta << std::setprecision(1) << std::fixed << ang.y;
+      psi << std::setprecision(1) << std::fixed << ang.z;
       debug_strings.push_back("Camera (a,b): (" + phi.str() + "," + 
-          theta.str() + ")");
+          theta.str() + "," + psi.str() + ")");
 
       for (auto& s : debug_strings) {
         text_renderer_.Draw(s, xt, yt, scale, text_color);
