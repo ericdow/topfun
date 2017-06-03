@@ -19,14 +19,10 @@ enum Camera_Movement {
   FORWARD,
   BACKWARD,
   LEFT,
-  RIGHT
+  RIGHT,
+  CW, // rotate clockwise
+  CCW // rotate counter-clockwise
 };
-
-// Default camera values
-// TODO move
-const GLfloat SPEED      =  3.0f;
-const GLfloat SENSITIVTY =  0.25f;
-const GLfloat ZOOM       =  45.0f;
 
 class Camera {
  public:
@@ -35,8 +31,8 @@ class Camera {
       glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
     screen_size_(screen_size), front_(glm::vec3(0.0f, 0.0f, -1.0f)), 
-    euler_(0.0f, 0.0f, 0.0f), movement_speed_(SPEED), 
-    mouse_sensitivity_(SENSITIVTY), zoom_(ZOOM)
+    euler_(0.0f, 0.0f, 0.0f), movement_speed_(3.0f), rotate_speed_(2.0f), 
+    mouse_sensitivity_(0.25f), zoom_(45.0f)
   {
     position_ = position;
     worldup_ = up;
@@ -72,7 +68,7 @@ class Camera {
 
   // Moves/alters the camera positions based on user input
   void Move(std::vector<bool> const& keys, GLfloat deltaTime) {
-    // Camera controls
+    // Move
     if(keys[GLFW_KEY_W])
       ProcessKeyboard(FORWARD, deltaTime);
     if(keys[GLFW_KEY_S])
@@ -81,11 +77,18 @@ class Camera {
       ProcessKeyboard(LEFT, deltaTime);
     if(keys[GLFW_KEY_D])
       ProcessKeyboard(RIGHT, deltaTime);
+    // Roll
+    if(keys[GLFW_KEY_E])
+      ProcessKeyboard(CW, deltaTime);
+    else if(keys[GLFW_KEY_Q])
+      ProcessKeyboard(CCW, deltaTime);
   }
 
   // Processes input received from any keyboard-like input system
   void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime) {
     GLfloat velocity = movement_speed_ * deltaTime;
+    GLfloat angular_velocity = rotate_speed_ * deltaTime;
+    // Move
     if (direction == FORWARD)
       position_ += front_ * velocity;
     if (direction == BACKWARD)
@@ -94,6 +97,25 @@ class Camera {
       position_ -= right_ * velocity;
     if (direction == RIGHT)
       position_ += right_ * velocity;
+    // Roll
+    if (direction == CW) {
+      Roll(angular_velocity);
+    }
+    else if (direction == CCW) {
+      Roll(-angular_velocity);
+    }
+  }
+
+  void Roll(GLfloat angular_velocity) {
+    // Constrain the Euler angles
+    euler_.z += glm::degrees(angular_velocity);
+    euler_.z = std::fmod(euler_.z, 360.0f);
+    if (euler_.z < 0.0f) {
+      euler_.z += 360.0f;
+    }
+    glm::vec3 axis = front_;
+    axis = glm::normalize(axis);
+    UpdateCameraVectors2(angular_velocity, axis);
   }
 
   // Processes input received from a mouse input system. Expects the offset 
@@ -129,7 +151,8 @@ class Camera {
     }
     
     // Pitch
-    glm::vec3 axis = glm::cross(front_, up_);
+    // glm::vec3 axis = glm::cross(front_, up_);
+    glm::vec3 axis = right_;
     axis = glm::normalize(axis);
     UpdateCameraVectors(glm::radians(yoffset), axis);
     // Yaw
@@ -159,32 +182,35 @@ class Camera {
   
   // Camera options
   GLfloat movement_speed_;
+  GLfloat rotate_speed_;
   GLfloat mouse_sensitivity_;
   GLfloat zoom_; // FOV
 
-  // Calculates the front vector from the Camera's (updated) Eular Angles
   void UpdateCameraVectors(GLfloat angle, glm::vec3 axis) {
-    glm::quat tmp, quat_view, result;
-    tmp.x = axis.x * sin(angle/2);
-    tmp.y = axis.y * sin(angle/2);
-    tmp.z = axis.z * sin(angle/2);
-    tmp.w = cos(angle/2);
-
-    quat_view.x = front_.x;
-    quat_view.y = front_.y;
-    quat_view.z = front_.z;
-    quat_view.w = 0.0;
-  
-    result = tmp * quat_view * glm::conjugate(tmp);
+    glm::quat rot = glm::angleAxis(angle, axis);
+    glm::quat quat_view = glm::quat(0.0f, front_.x, front_.y, front_.z);
+    glm::quat result = rot * quat_view * glm::conjugate(rot);
 
     front_.x = result.x;
     front_.y = result.y;
     front_.z = result.z;
      
-    // Also re-calculate the right_ and up_ vector
-    // Normalize the vectors, because their length gets closer to 0 the more you
-    // look up or down which results in slower movement.
+    // Recalculate the right and up vector
     right_ = glm::normalize(glm::cross(front_, worldup_));  
+    up_    = glm::normalize(glm::cross(right_, front_));
+  }
+  
+  void UpdateCameraVectors2(GLfloat angle, glm::vec3 axis) {
+    glm::quat rot = glm::angleAxis(angle, axis);
+    glm::quat quat_view = glm::quat(0.0f, right_.x, right_.y, right_.z);
+    glm::quat result = rot * quat_view * glm::conjugate(rot);
+
+    right_.x = result.x;
+    right_.y = result.y;
+    right_.z = result.z;
+     
+    // Recalculate the right and up vector
+    // front_ = glm::normalize(glm::cross(right_, worldup_));  
     up_    = glm::normalize(glm::cross(right_, front_));
   }
 };
