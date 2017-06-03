@@ -3,6 +3,7 @@
 // Std. Includes
 #include <vector>
 #include <iostream>
+#include <array>
 
 // GL Includes
 #include <GL/glew.h>
@@ -14,7 +15,6 @@
 
 // Defines several possible options for camera movement. 
 // Used as abstraction to stay away from window-system specific input methods
-// TODO move
 enum Camera_Movement {
   FORWARD,
   BACKWARD,
@@ -30,15 +30,11 @@ class Camera {
   Camera(std::array<GLuint,2> const& screen_size,
       glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
-    screen_size_(screen_size), front_(glm::vec3(0.0f, 0.0f, -1.0f)), 
+    screen_size_(screen_size), position_(position), 
+    front_(glm::vec3(0.0f, 0.0f, -1.0f)), up_(up), 
     euler_(0.0f, 0.0f, 0.0f), movement_speed_(3.0f), rotate_speed_(2.0f), 
-    mouse_sensitivity_(0.25f), zoom_(45.0f)
-  {
-    position_ = position;
-    worldup_ = up;
-    up_ = up;
+    mouse_sensitivity_(0.25f), zoom_(45.0f) {
     right_ = glm::cross(front_, up_);
-    UpdateCameraVectors(0.0, {0.0, 0.0, 0.0});
   }
 
   // Returns the current position of the camera
@@ -115,9 +111,7 @@ class Camera {
     if (euler_.z < 0.0f) {
       euler_.z += 360.0f;
     }
-    glm::vec3 axis = front_;
-    axis = glm::normalize(axis);
-    UpdateCameraVectors2(angular_velocity, axis);
+    UpdateCameraVectors(angular_velocity, glm::normalize(front_), right_, up_);
   }
 
   // Processes input received from a mouse input system. Expects the offset 
@@ -126,23 +120,9 @@ class Camera {
     xoffset *= mouse_sensitivity_;
     yoffset *= mouse_sensitivity_;
 
-    GLfloat pitch_old = euler_.x;
-
+    // Constrain the Euler angles
     euler_.x += yoffset;
     euler_.y += xoffset;
-    
-    // Flip the world if we flip upside down
-    if ((euler_.x > 90.0f && pitch_old < 90.0f) || 
-        (euler_.x < 90.0f && pitch_old > 90.0f) ||
-        (euler_.x > 270.0f && pitch_old < 270.0f) ||
-        (euler_.x < 270.0f && pitch_old > 270.0f)) {
-      // up_ = -up_;
-    }
-    if (euler_.x > 90.0f && euler_.x < 270.0f) {
-      xoffset = -xoffset;
-    }
-
-    // Constrain the Euler angles
     euler_.x = std::fmod(euler_.x, 360.0f);
     if (euler_.x < 0.0f) {
       euler_.x += 360.0f;
@@ -153,13 +133,11 @@ class Camera {
     }
     
     // Pitch
-    // glm::vec3 axis = glm::cross(front_, up_);
-    // glm::vec3 axis = right_;
-    // axis = glm::normalize(axis);
-    UpdateCameraVectors(glm::radians(yoffset), glm::normalize(right_));
+    UpdateCameraVectors(glm::radians(yoffset), glm::normalize(right_), up_, 
+        front_);
     // Yaw
-    // UpdateCameraVectors(glm::radians(-xoffset), {0.0, 1.0, 0.0});
-    UpdateCameraVectors3(glm::radians(-xoffset), glm::normalize(up_));
+    UpdateCameraVectors(glm::radians(-xoffset), glm::normalize(up_), front_,
+        right_);
   }
 
   // Processes input received from a mouse scroll-wheel event. Only requires 
@@ -180,7 +158,6 @@ class Camera {
   glm::vec3 front_;
   glm::vec3 up_;
   glm::vec3 right_;
-  glm::vec3 worldup_;
   glm::vec3 euler_; // (pitch, yaw, roll)
   
   // Camera options
@@ -188,46 +165,19 @@ class Camera {
   GLfloat rotate_speed_;
   GLfloat mouse_sensitivity_;
   GLfloat zoom_; // FOV
+  
+  void UpdateCameraVectors(GLfloat angle, const glm::vec3& axis, 
+      glm::vec3& dir1, glm::vec3& dir2) {
+    // Rotate dir1 around axis
+    glm::quat quat_rot = glm::angleAxis(angle, axis);
+    glm::quat quat_dir1 = glm::quat(0.0f, dir1.x, dir1.y, dir1.z);
+    glm::quat result = quat_rot * quat_dir1 * glm::conjugate(quat_rot);
 
-  // Pitch
-  void UpdateCameraVectors(GLfloat angle, glm::vec3 axis) {
-    glm::quat rot = glm::angleAxis(angle, axis);
-    glm::quat quat_view = glm::quat(0.0f, up_.x, up_.y, up_.z);
-    glm::quat result = rot * quat_view * glm::conjugate(rot);
-
-    up_.x = result.x;
-    up_.y = result.y;
-    up_.z = result.z;
+    dir1.x = result.x;
+    dir1.y = result.y;
+    dir1.z = result.z;
      
-    // Recalculate the right and up vector
-    front_ = -glm::normalize(glm::cross(right_, up_));  
-  }
- 
-  // Roll 
-  void UpdateCameraVectors2(GLfloat angle, glm::vec3 axis) {
-    glm::quat rot = glm::angleAxis(angle, axis);
-    glm::quat quat_view = glm::quat(0.0f, right_.x, right_.y, right_.z);
-    glm::quat result = rot * quat_view * glm::conjugate(rot);
-
-    right_.x = result.x;
-    right_.y = result.y;
-    right_.z = result.z;
-     
-    // Recalculate the right and up vector
-    up_ = glm::normalize(glm::cross(right_, front_));
-  }
- 
-  // Yaw 
-  void UpdateCameraVectors3(GLfloat angle, glm::vec3 axis) {
-    glm::quat rot = glm::angleAxis(angle, axis);
-    glm::quat quat_view = glm::quat(0.0f, front_.x, front_.y, front_.z);
-    glm::quat result = rot * quat_view * glm::conjugate(rot);
-    
-    front_.x = result.x;
-    front_.y = result.y;
-    front_.z = result.z;
-     
-    // Recalculate the right and up vector
-    right_ = glm::normalize(glm::cross(front_, up_));  
+    // Recalculate dir2 vector
+    dir2 = glm::normalize(glm::cross(dir1, axis));
   }
 };
