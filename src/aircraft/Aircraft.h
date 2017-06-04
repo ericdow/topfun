@@ -10,10 +10,9 @@
 
 #include "shaders/Shader.h"
 #include "utils/Model.h"
+#include "utils/Camera.h"
 
 namespace TopFun {
-
-class Camera;
 
 class Aircraft {
  
@@ -21,7 +20,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief Aircraft - Constructor
   //**************************************************************************80
-  Aircraft();
+  Aircraft(const glm::vec3& position, const glm::quat& orientation);
   
   //**************************************************************************80
   //! \brief ~Aircraft - Destructor
@@ -48,7 +47,8 @@ class Aircraft {
   float elevator_position_;
   float aileron_position_;
   float throttle_position_;
- 
+
+  /* 
   // Longitudinal coefficients
   const std::vector<float> CL_; // lift coefficient vs AoA
   const std::vector<float> CD_; // drag coefficient vs AoA
@@ -76,6 +76,7 @@ class Aircraft {
   const float Cn_da_; // yaw due to aileron
   const float Cl_dr_; // roll due to rudder
   const float Cn_dr_; // yaw due to rudder
+  */
   
   //**************************************************************************80
   //! \brief WorldToAircraft - convert a vector from world coordinates to 
@@ -102,6 +103,11 @@ class Aircraft {
     glm::vec3 lin_momentum_rel = WorldToAircraft(lin_momentum_);
     return atan(lin_momentum_rel.y / lin_momentum_rel.x);
   } 
+
+  //**************************************************************************80
+  //! \brief SetShaderData - sends the uniforms required by the shader
+  //**************************************************************************80
+  void SetShaderData(Camera const& camera);
 
 };
 } // End namespace TopFun

@@ -8,12 +8,14 @@ FIND_PATH( ASSIMP_INCLUDE_DIR assimp/mesh.h
 	/usr/include
 	/usr/local/include
 	/opt/local/include
+  /home/ericdow/code/assimp-3.3.1/include
 )
 FIND_LIBRARY( ASSIMP_LIBRARY assimp
 	/usr/lib64
 	/usr/lib
 	/usr/local/lib
 	/opt/local/lib
+  /home/ericdow/code/assimp-3.3.1/lib
 )
 IF(ASSIMP_INCLUDE_DIR AND ASSIMP_LIBRARY)
 	SET( ASSIMP_FOUND TRUE )

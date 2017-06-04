@@ -1,4 +1,5 @@
 #include <SOIL.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "terrain/Terrain.h"
 

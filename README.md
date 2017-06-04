@@ -13,7 +13,6 @@ libglew-dev
 libxmu-dev
 libxi-dev
 libsoil-dev
-libassimp-dev
 
 libeigen3-dev
 
@@ -21,4 +20,4 @@ libnoise-dev
 
 libfreetype6-dev
 
-Assimp is used to load meshes. Make sure to add -fPIC to C/C++ flags in CMake when compiling it.
+Assimp is used to load meshes and must be built yourself. Make sure to add -fPIC to C/C++ flags in CMake when compiling it.

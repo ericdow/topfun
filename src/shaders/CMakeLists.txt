@@ -6,6 +6,8 @@ set(FILES_TO_SEND
   text.frag
   skybox.vs
   skybox.frag
+  aircraft.vs
+  aircraft.frag
 ) 
 
 # this sends files over if they have changed

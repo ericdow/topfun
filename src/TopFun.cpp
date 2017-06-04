@@ -8,10 +8,11 @@
 #include "utils/DebugOverlay.h"
 #include "terrain/Terrain.h"
 #include "terrain/Skybox.h"
+#include "aircraft/Aircraft.h"
 
 using namespace TopFun;
 
-void DrawScene(Terrain& terrain, Skybox& skybox);
+void DrawScene(Terrain& terrain, Skybox& skybox, Aircraft& aircraft);
 
 // Set up the GL/GLFW environment
 const std::array<GLuint,2> screen_size = {1200, 800};
@@ -22,6 +23,8 @@ GLfloat terrain_size = 1000.0f;
 glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
+Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
+    glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 CallBackWorld callback_world(camera, debug_overlay, screen_size);
 
 GLfloat last_draw_time = 0.0f;
@@ -55,11 +58,11 @@ int main(int argc, char* argv[]) {
     if (callback_world.IsFPSLocked()) {
       if (draw_wait_time > 0.01666) {
         draw_wait_time = 0.0;
-        DrawScene(terrain, skybox);
+        DrawScene(terrain, skybox, aircraft);
       }
     }
     else {
-      DrawScene(terrain, skybox);
+      DrawScene(terrain, skybox, aircraft);
     }
 
     // Sleep (if possible)
@@ -76,7 +79,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void DrawScene(Terrain& terrain, Skybox& skybox) {
+void DrawScene(Terrain& terrain, Skybox& skybox, Aircraft& aircraft) {
   // Compute frame time
   GLfloat current_draw_time = glfwGetTime();
   GLfloat delta_draw_time = current_draw_time - last_draw_time;
@@ -87,6 +90,7 @@ void DrawScene(Terrain& terrain, Skybox& skybox) {
   
   terrain.Draw(camera);
   skybox.Draw(camera);
+  aircraft.Draw(camera);
   // Display the debug console last
   debug_overlay.Draw(camera, delta_loop_time, delta_draw_time);
       
