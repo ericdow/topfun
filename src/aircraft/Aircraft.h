@@ -31,6 +31,11 @@ class Aircraft {
   //! \brief Draw - draws the aircraft
   //**************************************************************************80
   void Draw(Camera const& camera);
+  
+  //**************************************************************************80
+  //! \brief Move - process keyboard input to move the aircraft
+  //**************************************************************************80
+  void Move(std::vector<bool> const& keys, float deltaTime);
 
  private:
   Shader shader_;
@@ -77,6 +82,11 @@ class Aircraft {
   const float Cl_dr_; // roll due to rudder
   const float Cn_dr_; // yaw due to rudder
   */
+  
+  //**************************************************************************80
+  //! \brief Rotate - rotate the aircraft based on keyboard input
+  //**************************************************************************80
+  void Rotate(float angle, glm::vec3 axis);
   
   //**************************************************************************80
   //! \brief WorldToAircraft - convert a vector from world coordinates to 

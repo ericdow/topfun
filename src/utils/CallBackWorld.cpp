@@ -5,10 +5,10 @@ namespace TopFun {
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
-    std::array<GLuint,2> const& screen_size) : first_mouse_(true), 
-  last_mouse_pos_({(double)screen_size[0]/2, (double)screen_size[1]/2}), 
-  key_state_(1024,false), fps_locked_(true), w_double_pressed_(false), 
-  last_w_press_time_(-100.0f),
+    std::array<GLuint,2> const& screen_size) : 
+  first_mouse_(true), last_mouse_pos_({(double)screen_size[0]/2, 
+  (double)screen_size[1]/2}), key_state_(1024,false), fps_locked_(true), 
+  w_double_pressed_(false), last_w_press_time_(-100.0f),
   camera_(camera), debug_overlay_(debug_overlay) {}
 
 //****************************************************************************80

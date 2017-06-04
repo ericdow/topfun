@@ -19,6 +19,8 @@ struct Vertex {
   glm::vec3 Position;
   glm::vec3 Normal;
   glm::vec2 TexCoords;
+  glm::vec3 Tangent;
+  glm::vec3 Bitangent;
 };
 
 struct Texture {
@@ -41,16 +43,22 @@ class Mesh {
     // Bind appropriate textures
     GLuint diffuseNr = 1;
     GLuint specularNr = 1;
-    for(GLuint i = 0; i < textures_.size(); i++) {
+    GLuint normalNr = 1;
+    GLuint heightNr = 1;
+    for (GLuint i = 0; i < textures_.size(); i++) {
       glActiveTexture(GL_TEXTURE0 + i);
       // Retrieve texture number (the N in diffuse_textureN)
       std::stringstream ss;
       std::string number;
       std::string name = textures_[i].type;
-      if(name == "texture_diffuse")
+      if (name == "texture_diffuse")
         ss << diffuseNr++; // Transfer GLuint to stream
-      else if(name == "texture_specular")
+      else if (name == "texture_specular")
         ss << specularNr++; // Transfer GLuint to stream
+      else if (name == "texture_normal")
+        ss << normalNr++; // Transfer GLuint to stream
+      else if (name == "texture_height")
+        ss << heightNr++; // Transfer GLuint to stream
       number = ss.str(); 
       // Now set the sampler to the correct texture unit
       glUniform1i(glGetUniformLocation(shader.GetProgram(), 

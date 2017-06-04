@@ -42,7 +42,8 @@ class Model {
     // Read file via ASSIMP
     Assimp::Importer importer;
     const aiScene* scene = 
-      importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+      importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | 
+          aiProcess_CalcTangentSpace);
     // Check for errors
     if (!scene || 
         scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || 
@@ -101,6 +102,16 @@ class Model {
       }
       else
         vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+      // tangent
+      vector.x = mesh->mTangents[i].x;
+      vector.y = mesh->mTangents[i].y;
+      vector.z = mesh->mTangents[i].z;
+      vertex.Tangent = vector;
+      // bitangent
+      vector.x = mesh->mBitangents[i].x;
+      vector.y = mesh->mBitangents[i].y;
+      vector.z = mesh->mBitangents[i].z;
+      vertex.Bitangent = vector;
       vertices.push_back(vertex);
     }
     // Walk through each mesh face and retrieve corresponding vertex indices

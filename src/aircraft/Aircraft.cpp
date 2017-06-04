@@ -1,4 +1,6 @@
 #include <glm/gtc/type_ptr.hpp>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include "aircraft/Aircraft.h"
 
@@ -23,9 +25,38 @@ void Aircraft::Draw(Camera const& camera) {
 }
 
 //****************************************************************************80
+void Aircraft::Move(std::vector<bool> const& keys, float deltaTime) {
+  if(keys[GLFW_KEY_UP]) {
+    glm::vec3 axis = WorldToAircraft(glm::vec3(-1.0f, 0.0f, 0.0f));
+    Rotate(2.0f*deltaTime, axis);
+  }
+  if(keys[GLFW_KEY_DOWN]) {
+    glm::vec3 axis = WorldToAircraft(glm::vec3(1.0f, 0.0f, 0.0f));
+    Rotate(2.0f*deltaTime, axis);
+  }
+  if(keys[GLFW_KEY_LEFT]) {
+    glm::vec3 axis = WorldToAircraft(glm::vec3(0.0f, -1.0f, 0.0f));
+    Rotate(2.0f*deltaTime, axis);
+  }
+  if(keys[GLFW_KEY_RIGHT]) {
+    glm::vec3 axis = WorldToAircraft(glm::vec3(0.0f, 1.0f, 0.0f));
+    Rotate(2.0f*deltaTime, axis);
+  }
+  glm::vec3 front = WorldToAircraft(glm::vec3(0.0f, 1.0f, 0.0f));
+  position_ += 50.0f * deltaTime * front;
+}
+
+//****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
-void Aircraft::SetShaderData(Camera const& camera) {
+void Aircraft::Rotate(float angle, glm::vec3 axis) {
+  axis = glm::normalize(axis);
+  glm::quat quat_rot = glm::angleAxis(angle, axis);
+  orientation_ = quat_rot * orientation_;
+}
+
+//****************************************************************************80
+  void Aircraft::SetShaderData(Camera const& camera) {
   // Set view/projection uniforms  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
       GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));

@@ -55,7 +55,7 @@ class Camera {
   // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
   glm::mat4 GetProjectionMatrix() const {
     return glm::perspective(glm::radians(zoom_), 
-        (GLfloat)screen_size_[0] / (GLfloat)screen_size_[1], 0.1f, 500.0f);
+        (GLfloat)screen_size_[0] / (GLfloat)screen_size_[1], 0.1f, 2000.0f);
   }
 
   inline GLfloat GetZoom() const { return zoom_; }
@@ -65,7 +65,7 @@ class Camera {
   }
 
   // Moves/alters the camera positions based on user input
-  void Move(std::vector<bool> const& keys, GLfloat deltaTime) {
+  void Move(std::vector<bool> const& keys, float deltaTime) {
     // Move
     if(keys[GLFW_KEY_W])
       ProcessKeyboard(FORWARD, deltaTime);

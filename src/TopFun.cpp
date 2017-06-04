@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
     // Check and call events
     glfwPollEvents();
     camera.Move(callback_world.GetKeyState(), delta_loop_time);
+    aircraft.Move(callback_world.GetKeyState(), delta_loop_time);
 
     // Draw the scene
     draw_wait_time += delta_loop_time;

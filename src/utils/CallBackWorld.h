@@ -13,7 +13,7 @@ namespace TopFun {
 
 class CallBackWorld {
  public:
-  CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
+  CallBackWorld(Camera& camera, DebugOverlay& debug_overlay, 
       std::array<GLuint,2> const& screen_size);
 
   ~CallBackWorld() = default;
@@ -40,7 +40,7 @@ class CallBackWorld {
   
   Camera& camera_;
   DebugOverlay& debug_overlay_;
-  
+
 };
 } // End namespace TopFun
 
