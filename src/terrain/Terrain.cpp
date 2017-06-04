@@ -1,4 +1,4 @@
-#include "SOIL.h"
+#include <SOIL.h>
 
 #include "terrain/Terrain.h"
 
@@ -49,9 +49,6 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
     }
   }
 }
-
-//****************************************************************************80
-Terrain::~Terrain() {}
 
 //****************************************************************************80
 void Terrain::Draw(Camera const& camera) {

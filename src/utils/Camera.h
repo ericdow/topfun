@@ -170,7 +170,7 @@ class Camera {
       glm::vec3& dir1, glm::vec3& dir2) {
     // Rotate dir1 around axis
     glm::quat quat_rot = glm::angleAxis(angle, axis);
-    glm::quat quat_dir1 = glm::quat(0.0f, dir1.x, dir1.y, dir1.z);
+    glm::quat quat_dir1 = glm::quat(0.0f, dir1);
     glm::quat result = quat_rot * quat_dir1 * glm::conjugate(quat_rot);
 
     dir1.x = result.x;

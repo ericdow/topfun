@@ -17,8 +17,9 @@ void DrawScene(Terrain& terrain, Skybox& skybox);
 const std::array<GLuint,2> screen_size = {1200, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
-// Set up objects that can be modified by input callbacks 
-glm::vec3 start_pos(0.0f, 20.0f, 0.0f);
+// Set up objects that can be modified by input callbacks
+GLfloat terrain_size = 1000.0f; 
+glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 CallBackWorld callback_world(camera, debug_overlay, screen_size);
@@ -30,7 +31,7 @@ GLfloat loop_lock_time = 1.0/120.0;
 int main(int argc, char* argv[]) {
   
   // Set up remaining game objects (in main due to static members)
-  Terrain terrain(1000.0f, 20);
+  Terrain terrain(terrain_size, 20);
   Skybox skybox;
 
   // Point callback to correct location  

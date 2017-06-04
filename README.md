@@ -13,6 +13,7 @@ libglew-dev
 libxmu-dev
 libxi-dev
 libsoil-dev
+libassimp-dev
 
 libeigen3-dev
 
