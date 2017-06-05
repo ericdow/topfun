@@ -12,6 +12,8 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   shader_("shaders/aircraft.vs", "shaders/aircraft.frag"),
   model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
   position_(position), orientation_(orientation) {
+    // TODO scale 
+    delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, 0.25f);
 }
 
 //****************************************************************************80
@@ -63,7 +65,9 @@ void Aircraft::Rotate(float angle, glm::vec3 axis) {
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"),
       1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
   glm::mat4 model = glm::translate(glm::mat4(), position_);
+  model = glm::translate(model, -delta_center_of_mass_);
   model *= glm::toMat4(orientation_);
+  model = glm::translate(model, delta_center_of_mass_);
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "model"),
       1, GL_FALSE, glm::value_ptr(model));
 

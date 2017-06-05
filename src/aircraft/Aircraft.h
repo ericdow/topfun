@@ -53,35 +53,37 @@ class Aircraft {
   float aileron_position_;
   float throttle_position_;
 
-  /* 
   // Longitudinal coefficients
-  const std::vector<float> CL_; // lift coefficient vs AoA
-  const std::vector<float> CD_; // drag coefficient vs AoA
-  const std::vector<float> Cm_; // moment coefficient vs AoA
-  const float CL_Q_; // lift due to pitch rate
-  const float Cm_Q_; // moment due to pitch rate
-  const float CL_alpha_dot_; // lift due to AoA rate
-  const float Cm_alpha_dot_; // moment due to AoA rate
+  std::vector<float> CL_; // lift coefficient vs AoA
+  std::vector<float> CD_; // drag coefficient vs AoA
+  std::vector<float> Cm_; // moment coefficient vs AoA
+  float CL_Q_; // lift due to pitch rate
+  float Cm_Q_; // moment due to pitch rate
+  float CL_alpha_dot_; // lift due to AoA rate
+  float Cm_alpha_dot_; // moment due to AoA rate
 
   // Lateral coefficients
-  const float CY_beta_; // side force due to sideslip
-  const float Cl_beta_; // dihedral effect
-  const float Cl_P_; // roll damping
-  const float Cl_R_; // roll due to yaw rate
-  const float Cn_beta_; // weather cocking stability
-  const float Cn_P_; // rudder adverse yaw
-  const float Cn_R_; // yaw damping
+  float CY_beta_; // side force due to sideslip
+  float Cl_beta_; // dihedral effect
+  float Cl_P_; // roll damping
+  float Cl_R_; // roll due to yaw rate
+  float Cn_beta_; // weather cocking stability
+  float Cn_P_; // rudder adverse yaw
+  float Cn_R_; // yaw damping
 
   // Control coefficients
-  const float CL_de_; // lift due to elevator
-  const float CD_de_; // drag due to elevator
-  const float CY_de_; // side force due to elevator
-  const float Cm_de_; // pitch due to elevator
-  const float Cl_da_; // roll due to aileron 
-  const float Cn_da_; // yaw due to aileron
-  const float Cl_dr_; // roll due to rudder
-  const float Cn_dr_; // yaw due to rudder
-  */
+  float CL_de_; // lift due to elevator
+  float CD_de_; // drag due to elevator
+  float CY_de_; // side force due to elevator
+  float Cm_de_; // pitch due to elevator
+  float Cl_da_; // roll due to aileron 
+  float Cn_da_; // yaw due to aileron
+  float Cl_dr_; // roll due to rudder
+  float Cn_dr_; // yaw due to rudder
+
+  // Mass/Inertia/etc.
+  float mass_;
+  glm::vec3 delta_center_of_mass_; // from model centroid
   
   //**************************************************************************80
   //! \brief Rotate - rotate the aircraft based on keyboard input
