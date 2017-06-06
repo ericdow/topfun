@@ -73,11 +73,11 @@ void main()
 
   vec4 base = texture(grassTexture0, TexCoord);
 
-  vec4 highlight0 = texture(grassTexture1, TexCoord)*pow(abs(norm.z),1.0f/4) + 
-    base*(1.0f - pow(abs(norm.z),1.0f/4));
+  vec4 highlight0 = texture(grassTexture1, TexCoord)*pow(abs(norm.z), 1.0f/4) +
+    base*(1.0f - pow(abs(norm.z), 1.0f/4));
   
-  vec4 highlight1 = texture(grassTexture2, TexCoord)*pow(abs(norm.x),1.0f/4) + 
-    base*(1.0f - pow(abs(norm.x),1.0f/4));
+  vec4 highlight1 = texture(grassTexture2, TexCoord)*pow(abs(norm.x), 1.0f/4) +
+    base*(1.0f - pow(abs(norm.x), 1.0f/4));
   
   color = vec4(ambient + diffuse + specular, 1.0f) * highlight0 * highlight1;
  

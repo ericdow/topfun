@@ -8,6 +8,7 @@ set(FILES_TO_SEND
   skybox.frag
   aircraft.vs
   aircraft.frag
+  canopy.frag
 ) 
 
 # this sends files over if they have changed

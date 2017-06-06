@@ -8,22 +8,33 @@ namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) : 
-  shader_("shaders/aircraft.vs", "shaders/aircraft.frag"),
-  model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
-  position_(position), orientation_(orientation) {
-    // TODO scale 
-    delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, 0.25f);
+Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
+    fuselage_shader_("shaders/aircraft.vs", "shaders/aircraft.frag"),
+    canopy_shader_("shaders/aircraft.vs", "shaders/canopy.frag"),
+    model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
+    position_(position), orientation_(orientation) {
+  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, -0.25f);
+  // Draw the canopy last since it's transparent
+  std::vector<unsigned int> draw_order(22);
+  std::iota(draw_order.begin(), draw_order.end(), 0);
+  draw_order.back() = 2;
+  draw_order[2] = draw_order.size() - 1;
+  model_.SetDrawOrder(draw_order);
+  // Set the shader pointers for each mesh
+  std::vector<Shader*> shaders(22);
+  for (size_t i = 0; i < shaders.size()-1; i++) {
+    shaders[i] = &fuselage_shader_;
+  }
+  shaders.back() = &canopy_shader_;
+  model_.SetShaders(shaders);
 }
 
 //****************************************************************************80
 void Aircraft::Draw(Camera const& camera) {
-  // Activate shader
-  shader_.Use();
   // Send data to the shaders
   SetShaderData(camera);
   // Draw the model
-  model_.Draw(shader_);
+  model_.Draw();
 }
 
 //****************************************************************************80
@@ -59,17 +70,29 @@ void Aircraft::Rotate(float angle, glm::vec3 axis) {
 
 //****************************************************************************80
   void Aircraft::SetShaderData(Camera const& camera) {
-  // Set view/projection uniforms  
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
-      GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"),
-      1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
+  // Rotate and translate model 
   glm::mat4 model = glm::translate(glm::mat4(), position_);
-  model = glm::translate(model, -delta_center_of_mass_);
-  model *= glm::toMat4(orientation_);
   model = glm::translate(model, delta_center_of_mass_);
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "model"),
-      1, GL_FALSE, glm::value_ptr(model));
+  model *= glm::toMat4(orientation_);
+  model = glm::translate(model, -delta_center_of_mass_);
+  
+  // Set model/view/projection uniforms
+  fuselage_shader_.Use();
+  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(), 
+        "view"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(),
+        "projection"), 1, GL_FALSE, 
+      glm::value_ptr(camera.GetProjectionMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(), 
+        "model"), 1, GL_FALSE, glm::value_ptr(model));
+  canopy_shader_.Use();
+  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(), 
+        "view"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(),
+        "projection"), 1, GL_FALSE, 
+      glm::value_ptr(camera.GetProjectionMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(), 
+        "model"), 1, GL_FALSE, glm::value_ptr(model));
 
   /*
   // Set material uniforms

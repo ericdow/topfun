@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <numeric>
 
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
 #include <glm/glm.hpp>
@@ -26,16 +27,33 @@ class Model {
   // Constructor, expects a filepath to a 3D model
   Model(const std::string& path) {
     LoadModel(path);
+    // Default: draw meshes in order of appearance in .obj file
+    draw_order_.resize(meshes_.size());
+    std::iota(draw_order_.begin(), draw_order_.end(), 0); 
   }
 
-  // Draws the model, and thus all its meshes
-  void Draw(const Shader& shader) {
-    for(GLuint i = 0; i < meshes_.size(); ++i)
-      meshes_[i].Draw(shader);
+  // Draws all the meshes in this model
+  void Draw() {
+    for(size_t i = 0; i < meshes_.size(); ++i) {
+      shaders_[i]->Use();
+      meshes_[draw_order_[i]].Draw(*(shaders_[i]));
+    }
+  }
+
+  // Sets the order to draw the meshes in
+  void SetDrawOrder(const std::vector<unsigned int>& draw_order) {
+    draw_order_ = draw_order;
+  }
+  
+  // Sets the shader pointer for each mesh
+  void SetShaders(const std::vector<Shader*>& shaders) {
+    shaders_ = shaders;
   }
   
  private:
   std::vector<Mesh> meshes_;
+  std::vector<unsigned int> draw_order_; // order to draw the meshes
+  std::vector<Shader*> shaders_; // shaders to use for each mesh
 
   // Loads a model with supported ASSIMP extensions from file
   void LoadModel(const std::string& path) {

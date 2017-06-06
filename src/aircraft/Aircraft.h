@@ -38,7 +38,8 @@ class Aircraft {
   void Move(std::vector<bool> const& keys, float deltaTime);
 
  private:
-  Shader shader_;
+  Shader fuselage_shader_;
+  Shader canopy_shader_;
   Model model_;
 
   // Primary state variables (all in world frame)
