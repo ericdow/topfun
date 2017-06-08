@@ -29,7 +29,8 @@ class Model {
     LoadModel(path);
     // Default: draw meshes in order of appearance in .obj file
     draw_order_.resize(meshes_.size());
-    std::iota(draw_order_.begin(), draw_order_.end(), 0); 
+    std::iota(draw_order_.begin(), draw_order_.end(), 0);
+    FormAABB(); 
   }
 
   // Draws all the meshes in this model
@@ -54,6 +55,7 @@ class Model {
   std::vector<Mesh> meshes_;
   std::vector<unsigned int> draw_order_; // order to draw the meshes
   std::vector<Shader*> shaders_; // shaders to use for each mesh
+  std::array<std::array<float,2>,3> AABB_; // min/max extent for x,y,z
 
   // Loads a model with supported ASSIMP extensions from file
   void LoadModel(const std::string& path) {
@@ -186,6 +188,20 @@ class Model {
       textures.push_back(texture);
     }
     return textures;
+  }
+
+  // Forms an AABB of a model from its constituent meshes
+  void FormAABB() {
+    AABB_ = meshes_[0].FormAABB();
+    for (size_t i = 1; i < meshes_.size(); ++i) {
+      std::array<std::array<float,2>,3> AABB = meshes_[i].FormAABB();
+      AABB_[0][0] = std::min(AABB_[0][0], AABB[0][0]);
+      AABB_[0][1] = std::max(AABB_[0][1], AABB[0][1]);
+      AABB_[1][0] = std::min(AABB_[1][0], AABB[1][0]);
+      AABB_[1][1] = std::max(AABB_[1][1], AABB[1][1]);
+      AABB_[2][0] = std::min(AABB_[2][0], AABB[2][0]);
+      AABB_[2][1] = std::max(AABB_[2][1], AABB[2][1]);
+    }
   }
 };
 

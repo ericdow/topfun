@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <array>
 
 #include <GL/glew.h> 
 #include <glm/glm.hpp>
@@ -81,6 +82,23 @@ class Mesh {
       glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, 0);
     }
+  }
+
+  // Forms an AABB of mesh
+  std::array<std::array<float,2>,3> FormAABB() const {
+    std::array<std::array<float,2>,3> AABB;
+    AABB[0] = {vertices_[0].Position.x, vertices_[0].Position.x};
+    AABB[1] = {vertices_[0].Position.y, vertices_[0].Position.y};
+    AABB[2] = {vertices_[0].Position.z, vertices_[0].Position.z};
+    for (size_t i = 1; i < vertices_.size(); ++i) {
+      AABB[0][0] = std::min(vertices_[i].Position.x, AABB[0][0]);
+      AABB[0][1] = std::max(vertices_[i].Position.x, AABB[0][1]);
+      AABB[1][0] = std::min(vertices_[i].Position.y, AABB[1][0]);
+      AABB[1][1] = std::max(vertices_[i].Position.y, AABB[1][1]);
+      AABB[2][0] = std::min(vertices_[i].Position.z, AABB[2][0]);
+      AABB[2][1] = std::max(vertices_[i].Position.z, AABB[2][1]);
+    }
+    return AABB;
   }
 
  private:
