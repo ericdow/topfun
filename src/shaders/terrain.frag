@@ -54,8 +54,7 @@ float CalcFogFactor(Fog params, float FogCoord)
   return Result;
 }
 
-void main()
-{
+void main() {
   // Ambient
   vec3 ambient = light.ambient * material.color;
 	

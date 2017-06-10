@@ -27,6 +27,9 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   }
   shaders.back() = &canopy_shader_;
   model_.SetShaders(shaders);
+  // Define the aerodynamic coefficients
+  // TODO
+  CL_ = {0.0, 1.0, 0.0};
 }
 
 //****************************************************************************80
@@ -95,12 +98,6 @@ void Aircraft::Rotate(float angle, glm::vec3 axis) {
         "model"), 1, GL_FALSE, glm::value_ptr(model));
 
   /*
-  // Set material uniforms
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.color"), 1.0f, 1.0f, 1.0f);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.shininess"), 1.0f);
-
   // Set lighting uniforms
   // TODO move light direction definition to somewhere higher up
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.direction"),
@@ -116,7 +113,7 @@ void Aircraft::Rotate(float angle, glm::vec3 axis) {
   glm::vec3 camera_pos = camera.GetPosition();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "viewPos"), 
       camera_pos.x, camera_pos.y, camera_pos.z);
-  */
+      */
 }
 
 } // End namespace TopFun
