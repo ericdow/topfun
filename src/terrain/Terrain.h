@@ -15,6 +15,8 @@
 
 namespace TopFun {
 
+class Sky;
+
 class Terrain {
  
  public:
@@ -38,7 +40,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw(Camera const& camera);
+  void Draw(const Camera& camera, const Sky& sky);
 
  private:
   Shader shader_;
@@ -54,7 +56,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera);
+  void SetShaderData(Camera const& camera, const Sky& sky);
   
 };
 } // End namespace TopFun

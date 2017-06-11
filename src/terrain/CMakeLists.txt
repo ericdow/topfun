@@ -1,7 +1,7 @@
 # build the terrain library
 set(SOURCES
   Terrain.cpp
-  Skybox.cpp
+  Sky.cpp
   TerrainTile.cpp
 )
 

@@ -1,11 +1,15 @@
 #include "SOIL.h"
-#include "terrain/Skybox.h"
+#include "terrain/Sky.h"
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Skybox::Skybox() : shader_("shaders/skybox.vs", "shaders/skybox.frag") {
+Sky::Sky() : shader_("shaders/skybox.vs", "shaders/skybox.frag"),
+  sun_dir_(glm::vec3(0.0f, -1.0f, 0.0f)), 
+  sun_color_(glm::vec3(1.0f, 1.0f, 1.0f)),
+  fog_color_(glm::vec3(183.0/256.0, 213.0/256.0, 219.0/256.0)),
+  fog_start_end_({70.0f, 200.0f}), fog_eq_(0) {
   
   GLfloat vertices[] = {
   // Positions          
@@ -52,7 +56,7 @@ Skybox::Skybox() : shader_("shaders/skybox.vs", "shaders/skybox.frag") {
    1.0f, -1.0f,  1.0f
   };
 
-  // Setup skybox VAO
+  // Setup sky VAO
   GLuint VBO;
   glGenVertexArrays(1, &VAO_);
   glGenBuffers(1, &VBO);
@@ -67,22 +71,28 @@ Skybox::Skybox() : shader_("shaders/skybox.vs", "shaders/skybox.frag") {
 
   // Load cubemap textures
   std::vector<const GLchar*> faces;
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayLeft2048.png");
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayRight2048.png");
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayUp2048.png");
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayDown2048.png");
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayFront2048.png");
-  faces.push_back("../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayBack2048.png");
+  faces.push_back(
+      "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayLeft2048.png");
+  faces.push_back(
+     "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayRight2048.png");
+  faces.push_back(
+      "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayUp2048.png");
+  faces.push_back(
+      "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayDown2048.png");
+  faces.push_back(
+     "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayFront2048.png");
+  faces.push_back(
+      "../../../assets/textures/TropicalSunnyDay/TropicalSunnyDayBack2048.png");
   LoadCubemap(faces);
 }
 
 //****************************************************************************80
-Skybox::~Skybox() {
+Sky::~Sky() {
   glDeleteVertexArrays(1, &VAO_);
 }
 
 //****************************************************************************80
-void Skybox::Draw(Camera const& camera) {		
+void Sky::Draw(Camera const& camera) {		
   // Change depth function so depth test passes when values are equal to 
   // depth buffer's content
   glDepthFunc(GL_LEQUAL);  
@@ -90,7 +100,7 @@ void Skybox::Draw(Camera const& camera) {
   SetShaderData(camera);  
   glBindVertexArray(VAO_);
   glActiveTexture(GL_TEXTURE0);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "skybox"), 0);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "sky"), 0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture_);
   glDrawArrays(GL_TRIANGLES, 0, 36);
   glBindVertexArray(0);
@@ -100,7 +110,7 @@ void Skybox::Draw(Camera const& camera) {
 //****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
-void Skybox::LoadCubemap(std::vector<const GLchar*> const& faces) {
+void Sky::LoadCubemap(std::vector<const GLchar*> const& faces) {
   glGenTextures(1, &cubemap_texture_);
 
   int width,height;
@@ -122,7 +132,7 @@ void Skybox::LoadCubemap(std::vector<const GLchar*> const& faces) {
 }
 
 //****************************************************************************80
-void Skybox::SetShaderData(Camera const& camera) {
+void Sky::SetShaderData(Camera const& camera) {
   // Remove any translation component of the view matrix	
   glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));	
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 

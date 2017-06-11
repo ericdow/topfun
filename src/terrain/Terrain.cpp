@@ -2,6 +2,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "terrain/Terrain.h"
+#include "terrain/Sky.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -52,12 +53,12 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
 }
 
 //****************************************************************************80
-void Terrain::Draw(Camera const& camera) {
+void Terrain::Draw(Camera const& camera, const Sky& sky) {
   // Activate shader
   shader_.Use();
 
   // Send data to the shaders
-  SetShaderData(camera);
+  SetShaderData(camera, sky);
   
   // Bind the texture data
   glActiveTexture(GL_TEXTURE0);
@@ -122,7 +123,7 @@ void Terrain::LoadTextures() {
 }
 
 //****************************************************************************80
-void Terrain::SetShaderData(Camera const& camera) {
+void Terrain::SetShaderData(Camera const& camera, const Sky& sky) {
   // Set view/projection uniforms  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
       GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
@@ -136,22 +137,28 @@ void Terrain::SetShaderData(Camera const& camera) {
         "material.shininess"), 1.0f);
 
   // Set lighting uniforms
-  // TODO move light direction definition to somewhere higher up
+  const glm::vec3& sun_dir = sky.GetSunDirection();
+  const glm::vec3& sun_color = sky.GetSunColor();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.direction"),
-      -0.3f, -1.0f, 0.0f);
+      sun_dir.x, sun_dir.y, sun_dir.z);
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.ambient"), 
-      0.2f, 0.2f, 0.2f);
+      0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.diffuse"), 
-      0.5f, 0.5f, 0.5f);
+      0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.specular"), 
-      1.0f, 1.0f, 1.0f);
+      0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
 
   // Set fog uniforms
+  const glm::vec3& fog_color = sky.GetFogColor();
+  const std::array<float,2>& fog_start_end = sky.GetFogStartEnd();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "fog.Color"),
-      183.0/256.0, 213.0/256.0, 219.0/256.0);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.Start"), 70.0f);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.End"), 200.0f);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "fog.Equation"), 0);
+      fog_color.x, fog_color.y, fog_color.z);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.Start"), 
+      fog_start_end[0]);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.End"), 
+      fog_start_end[1]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "fog.Equation"), 
+      sky.GetFogEquation());
   
   // Set the camera position uniform
   glm::vec3 camera_pos = camera.GetPosition();

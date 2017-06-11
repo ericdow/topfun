@@ -15,6 +15,8 @@
 
 namespace TopFun {
 
+class Sky;
+
 class Aircraft {
  
  public:
@@ -31,7 +33,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief Draw - draws the aircraft
   //**************************************************************************80
-  void Draw(Camera const& camera);
+  void Draw(const Camera& camera, const Sky& sky);
   
   //**************************************************************************80
   //! \brief Move - process keyboard input to move the aircraft
@@ -101,10 +103,23 @@ class Aircraft {
   //**************************************************************************80
   //! \brief WorldToAircraft - convert a vector from world coordinates to 
   //! aircraft local coordinates
+  //! \details Aircraft is oriented like this:
+  /*!     ^ x (front)
+   *      |
+   *      O 
+   *  ====O====->
+   *      O\    y (right)
+   *      V \
+   *     =|= v z (down)
+   */    
+  //! \param[in] world_vec - vector in world frame
+  //! \param[in] orientation - orientation of aircraft
+  //! \returns vector in aircraft frame
   //**************************************************************************80
-  inline glm::vec3 WorldToAircraft(const glm::vec3& world_vec) const {
+  inline glm::vec3 WorldToAircraft(const glm::vec3& world_vec,
+      const glm::quat& orientation) const {
     glm::quat world_quat = glm::quat(0.0f, world_vec);
-    glm::quat result = orientation_ * world_quat * glm::conjugate(orientation_);
+    glm::quat result = orientation * world_quat * glm::conjugate(orientation);
     return glm::vec3(result.x, result.y, result.z);
   }
 
@@ -117,11 +132,11 @@ class Aircraft {
   } 
   
   //**************************************************************************80
-  //! \brief CalcAlphaRate - calculate the time derivative of angle of attack
+  //! \brief CalcAlphaDot - calculate the time derivative of angle of attack
   //! \param[in] v - velocity in aircraft frame
   //! \param[in] a - acceleration in aircraft frame
   //**************************************************************************80
-  inline float CalcAlphaRate(const glm::vec3& v, const glm::vec3& a) const {
+  inline float CalcAlphaDot(const glm::vec3& v, const glm::vec3& a) const {
     return (v.x*a.z - v.z*a.x) / std::sqrt(v.x*v.x + v.z*v.z); 
   } 
   
@@ -134,11 +149,11 @@ class Aircraft {
   } 
   
   //**************************************************************************80
-  //! \brief CalcBetaRate - calculate the time derivative of sideslip angle
+  //! \brief CalcBetaDot - calculate the time derivative of sideslip angle
   //! \param[in] v - velocity in aircraft frame
   //! \param[in] a - acceleration in aircraft frame
   //**************************************************************************80
-  inline float CalcBetaRate(const glm::vec3& v, const glm::vec3& a) const {
+  inline float CalcBetaDot(const glm::vec3& v, const glm::vec3& a) const {
     float u2w2 = std::sqrt(v.x*v.x + v.z*v.z);
     return (a.y*u2w2 - v.y*(v.x*a.x + v.z*a.z)) / 
       (u2w2*(v.x*v.x + v.y*v.y + v.z*v.z));
@@ -175,14 +190,15 @@ class Aircraft {
   //! \param[in] vt - total velocity
   //! \param[in] dve - velocity across tail control surfaces 
   //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] de - elevator position
   //! \returns - value of drag
   //**************************************************************************80
   inline float CalcLift(float alpha, float alpha_dot, const glm::vec3& omega, 
-      float vt, float dve, float q) const {
+      float vt, float dve, float q, float de) const {
     // Calculate the total lift coefficient
     float CL = InterpolateAeroCoefficient(alpha, CL_) + 
       (CL_Q_*omega.y + CL_alpha_dot_*alpha_dot)*chord_/2/vt + 
-      CL_de_*elevator_position_*(vt + dve)*(vt + dve)/vt/vt;
+      CL_de_*de*(vt + dve)*(vt + dve)/vt/vt;
     return q*wetted_area_*CL;
   }
 
@@ -192,13 +208,15 @@ class Aircraft {
   //! \param[in] vt - total velocity
   //! \param[in] dve - velocity across tail control surfaces 
   //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] de - elevator position
   //! \returns - value of drag
   //**************************************************************************80
-  inline float CalcDrag(float alpha, float vt, float dve, float q) const {
+  inline float CalcDrag(float alpha, float vt, float dve, float q, float de) 
+    const {
     // Calculate the total drag coefficient
     float CL = InterpolateAeroCoefficient(alpha, CL_);
     float CDt = InterpolateAeroCoefficient(alpha, CD_) + CL*CL*CDi_CL2_ 
-      + CD_de_*elevator_position_*(vt + dve)*(vt + dve)/vt/vt;
+      + CD_de_*de*(vt + dve)*(vt + dve)/vt/vt;
     return q*wetted_area_*CDt;
   }
   
@@ -206,18 +224,28 @@ class Aircraft {
   //! \brief CalcSideForce - calculate the side force (in aircraft frame)
   //! \param[in] beta - sideslip angle
   //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] dr - rudder position
   //! \returns - value of side force
   //**************************************************************************80
-  inline float CalcSideForce(float beta, float q) const {
+  inline float CalcSideForce(float beta, float q, float dr) const {
     // Calculate the total side force coefficient
-    float CYt = CY_beta_*beta + CY_dr_*rudder_position_;
+    float CYt = CY_beta_*beta + CY_dr_*dr;
     return q*wetted_area_*CYt;
   }
+  
+  //**************************************************************************80
+  //! \brief CalcAeroForcesAndMoments - calculate all aerodynamic forces and
+  //! moments acting on the aircraft (in aircraft frame)
+  //! TODO
+  //**************************************************************************80
+  void CalcAeroForcesAndMoments(const glm::vec3& lin_momentum, 
+    const glm::vec3& ang_momentum, const glm::vec3& acceleration,
+    const glm::quat orientation, float da, float de, float dr) const;
 
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera);
+  void SetShaderData(Camera const& camera, const Sky& sky);
 
 };
 } // End namespace TopFun
