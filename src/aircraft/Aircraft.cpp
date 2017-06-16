@@ -14,7 +14,6 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
     canopy_shader_("shaders/aircraft.vs", "shaders/canopy.frag"),
     model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
     position_(position), orientation_(orientation) {
-  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, -0.25f);
   // Draw the canopy last since it's transparent
   std::vector<unsigned int> draw_order(22);
   std::iota(draw_order.begin(), draw_order.end(), 0);
@@ -31,6 +30,19 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   // Define the aerodynamic coefficients
   // TODO
   CL_ = {0.0, 1.0, 0.0};
+  // Set the physical dimensions of the aircraft
+  mass_ = 40000.0f; 
+  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, -0.25f);
+  inertia_[0][0] = 22000.0f;       // I_xx
+  inertia_[1][1] = 162000.0f;      // I_yy
+  inertia_[2][2] = 178000.0f;      // I_zz
+  inertia_[0][2] = -2874.0f;       // I_xz
+  inertia_[2][0] = inertia_[0][2]; // I_zx
+  inverse_inertia_ = glm::inverse(inertia_);
+  wetted_area_ = 316.0f;
+  chord_ = 5.75f;
+  span_ = 13.56f;
+  r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
 }
 
 //****************************************************************************80
@@ -122,9 +134,8 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
 //****************************************************************************80
 void Aircraft::CalcAeroForcesAndMoments(const glm::vec3& lin_momentum, 
     const glm::vec3& ang_momentum, const glm::vec3& acceleration,
-    const glm::quat orientation, float da, float de, float dr) const {
-  glm::vec3 Forces;
-  glm::vec3 Moments;
+    const glm::quat orientation, float da, float de, float dr,
+    glm::vec3& Forces, glm::vec3& Moments) const {
   glm::vec3 va = WorldToAircraft(lin_momentum / mass_, orientation);
   glm::vec3 omega = WorldToAircraft(inverse_inertia_*ang_momentum, orientation);
   float alpha = CalcAlpha(va);
@@ -134,12 +145,17 @@ void Aircraft::CalcAeroForcesAndMoments(const glm::vec3& lin_momentum,
   float vt = glm::l2Norm(va);
   float rho = 1.225; // TODO
   float q = 0.5*rho*vt*vt;
-  float Lift = CalcLift(alpha, alpha_dot, omega, vt, dve, q, de);
-  float Drag = CalcDrag(alpha, vt, dve, q, de);
-  float Side = CalcSideForce(beta, q, de);
-  Forces.x = Lift * sin(alpha) - Drag * cos(alpha) - Side * sin(beta);
-  Forces.y = Side * cos(beta);
-  Forces.z = -Lift * cos(alpha) - Drag * sin(alpha);
+
+  float lift = CalcLift(alpha, alpha_dot, omega, vt, dve, q, de);
+  float drag = CalcDrag(alpha, vt, dve, q, de);
+  float side = CalcSideForce(beta, q, de);
+  Forces.x = lift * sin(alpha) - drag * cos(alpha) - side * sin(beta);
+  Forces.y = side * cos(beta);
+  Forces.z = -lift * cos(alpha) - drag * sin(alpha);
+
+  Moments.x = CalcRollMoment(beta, omega, vt, q, da, dr);
+  Moments.y = CalcPitchMoment(alpha, alpha_dot, omega, vt, dve, q, de);
+  Moments.z = CalcYawMoment(beta, omega, vt, q, da, dr);
 }
 
 } // End namespace TopFun

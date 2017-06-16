@@ -86,13 +86,14 @@ class Aircraft {
   float Cl_dr_; // roll due to rudder
   float Cn_dr_; // yaw due to rudder
 
-  // Mass/Inertia/etc.
+  // Mass/Inertia/Dimensions/etc.
   float mass_;
   glm::vec3 delta_center_of_mass_; // from model centroid
-  glm::vec3 inertia_; // rotational inertia (I_xx, I_yy, I_zz)
-  glm::vec3 inverse_inertia_;
+  glm::mat3 inertia_; // rotational inertia tensor
+  glm::mat3 inverse_inertia_;
   float wetted_area_;
   float chord_;
+  float span_;
   glm::vec3 r_tail_; // vector from center of mass to tail
   
   //**************************************************************************80
@@ -191,7 +192,7 @@ class Aircraft {
   //! \param[in] dve - velocity across tail control surfaces 
   //! \param[in] q - dynamic pressure (1/2 rho vt^2)
   //! \param[in] de - elevator position
-  //! \returns - value of drag
+  //! \returns - value of lift
   //**************************************************************************80
   inline float CalcLift(float alpha, float alpha_dot, const glm::vec3& omega, 
       float vt, float dve, float q, float de) const {
@@ -234,13 +235,70 @@ class Aircraft {
   }
   
   //**************************************************************************80
+  //! \brief CalcRollMoment - calculate the roll moment (in aircraft frame)
+  //! \param[in] beta - sideslip angle
+  //! \param[in] omega - angular velocity in aircraft frame
+  //! \param[in] vt - total velocity
+  //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] da - aileron position
+  //! \param[in] dr - rudder position
+  //! \returns - value of roll moment
+  //**************************************************************************80
+  inline float CalcRollMoment(float beta, const glm::vec3& omega, 
+      float vt, float q, float da, float dr) const {
+    // Calculate the total roll coefficient
+    float Cl = (Cl_beta_*beta + (Cl_P_*omega.x + Cl_R_*omega.z)*span_/2/vt 
+        + Cl_da_*da + Cl_dr_*dr);
+    return q*wetted_area_*span_*Cl;
+  }
+  
+  //**************************************************************************80
+  //! \brief CalcPitchMoment - calculate the pitch moment (in aircraft frame)
+  //! \param[in] alpha - angle of attack
+  //! \param[in] alpha_dot - time derivative of angle of attack
+  //! \param[in] omega - angular velocity in aircraft frame
+  //! \param[in] vt - total velocity
+  //! \param[in] dve - velocity across tail control surfaces 
+  //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] de - elevator position
+  //! \returns - value of pitch moment
+  //**************************************************************************80
+  inline float CalcPitchMoment(float alpha, float alpha_dot, 
+      const glm::vec3& omega, float vt, float dve, float q, float de) const {
+    // Calculate the total pitch coefficient
+    float Cm = InterpolateAeroCoefficient(alpha, Cm_) + (Cm_Q_*omega.y + 
+        Cm_alpha_dot_*alpha_dot)*chord_/2/vt  
+      + Cm_de_*de*(vt + dve)*(vt + dve)/vt/vt;
+    return q*wetted_area_*chord_*Cm;
+  }
+  
+  //**************************************************************************80
+  //! \brief CalcYawMoment - calculate the yaw moment (in aircraft frame)
+  //! \param[in] beta - sideslip angle
+  //! \param[in] omega - angular velocity in aircraft frame
+  //! \param[in] vt - total velocity
+  //! \param[in] q - dynamic pressure (1/2 rho vt^2)
+  //! \param[in] da - aileron position
+  //! \param[in] dr - rudder position
+  //! \returns - value of yaw moment
+  //**************************************************************************80
+  inline float CalcYawMoment(float beta, const glm::vec3& omega, 
+      float vt, float q, float da, float dr) const {
+    // Calculate the total yaw coefficient
+    float Cn = (Cn_beta_*beta + (Cn_P_*omega.x + Cn_R_*omega.z)*span_/2/vt 
+        + Cn_da_*da + Cn_dr_*dr);
+    return q*wetted_area_*span_*Cn;
+  }
+  
+  //**************************************************************************80
   //! \brief CalcAeroForcesAndMoments - calculate all aerodynamic forces and
   //! moments acting on the aircraft (in aircraft frame)
   //! TODO
   //**************************************************************************80
   void CalcAeroForcesAndMoments(const glm::vec3& lin_momentum, 
     const glm::vec3& ang_momentum, const glm::vec3& acceleration,
-    const glm::quat orientation, float da, float de, float dr) const;
+    const glm::quat orientation, float da, float de, float dr, 
+    glm::vec3& Forces, glm::vec3& Moments) const;
 
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
