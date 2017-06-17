@@ -55,7 +55,7 @@ class Aircraft {
   float rudder_position_;
   float elevator_position_;
   float aileron_position_;
-  float throttle_position_;
+  float throttle_position_; // between 0.0 and 1.0
 
   // Longitudinal coefficients
   std::vector<float> CL_; // lift coefficient vs alpha
@@ -95,6 +95,7 @@ class Aircraft {
   float chord_;
   float span_;
   glm::vec3 r_tail_; // vector from center of mass to tail
+  float max_thrust_;
   
   //**************************************************************************80
   //! \brief Rotate - rotate the aircraft based on keyboard input
@@ -120,7 +121,21 @@ class Aircraft {
   inline glm::vec3 WorldToAircraft(const glm::vec3& world_vec,
       const glm::quat& orientation) const {
     glm::quat world_quat = glm::quat(0.0f, world_vec);
-    glm::quat result = orientation * world_quat * glm::conjugate(orientation);
+    glm::quat result = orientation*world_quat*glm::conjugate(orientation);
+    return glm::vec3(result.x, result.y, result.z);
+  }
+  
+  //**************************************************************************80
+  //! \brief AircraftToWorld - convert a vector from aircraft coordinates to 
+  //! world coordinates
+  //! \param[in] aircraft_vec - vector in aircraft frame
+  //! \param[in] orientation - orientation of aircraft
+  //! \returns vector in world frame
+  //**************************************************************************80
+  inline glm::vec3 AircraftToWorld(const glm::vec3& aircraft_vec,
+      const glm::quat& orientation) const {
+    glm::quat aircraft_quat = glm::quat(0.0f, aircraft_vec);
+    glm::quat result = glm::conjugate(orientation)*aircraft_quat*orientation;
     return glm::vec3(result.x, result.y, result.z);
   }
 
@@ -291,14 +306,57 @@ class Aircraft {
   }
   
   //**************************************************************************80
-  //! \brief CalcAeroForcesAndMoments - calculate all aerodynamic forces and
-  //! moments acting on the aircraft (in aircraft frame)
+  //! \brief CalcAeroForcesAndTorques - calculate all aerodynamic forces and
+  //! torques acting on the aircraft (in aircraft frame)
   //! TODO
   //**************************************************************************80
-  void CalcAeroForcesAndMoments(const glm::vec3& lin_momentum, 
-    const glm::vec3& ang_momentum, const glm::vec3& acceleration,
-    const glm::quat orientation, float da, float de, float dr, 
-    glm::vec3& Forces, glm::vec3& Moments) const;
+  void CalcAeroForcesAndTorques(const glm::vec3& position,
+      const glm::quat& orientation, const glm::vec3& lin_momentum, 
+      const glm::vec3& ang_momentum, const glm::vec3& acceleration,
+      glm::vec3& forces, glm::vec3& torques) const;
+
+  //**************************************************************************80
+  //! \brief CalcEngineForce - calculates the force vector due to the engine
+  //! in the frame of the aircraft
+  //! returns - engine thrust vector
+  //**************************************************************************80
+  inline glm::vec3 CalcEngineForce() const {
+    return glm::vec3(max_thrust_ * throttle_position_, 0.0f, 0.0f);
+  }
+  
+  //**************************************************************************80
+  //! \brief CalcGravityForce - calculates the force vector due to gravity in
+  //! the world frame
+  //! returns - gravity force vector
+  //**************************************************************************80
+  inline glm::vec3 CalcGravityForce() const {
+    return glm::vec3(0.0f, -mass_ * 9.8f, 0.0f);
+  }
+
+  //**************************************************************************80
+  //! \brief GetState - get the position/orientation/momentum state vector
+  //! returns - aircraft state vector
+  //**************************************************************************80
+  inline std::vector<float> GetState() {
+    std::vector<float> state(13);
+    for (int i = 0; i < 3; ++i) 
+      state[i] = position_[i];
+    for (int i = 0; i < 4; ++i) 
+      state[i+3] = orientation_[i];
+    for (int i = 0; i < 3; ++i) 
+      state[i+7] = lin_momentum_[i];
+    for (int i = 0; i < 3; ++i) 
+      state[i+10] = ang_momentum_[i];
+    return state;
+  }
+  
+  //**************************************************************************80
+  //! \brief CalcStateDerivate - calculate the derivative of the state vector
+  //! TODO
+  //! returns - derivative of state vector
+  //**************************************************************************80
+  std::vector<float> CalcStateDerivative(const std::vector<float>& state,
+      const std::vector<float>& deriv, float t, float dt) const;
 
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader

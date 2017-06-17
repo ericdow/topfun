@@ -20,6 +20,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   draw_order.back() = 2;
   draw_order[2] = draw_order.size() - 1;
   model_.SetDrawOrder(draw_order);
+  
   // Set the shader pointers for each mesh
   std::vector<Shader*> shaders(22);
   for (size_t i = 0; i < shaders.size()-1; i++) {
@@ -27,11 +28,13 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   }
   shaders.back() = &canopy_shader_;
   model_.SetShaders(shaders);
+  
   // Define the aerodynamic coefficients
   // TODO
   CL_ = {0.0, 1.0, 0.0};
+  
   // Set the physical dimensions of the aircraft
-  mass_ = 40000.0f; 
+  mass_ = 27000.0f; 
   delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, -0.25f);
   inertia_[0][0] = 22000.0f;       // I_xx
   inertia_[1][1] = 162000.0f;      // I_yy
@@ -43,6 +46,13 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   chord_ = 5.75f;
   span_ = 13.56f;
   r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
+  max_thrust_ = 311000.0f;
+  
+  // Set the initial values for control inputs
+  rudder_position_   = 0.0f;
+  elevator_position_ = 0.0f;
+  aileron_position_  = 0.0f;
+  throttle_position_ = 0.5f;
 }
 
 //****************************************************************************80
@@ -83,7 +93,7 @@ void Aircraft::Move(std::vector<bool> const& keys, float deltaTime) {
 void Aircraft::Rotate(float angle, glm::vec3 axis) {
   axis = glm::normalize(axis);
   glm::quat quat_rot = glm::angleAxis(angle, axis);
-  orientation_ = quat_rot * orientation_;
+  orientation_ = normalize(quat_rot * orientation_);
 }
 
 //****************************************************************************80
@@ -132,30 +142,81 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
 }
 
 //****************************************************************************80
-void Aircraft::CalcAeroForcesAndMoments(const glm::vec3& lin_momentum, 
-    const glm::vec3& ang_momentum, const glm::vec3& acceleration,
-    const glm::quat orientation, float da, float de, float dr,
-    glm::vec3& Forces, glm::vec3& Moments) const {
+void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
+    const glm::quat& orientation, const glm::vec3& lin_momentum, 
+    const glm::vec3& ang_momentum, const glm::vec3& acceleration, 
+    glm::vec3& forces, glm::vec3& torques) const {
   glm::vec3 va = WorldToAircraft(lin_momentum / mass_, orientation);
+  glm::vec3 aa = WorldToAircraft(acceleration, orientation);
   glm::vec3 omega = WorldToAircraft(inverse_inertia_*ang_momentum, orientation);
   float alpha = CalcAlpha(va);
   float beta = CalcBeta(va);
-  float alpha_dot = CalcAlphaDot(va, acceleration); 
+  float alpha_dot = CalcAlphaDot(va, aa); 
   float dve = CalcTailVelocity(omega); 
   float vt = glm::l2Norm(va);
-  float rho = 1.225; // TODO
+  float rho = 1.225; // TODO compute using position
   float q = 0.5*rho*vt*vt;
 
-  float lift = CalcLift(alpha, alpha_dot, omega, vt, dve, q, de);
-  float drag = CalcDrag(alpha, vt, dve, q, de);
-  float side = CalcSideForce(beta, q, de);
-  Forces.x = lift * sin(alpha) - drag * cos(alpha) - side * sin(beta);
-  Forces.y = side * cos(beta);
-  Forces.z = -lift * cos(alpha) - drag * sin(alpha);
+  float lift = CalcLift(alpha, alpha_dot, omega, vt, dve, q, 
+      elevator_position_);
+  float drag = CalcDrag(alpha, vt, dve, q, elevator_position_);
+  float side = CalcSideForce(beta, q, elevator_position_);
+  forces.x = lift * sin(alpha) - drag * cos(alpha) - side * sin(beta);
+  forces.y = side * cos(beta);
+  forces.z = -lift * cos(alpha) - drag * sin(alpha);
 
-  Moments.x = CalcRollMoment(beta, omega, vt, q, da, dr);
-  Moments.y = CalcPitchMoment(alpha, alpha_dot, omega, vt, dve, q, de);
-  Moments.z = CalcYawMoment(beta, omega, vt, q, da, dr);
+  torques.x = CalcRollMoment(beta, omega, vt, q, aileron_position_, 
+      rudder_position_);
+  torques.y = CalcPitchMoment(alpha, alpha_dot, omega, vt, dve, q, 
+      elevator_position_);
+  torques.z = CalcYawMoment(beta, omega, vt, q, aileron_position_, 
+      rudder_position_);
+}
+
+//****************************************************************************80
+std::vector<float> Aircraft::CalcStateDerivative(
+    const std::vector<float>& state, const std::vector<float>& deriv,
+    float t, float dt) const {
+  // Unpack the state and deriv vectors
+  glm::vec3 position(state[0], state[1], state[2]);
+  glm::quat orientation(state[3], state[4], state[5], state[6]);
+  orientation = normalize(orientation);
+  glm::vec3 lin_momentum(state[7], state[8], state[9]);
+  glm::vec3 ang_momentum(state[10], state[11], state[12]);
+  glm::vec3 velocity(deriv[0], deriv[1], deriv[2]);
+  glm::quat spin(deriv[3], deriv[4], deriv[5], deriv[6]);
+  glm::vec3 forces(deriv[7], deriv[8], deriv[9]);
+  glm::vec3 torques(deriv[10], deriv[11], deriv[12]);
+
+  // Evaluate the state vector at (t + dt)
+  position += velocity * dt;
+  orientation += spin * dt;
+
+  // Update the forces and torques in the aircraft frame
+  glm::vec3 acceleration = forces / mass_;
+  CalcAeroForcesAndTorques(position, orientation, lin_momentum, ang_momentum,
+      acceleration, forces, torques);
+  forces += CalcEngineForce();
+
+  // Rotate forces and torques to world frame and add gravity
+  forces = AircraftToWorld(forces, orientation);
+  torques = AircraftToWorld(forces, orientation);
+  forces += CalcGravityForce();
+
+  // Compute the derivative of the state vector
+  std::vector<float> out(13);
+  for (int i = 0; i < 3; ++i) 
+    out[i] = lin_momentum[i] / mass_;
+  glm::quat ang_vel_quat(0.0f, inverse_inertia_ * ang_momentum);
+  spin = 0.5f * ang_vel_quat * orientation;
+  for (int i = 0; i < 4; ++i) 
+    out[i+3] = spin[i];
+  for (int i = 0; i < 3; ++i) 
+    out[i+7] = forces[i];
+  for (int i = 0; i < 3; ++i) 
+    out[i+10] = torques[i];
+  
+  return out;
 }
 
 } // End namespace TopFun
