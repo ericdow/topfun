@@ -177,7 +177,7 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
   }
 
   // Set the texture coordinates based on largest tile size
-  GLuint nrepeat = 4; // number of texture repetitions per largest tile
+  GLuint nrepeat = 40; // number of texture repetitions per largest tile
   GLuint denom = std::pow(2, num_lod_ - nrepeat + 1);
   denom = std::max(denom, 1u);
   for (int i = 0; i < nv; ++i) {
