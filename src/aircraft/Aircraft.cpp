@@ -38,7 +38,6 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  inverse_inertia_ = glm::inverse(inertia_);
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -116,7 +115,11 @@ void Aircraft::operator()(const std::vector<float>& state,
     std::vector<float>& deriv, float /* t */) {
   // Unpack the state vector
   glm::vec3 position(state[0], state[1], state[2]);
-  glm::quat orientation(state[3], state[4], state[5], state[6]);
+  glm::quat orientation;
+  orientation.w = state[3];
+  orientation.x = state[4];
+  orientation.y = state[5];
+  orientation.z = state[6];
   glm::vec3 lin_momentum(state[7], state[8], state[9]);
   glm::vec3 ang_momentum(state[10], state[11], state[12]);
 
@@ -133,10 +136,9 @@ void Aircraft::operator()(const std::vector<float>& state,
   torques = AircraftToWorld(torques, orientation);
   forces += CalcGravityForce();
 
+  // TODO
   forces *= 0.0f;
-  torques = AircraftToWorld(glm::vec3(0.0f, 1000.0f, 0.0f), orientation);
-  std::cout << torques[0] << " " << torques[1] << " " 
-    << torques[2] << std::endl;
+  torques = AircraftToWorld(glm::vec3(0.0f, 10000.0f, 0.0f), orientation);
 
   // Update acceleration (for computing angle rates)
   acceleration_ = WorldToAircraft(forces / mass_, orientation);
@@ -144,10 +146,10 @@ void Aircraft::operator()(const std::vector<float>& state,
   // Compute the derivative of the state vector
   for (int i = 0; i < 3; ++i) 
     deriv[i] = lin_momentum[i] / mass_;
-  glm::vec3 ang_vel_aircraft = inverse_inertia_ *
-    WorldToAircraft(ang_momentum, orientation);
-  glm::quat ang_vel_quat(0.0f, AircraftToWorld(ang_vel_aircraft, orientation));
-  glm::quat spin = 0.5f * ang_vel_quat * orientation;
+  glm::vec3 omega = 
+    glm::inverse(AircraftToWorld(inertia_, orientation)) * ang_momentum;
+  glm::quat omega_quat(0.0f, omega);
+  glm::quat spin = 0.5f * omega_quat * orientation;
   deriv[3] = spin.w;
   deriv[4] = spin.x;
   deriv[5] = spin.y;
@@ -156,6 +158,20 @@ void Aircraft::operator()(const std::vector<float>& state,
     deriv[i+7] = forces[i];
   for (int i = 0; i < 3; ++i) 
     deriv[i+10] = torques[i];
+  
+  std::cout << "torques:" << std::endl;
+  std::cout << torques[0] << " " << torques[1] << " " 
+    << torques[2] << std::endl;
+  std::cout << "ang_momentum:" << std::endl;
+  std::cout << ang_momentum[0] << " " << ang_momentum[1] << " " 
+    << ang_momentum[2] << std::endl;
+  std::cout << "spin" << std::endl;
+  std::cout << spin.w << " " << spin.x << " " << spin.y << " "
+    << spin.z << std::endl;
+  std::cout << "orientation" << std::endl;
+  std::cout << orientation.w << " " << orientation.x << " " 
+    << orientation.y << " " << orientation.z << std::endl;
+  std::cout << std::endl;
 }
 
 //****************************************************************************80
@@ -225,7 +241,9 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
     glm::vec3& torques) const {
   glm::vec3 va = WorldToAircraft(lin_momentum / mass_, orientation);
   glm::vec3 aa = WorldToAircraft(acceleration_, orientation);
-  glm::vec3 omega = WorldToAircraft(inverse_inertia_*ang_momentum, orientation);
+  // TODO pass in omega
+  glm::vec3 omega = 
+    glm::inverse(AircraftToWorld(inertia_, orientation)) * ang_momentum;
   float alpha = CalcAlpha(va);
   float beta = CalcBeta(va);
   float alpha_dot = CalcAlphaDot(va, aa); 

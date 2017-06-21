@@ -139,7 +139,6 @@ class Aircraft {
   float mass_;
   glm::vec3 delta_center_of_mass_; // from model centroid
   glm::mat3 inertia_; // rotational inertia tensor
-  glm::mat3 inverse_inertia_;
   float wetted_area_;
   float chord_;
   float span_;
@@ -186,6 +185,19 @@ class Aircraft {
     glm::quat aircraft_quat = glm::quat(0.0f, aircraft_vec);
     glm::quat result = glm::conjugate(orientation)*aircraft_quat*orientation;
     return glm::vec3(result.x, result.y, result.z);
+  }
+  
+  //**************************************************************************80
+  //! \brief AircraftToWorld - convert a matrix from aircraft coordinates to 
+  //! world coordinates
+  //! \param[in] aircraft_mat - matrix in aircraft frame
+  //! \param[in] orientation - orientation of aircraft
+  //! \returns matrix in world frame
+  //**************************************************************************80
+  inline glm::mat3 AircraftToWorld(const glm::mat3& aircraft_mat,
+      const glm::quat& orientation) const {
+    glm::mat3 rot = glm::toMat3(orientation);
+    return rot * aircraft_mat * glm::transpose(rot); 
   }
 
   //**************************************************************************80
