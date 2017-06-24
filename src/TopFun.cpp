@@ -59,12 +59,19 @@ int main(int argc, char* argv[]) {
 
     // Check and call events
     glfwPollEvents();
-    camera.Move(callback_world.GetKeyState(), dt_loop);
     
     // aircraft.Move(callback_world.GetKeyState(), dt_loop);
     std::vector<float> state = aircraft.GetState();
     integrator.do_step(aircraft, state, t_physics, dt_physics);
     aircraft.SetState(state);
+    
+    // Update the camera position
+    // camera.Move(callback_world.GetKeyState(), dt_loop);
+    glm::vec3 aircraft_front = aircraft.GetFrontDirection();
+    glm::vec3 aircraft_up = aircraft.GetUpDirection();
+    camera.SetPosition(aircraft.GetPosition() + 
+        2.0f * aircraft_up - 17.0f * aircraft_front);
+    camera.SetOrientation(aircraft_front, aircraft_up);
 
     // Draw the scene
     draw_wait_time += dt_loop;

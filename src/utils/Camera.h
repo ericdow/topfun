@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CAMERA_H
+#define CAMERA_H
 
 // Std. Includes
 #include <vector>
@@ -40,6 +41,16 @@ class Camera {
   // Returns the current position of the camera
   inline glm::vec3 GetPosition() const {
     return position_;
+  }
+  
+  inline void SetPosition(const glm::vec3& position) {
+    position_ = position;
+  }
+  
+  inline void SetOrientation(const glm::vec3& front, const glm::vec3& up) {
+    front_ = glm::normalize(front);
+    up_ = glm::normalize(up);
+    right_ = glm::normalize(glm::cross(front_, up_));
   }
   
   // Returns the current angle of the camera
@@ -181,3 +192,5 @@ class Camera {
     dir2 = glm::normalize(glm::cross(dir1, axis));
   }
 };
+
+#endif

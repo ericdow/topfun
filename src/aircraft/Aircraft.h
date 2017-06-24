@@ -39,6 +39,28 @@ class Aircraft {
   //! \brief Move - process keyboard input to move the aircraft
   //**************************************************************************80
   void Move(std::vector<bool> const& keys, float deltaTime);
+  
+  //**************************************************************************80
+  //! \brief GetPosition - get the position vector
+  //! returns - aircraft position vector
+  //**************************************************************************80
+  inline glm::vec3 GetPosition() { return position_; }
+  
+  //**************************************************************************80
+  //! \brief GetFrontDirection - get a vector pointing in the +x direction
+  //! returns - aircraft front vector
+  //**************************************************************************80
+  inline glm::vec3 GetFrontDirection() { 
+    return AircraftToWorld(glm::vec3(1.0f, 0.0f, 0.0f), orientation_); 
+  }
+  
+  //**************************************************************************80
+  //! \brief GetUpDirection - get a vector pointing in the -z direction
+  //! returns - aircraft up vector
+  //**************************************************************************80
+  inline glm::vec3 GetUpDirection() { 
+    return AircraftToWorld(glm::vec3(0.0f, 0.0f, -1.0f), orientation_); 
+  }
 
   //**************************************************************************80
   //! \brief GetState - get the position/orientation/momentum state vector
@@ -169,7 +191,7 @@ class Aircraft {
   inline glm::vec3 WorldToAircraft(const glm::vec3& world_vec,
       const glm::quat& orientation) const {
     glm::quat world_quat = glm::quat(0.0f, world_vec);
-    glm::quat result = orientation*world_quat*glm::conjugate(orientation);
+    glm::quat result = glm::conjugate(orientation)*world_quat*orientation;
     return glm::vec3(result.x, result.y, result.z);
   }
   
@@ -183,7 +205,7 @@ class Aircraft {
   inline glm::vec3 AircraftToWorld(const glm::vec3& aircraft_vec,
       const glm::quat& orientation) const {
     glm::quat aircraft_quat = glm::quat(0.0f, aircraft_vec);
-    glm::quat result = glm::conjugate(orientation)*aircraft_quat*orientation;
+    glm::quat result = orientation*aircraft_quat*glm::conjugate(orientation);
     return glm::vec3(result.x, result.y, result.z);
   }
   
@@ -205,7 +227,12 @@ class Aircraft {
   //! \param[in] v - velocity in aircraft frame
   //**************************************************************************80
   inline float CalcAlpha(const glm::vec3& v) const {
-    return atan(v.z / v.x);
+    if (std::abs(v.x) < std::numeric_limits<float>::epsilon()) {
+      return 0.0f;
+    }
+    else {
+      return atan(v.z / v.x);
+    }
   } 
   
   //**************************************************************************80
@@ -214,7 +241,13 @@ class Aircraft {
   //! \param[in] a - acceleration in aircraft frame
   //**************************************************************************80
   inline float CalcAlphaDot(const glm::vec3& v, const glm::vec3& a) const {
-    return (v.x*a.z - v.z*a.x) / (v.x*v.x + v.z*v.z); 
+    return 1.0f;
+    if (std::abs(v.x*v.x + v.z*v.z) < std::numeric_limits<float>::epsilon()) {
+      return 0.0f;
+    }
+    else {
+      return (v.x*a.z - v.z*a.x) / (v.x*v.x + v.z*v.z); 
+    }
   } 
   
   //**************************************************************************80
@@ -222,7 +255,12 @@ class Aircraft {
   //! \param[in] v - velocity in aircraft frame
   //**************************************************************************80
   inline float CalcBeta(const glm::vec3& v) const {
-    return atan(v.y / std::sqrt(v.x*v.x + v.z*v.z));
+    if (std::abs(v.x*v.x + v.z*v.z) < std::numeric_limits<float>::epsilon()) {
+      return 0.0f;
+    }
+    else {
+      return atan(v.y / std::sqrt(v.x*v.x + v.z*v.z));
+    }
   } 
   
   //**************************************************************************80
@@ -232,20 +270,27 @@ class Aircraft {
   //**************************************************************************80
   inline float CalcBetaDot(const glm::vec3& v, const glm::vec3& a) const {
     float u2w2 = std::sqrt(v.x*v.x + v.z*v.z);
-    return (a.y*u2w2 - v.y*(v.x*a.x + v.z*a.z)) / 
-      (u2w2*(v.x*v.x + v.y*v.y + v.z*v.z));
+    if (std::abs(u2w2*(v.x*v.x + v.y*v.y + v.z*v.z)) < 
+        std::numeric_limits<float>::epsilon()) {
+      return 0.0f;
+    }
+    else {
+      return (a.y*u2w2 - v.y*(v.x*a.x + v.z*a.z)) / 
+        (u2w2*(v.x*v.x + v.y*v.y + v.z*v.z));
+    }
   } 
   
   //**************************************************************************80
   //! \brief InterpolateAeroCoefficient - interpolate an aerodynamic coefficient
   //! for a given angle of attack
-  //! \param[in] alpha - angle of attack
+  //! \param[in] alpha - angle of attack (-pi < alpha < pi)
   //! \param[in] C - reference to the coefficient to be interpolated
   //! \returns - value of aerodynamic coefficient  
   //**************************************************************************80
   inline float InterpolateAeroCoefficient(float alpha, 
       const std::vector<float>& C) const {
     float dalpha = 2 * M_PI / (C.size() - 1);
+    alpha += M_PI;
     size_t ix = static_cast<size_t>(std::floor(alpha / dalpha));
     return C[ix] + (C[ix+1] - C[ix]) / dalpha * (alpha - dalpha*ix);
   }
@@ -281,6 +326,7 @@ class Aircraft {
 
   //**************************************************************************80
   //! \brief CalcDrag - calculate the drag force (in aircraft frame)
+  //! \param[in] lift - value of lift
   //! \param[in] alpha - angle of attack
   //! \param[in] vt - total velocity
   //! \param[in] dve - velocity across tail control surfaces 
@@ -288,10 +334,11 @@ class Aircraft {
   //! \param[in] de - elevator position
   //! \returns - value of drag
   //**************************************************************************80
-  inline float CalcDrag(float alpha, float vt, float dve, float q, float de) 
+  inline float CalcDrag(float lift, float alpha, float vt, float dve, float q, 
+      float de) 
     const {
     // Calculate the total drag coefficient
-    float CL = InterpolateAeroCoefficient(alpha, CL_);
+    float CL = lift / q / wetted_area_;
     float CDt = InterpolateAeroCoefficient(alpha, CD_) + CL*CL*CDi_CL2_ 
       + CD_de_*std::abs(de)*(vt + dve)*(vt + dve)/vt/vt;
     return q*wetted_area_*CDt;
@@ -370,10 +417,11 @@ class Aircraft {
   //! \brief CalcAeroForcesAndTorques - calculate all aerodynamic forces and
   //! torques acting on the aircraft (in aircraft frame)
   //! TODO
+  //! \param[in] omega - angular velocity in aircraft frame
   //**************************************************************************80
   void CalcAeroForcesAndTorques(const glm::vec3& position,
       const glm::quat& orientation, const glm::vec3& lin_momentum, 
-      const glm::vec3& ang_momentum, glm::vec3& forces, 
+      const glm::vec3& ang_momentum, const glm::vec3& omega, glm::vec3& forces, 
       glm::vec3& torques) const;
 
   //**************************************************************************80
