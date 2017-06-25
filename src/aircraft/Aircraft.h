@@ -49,13 +49,25 @@ class Aircraft {
   //! \brief GetPosition - get the position vector
   //! returns - aircraft position vector
   //**************************************************************************80
-  inline glm::vec3 GetPosition() { return position_; }
+  inline glm::vec3 GetPosition() const { return position_; }
+  
+  //**************************************************************************80
+  //! \brief GetVelocity - get the velocity vector
+  //! returns - aircraft velocity vector
+  //**************************************************************************80
+  inline glm::vec3 GetVelocity() const { return lin_momentum_ / mass_; }
+  
+  //**************************************************************************80
+  //! \brief GetThrottlePosition - get the throttle position
+  //! returns - throttle position
+  //**************************************************************************80
+  inline float GetThrottlePosition() const { return throttle_position_; }
   
   //**************************************************************************80
   //! \brief GetFrontDirection - get a vector pointing in the +x direction
   //! returns - aircraft front vector
   //**************************************************************************80
-  inline glm::vec3 GetFrontDirection() { 
+  inline glm::vec3 GetFrontDirection() const { 
     return AircraftToWorld(glm::vec3(1.0f, 0.0f, 0.0f), orientation_); 
   }
   
@@ -63,7 +75,7 @@ class Aircraft {
   //! \brief GetUpDirection - get a vector pointing in the -z direction
   //! returns - aircraft up vector
   //**************************************************************************80
-  inline glm::vec3 GetUpDirection() { 
+  inline glm::vec3 GetUpDirection() const { 
     return AircraftToWorld(glm::vec3(0.0f, 0.0f, -1.0f), orientation_); 
   }
 

@@ -115,7 +115,7 @@ void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft) {
   sky.Draw(camera);
   aircraft.Draw(camera, sky);
   // Display the debug console last
-  debug_overlay.Draw(camera, dt_loop, dt_draw);
+  debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
       
   // Swap the buffers
   glfwSwapBuffers(window);

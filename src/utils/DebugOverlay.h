@@ -7,6 +7,7 @@
 
 #include "utils/Camera.h"
 #include "utils/TextRenderer.h"
+#include "aircraft/Aircraft.h"
 
 // Prints debug/performance info to the screen
 
@@ -25,8 +26,8 @@ class DebugOverlay {
     visible_ = !visible_;
   }
 
-  void Draw(Camera const& camera, GLfloat delta_loop_time, 
-      GLfloat delta_draw_time) {
+  void Draw(const Camera& camera, const Aircraft& aircraft, 
+      GLfloat delta_loop_time, GLfloat delta_draw_time) {
     if (visible_) {
       glm::vec3 text_color = glm::vec3(1.0, 1.0, 1.0);
       GLfloat scale = 0.45;
@@ -59,6 +60,17 @@ class DebugOverlay {
       psi << std::setprecision(1) << std::fixed << ang.z;
       debug_strings.push_back("Camera (a,b): (" + phi.str() + "," + 
           theta.str() + "," + psi.str() + ")");
+
+      // Display the aircraft info
+      std::ostringstream thr;
+      thr << std::setprecision(1) << std::fixed << 
+        (aircraft.GetThrottlePosition() * 100.0f);
+      debug_strings.push_back("Throttle: " + thr.str() + "%");
+      
+      std::ostringstream vel;
+      vel << std::setprecision(1) << std::fixed << 
+        glm::l2Norm(aircraft.GetVelocity());
+      debug_strings.push_back("Speed: " + vel.str() + " m/s");
 
       for (auto& s : debug_strings) {
         text_renderer_.Draw(s, xt, yt, scale, text_color);

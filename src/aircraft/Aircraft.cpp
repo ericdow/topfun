@@ -54,7 +54,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   for (float& i : CL_) i /= 10.0;
   CD_ = {0.03, 0.11, 0.25, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03,
     0.11, 0.25, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03};
-  Cm_ = {0.0, 0.0, 0.0};
+  Cm_ = {0.0, -1.0e-12, 0.0};
   CL_Q_ = 0.0f;
   Cm_Q_ = -3.6f;
   CL_alpha_dot_ = 0.72f;
@@ -74,8 +74,8 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   Cm_de_ = -0.5f; 
   Cl_da_ = 0.08f; 
   Cn_da_ = 0.06f; 
-  Cl_dr_ = -0.105f; 
-  Cn_dr_ = 0.032f; 
+  Cl_dr_ = -0.001f; 
+  Cn_dr_ = 0.232f; 
   
   // Set the initial values for control inputs
   rudder_position_   = 0.0f;
@@ -115,10 +115,10 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
     aileron_position_ = 0.0f;
   }
   // Rudder control
-  if(keys[GLFW_KEY_A]) {
+  if(keys[GLFW_KEY_D]) {
     rudder_position_ = 0.5f * rudder_position_max_;
   }
-  else if(keys[GLFW_KEY_D]) {
+  else if(keys[GLFW_KEY_A]) {
     rudder_position_ = -0.5f * rudder_position_max_;
   }
   else {
@@ -126,11 +126,11 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   }
   // Throttle control
   if(keys[GLFW_KEY_W]) {
-    throttle_position_ += 0.01;
+    throttle_position_ += 0.005;
     throttle_position_ = std::min(1.0f, throttle_position_);
   }
   else if(keys[GLFW_KEY_S]) {
-    throttle_position_ -= 0.01;
+    throttle_position_ -= 0.005;
     throttle_position_ = std::max(0.0f, throttle_position_);
   }
 }
