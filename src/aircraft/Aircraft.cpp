@@ -14,7 +14,9 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
     canopy_shader_("shaders/aircraft.vs", "shaders/canopy.frag"),
     model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
     position_(position), orientation_(orientation), 
-    lin_momentum_(0.0f, 0.0f, 0.0f), ang_momentum_(0.0f, 0.0f, 0.0f),
+    lin_momentum_(AircraftToWorld(glm::vec3(27000.0f * 150.0f, 0.0f, 0.0f), 
+          orientation)), 
+    ang_momentum_(0.0f, 0.0f, 0.0f),
     acceleration_(0.0f, 0.0f, 0.0f) {
   // Draw the canopy last since it's transparent
   std::vector<unsigned int> draw_order(22);
@@ -47,8 +49,11 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   
   // Define the aerodynamic coefficients
   // TODO
-  CL_ = {0.0, 0.0, 0.0};
-  CD_ = {0.1, 0.1, 0.1};
+  CL_ = {0.0, 2.6, 1.2, 2.2, 1.4, 0.7, 0.0, -0.7, -1.4, -2.2, -1.2, -2.3, 0.0,
+    2.6, 1.2, 2.2, 1.4, 0.7, 0.0, -0.7, -1.4, -2.2, -1.2, -2.3, 0.0};
+  for (float& i : CL_) i /= 10.0;
+  CD_ = {0.03, 0.11, 0.25, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03,
+    0.11, 0.25, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03};
   Cm_ = {0.0, 0.0, 0.0};
   CL_Q_ = 0.0f;
   Cm_Q_ = -3.6f;
@@ -76,7 +81,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   rudder_position_   = 0.0f;
   elevator_position_ = 0.0f;
   aileron_position_  = 0.0f;
-  throttle_position_ = 0.5f;
+  throttle_position_ = 1.0f;
 }
 
 //****************************************************************************80
@@ -85,6 +90,49 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky) {
   SetShaderData(camera, sky);
   // Draw the model
   model_.Draw();
+}
+
+//****************************************************************************80
+void Aircraft::UpdateControls(std::vector<bool> const& keys) {
+  // Elevator control
+  if(keys[GLFW_KEY_UP]) {
+    elevator_position_ = 0.25f * elevator_position_max_;
+  }
+  else if(keys[GLFW_KEY_DOWN]) {
+    elevator_position_ = -0.25f * elevator_position_max_;
+  }
+  else {
+    elevator_position_ = 0.0f;
+  }
+  // Aileron control
+  if(keys[GLFW_KEY_RIGHT]) {
+    aileron_position_ = 0.5f * aileron_position_max_;
+  }
+  else if(keys[GLFW_KEY_LEFT]) {
+    aileron_position_ = -0.5f * aileron_position_max_;
+  }
+  else {
+    aileron_position_ = 0.0f;
+  }
+  // Rudder control
+  if(keys[GLFW_KEY_A]) {
+    rudder_position_ = 0.5f * rudder_position_max_;
+  }
+  else if(keys[GLFW_KEY_D]) {
+    rudder_position_ = -0.5f * rudder_position_max_;
+  }
+  else {
+    rudder_position_ = 0.0f;
+  }
+  // Throttle control
+  if(keys[GLFW_KEY_W]) {
+    throttle_position_ += 0.01;
+    throttle_position_ = std::min(1.0f, throttle_position_);
+  }
+  else if(keys[GLFW_KEY_S]) {
+    throttle_position_ -= 0.01;
+    throttle_position_ = std::max(0.0f, throttle_position_);
+  }
 }
 
 //****************************************************************************80
@@ -153,23 +201,23 @@ void Aircraft::operator()(const std::vector<float>& state,
     deriv[i+7] = forces[i];
   for (int i = 0; i < 3; ++i) 
     deriv[i+10] = torques[i];
- 
-  std::cout << "position:" << std::endl;
-  std::cout << position[0] << " " << position[1] << " " 
-    << position[2] << std::endl;
-  std::cout << "torques:" << std::endl;
+
+  /*
+  std::cout << "velocity: " << glm::l2Norm(lin_momentum / mass_) << std::endl;
+  std::cout << "torques: ";
   std::cout << torques[0] << " " << torques[1] << " " 
     << torques[2] << std::endl;
-  std::cout << "ang_momentum:" << std::endl;
+  std::cout << "ang_momentum: ";
   std::cout << ang_momentum[0] << " " << ang_momentum[1] << " " 
     << ang_momentum[2] << std::endl;
-  std::cout << "spin" << std::endl;
+  std::cout << "spin: ";
   std::cout << spin.w << " " << spin.x << " " << spin.y << " "
     << spin.z << std::endl;
-  std::cout << "orientation" << std::endl;
+  std::cout << "orientation: ";
   std::cout << orientation.w << " " << orientation.x << " " 
     << orientation.y << " " << orientation.z << std::endl;
   std::cout << std::endl;
+  */
 }
 
 //****************************************************************************80

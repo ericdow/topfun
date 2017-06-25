@@ -41,6 +41,11 @@ class Aircraft {
   void Move(std::vector<bool> const& keys, float deltaTime);
   
   //**************************************************************************80
+  //! \brief UpdateControls - process keyboard input to update ailerons, etc. 
+  //**************************************************************************80
+  void UpdateControls(std::vector<bool> const& keys);
+  
+  //**************************************************************************80
   //! \brief GetPosition - get the position vector
   //! returns - aircraft position vector
   //**************************************************************************80
@@ -126,6 +131,9 @@ class Aircraft {
   float rudder_position_;
   float elevator_position_;
   float aileron_position_;
+  const float rudder_position_max_ = 0.2618f;
+  const float elevator_position_max_ = 0.5236f;
+  const float aileron_position_max_ = 0.5236f;
   float throttle_position_; // between 0.0 and 1.0
 
   // Longitudinal coefficients
@@ -241,8 +249,7 @@ class Aircraft {
   //! \param[in] a - acceleration in aircraft frame
   //**************************************************************************80
   inline float CalcAlphaDot(const glm::vec3& v, const glm::vec3& a) const {
-    return 1.0f;
-    if (std::abs(v.x*v.x + v.z*v.z) < std::numeric_limits<float>::epsilon()) {
+    if (v.x*v.x + v.z*v.z < std::numeric_limits<float>::epsilon()) {
       return 0.0f;
     }
     else {

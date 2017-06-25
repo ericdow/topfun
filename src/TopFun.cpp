@@ -33,7 +33,7 @@ GLfloat last_draw_time = 0.0f;
 GLfloat dt_loop = 0.0f;
 // Force loop to sleep until this amount of time has passed
 GLfloat loop_lock_time = 1.0/120.0;
-int main(int argc, char* argv[]) {
+int main(int /* argc */, char** /* argv */) {
   
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 20);
@@ -59,8 +59,10 @@ int main(int argc, char* argv[]) {
 
     // Check and call events
     glfwPollEvents();
-    
+   
+    // Update the aircraft state 
     // aircraft.Move(callback_world.GetKeyState(), dt_loop);
+    aircraft.UpdateControls(callback_world.GetKeyState());
     std::vector<float> state = aircraft.GetState();
     integrator.do_step(aircraft, state, t_physics, dt_physics);
     aircraft.SetState(state);

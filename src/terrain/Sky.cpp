@@ -9,7 +9,7 @@ Sky::Sky() : shader_("shaders/skybox.vs", "shaders/skybox.frag"),
   sun_dir_(glm::vec3(0.0f, -1.0f, 0.0f)), 
   sun_color_(glm::vec3(1.0f, 1.0f, 1.0f)),
   fog_color_(glm::vec3(183.0/256.0, 213.0/256.0, 219.0/256.0)),
-  fog_start_end_({70.0f, 200.0f}), fog_eq_(0) {
+  fog_start_end_({300.0f, 1000.0f}), fog_eq_(0) {
   
   GLfloat vertices[] = {
   // Positions          
