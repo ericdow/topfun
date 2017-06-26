@@ -17,7 +17,7 @@ using namespace TopFun;
 void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft);
 
 // Set up the GL/GLFW environment
-const std::array<GLuint,2> screen_size = {1200, 800};
+const std::array<GLuint,2> screen_size = {1400, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
@@ -72,7 +72,7 @@ int main(int /* argc */, char** /* argv */) {
     glm::vec3 aircraft_front = aircraft.GetFrontDirection();
     glm::vec3 aircraft_up = aircraft.GetUpDirection();
     camera.SetPosition(aircraft.GetPosition() + 
-        2.0f * aircraft_up - 17.0f * aircraft_front);
+        2.0f * aircraft_up - 20.0f * aircraft_front);
     camera.SetOrientation(aircraft_front, aircraft_up);
 
     // Draw the scene

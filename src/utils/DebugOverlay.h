@@ -29,8 +29,8 @@ class DebugOverlay {
   void Draw(const Camera& camera, const Aircraft& aircraft, 
       GLfloat delta_loop_time, GLfloat delta_draw_time) {
     if (visible_) {
-      glm::vec3 text_color = glm::vec3(1.0, 1.0, 1.0);
-      GLfloat scale = 0.45;
+      glm::vec3 text_color = glm::vec3(0.0, 0.0, 0.0);
+      GLfloat scale = 0.5; // controls font size
       GLfloat xt = 10;
       GLfloat yt = 10;
       GLfloat dyt = 50*scale;

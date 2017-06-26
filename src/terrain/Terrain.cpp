@@ -17,7 +17,7 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
   shader_("shaders/terrain.vs", "shaders/terrain.frag") {
   // Set the noise parameters
   perlin_generator_.SetOctaveCount(5);
-  perlin_generator_.SetFrequency(0.2);
+  perlin_generator_.SetFrequency(0.05);
   perlin_generator_.SetPersistence(0.5);
 
   // Load the textures
@@ -84,7 +84,7 @@ void Terrain::Draw(Camera const& camera, const Sky& sky) {
 
 //****************************************************************************80
 GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
-  return perlin_generator_.GetValue(x/10, z/10, 0.5);
+  return 2.0f * perlin_generator_.GetValue(x/10, z/10, 0.5);
 }
 
 //****************************************************************************80

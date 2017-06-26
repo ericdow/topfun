@@ -31,10 +31,11 @@ class Camera {
   Camera(std::array<GLuint,2> const& screen_size,
       glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)) : 
-    screen_size_(screen_size), position_(position), 
-    front_(glm::vec3(0.0f, 0.0f, -1.0f)), up_(up), 
-    euler_(0.0f, 0.0f, 0.0f), movement_speed_(3.0f), rotate_speed_(2.0f), 
-    mouse_sensitivity_(0.25f), zoom_(45.0f) {
+    screen_size_(screen_size), position_(position),
+    orientation_(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
+    front_(glm::vec3(0.0f, 0.0f, -1.0f)), up_(up), movement_speed_(3.0f), 
+    rotate_speed_(2.0f), mouse_sensitivity_(0.25f), zoom_(45.0f), 
+    view_distance_(5000.0f) {
     right_ = glm::cross(front_, up_);
   }
 
@@ -54,19 +55,20 @@ class Camera {
   }
   
   // Returns the current angle of the camera
-  inline const glm::vec3& GetEulerAngles() const {
-    return euler_;
+  inline const glm::vec3 GetEulerAngles() const {
+    return glm::eulerAngles(orientation_) * 180.0f / (float) M_PI;
   }
 
-  // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
+  // Returns the view matrix
   glm::mat4 GetViewMatrix() const {
     return glm::lookAt(position_, position_ + front_, up_);
   }
   
-  // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
+  // Returns the projection matrix
   glm::mat4 GetProjectionMatrix() const {
-    return glm::perspective(glm::radians(zoom_), 
-        (GLfloat)screen_size_[0] / (GLfloat)screen_size_[1], 0.1f, 2000.0f);
+    return glm::perspective(glm::radians(zoom_),
+        (GLfloat)screen_size_[0] / 
+        (GLfloat)screen_size_[1], 1.0f, view_distance_);
   }
 
   inline GLfloat GetZoom() const { return zoom_; }
@@ -116,12 +118,6 @@ class Camera {
   }
 
   void Roll(GLfloat angular_velocity) {
-    // Constrain the Euler angles
-    euler_.z += glm::degrees(angular_velocity);
-    euler_.z = std::fmod(euler_.z, 360.0f);
-    if (euler_.z < 0.0f) {
-      euler_.z += 360.0f;
-    }
     UpdateCameraVectors(angular_velocity, glm::normalize(front_), right_, up_);
   }
 
@@ -130,18 +126,6 @@ class Camera {
   void ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset) {
     xoffset *= mouse_sensitivity_;
     yoffset *= mouse_sensitivity_;
-
-    // Constrain the Euler angles
-    euler_.x += yoffset;
-    euler_.y += xoffset;
-    euler_.x = std::fmod(euler_.x, 360.0f);
-    if (euler_.x < 0.0f) {
-      euler_.x += 360.0f;
-    }
-    euler_.y = std::fmod(euler_.y, 360.0f);
-    if (euler_.y < 0.0f) {
-      euler_.y += 360.0f;
-    }
     
     // Pitch
     UpdateCameraVectors(glm::radians(yoffset), glm::normalize(right_), up_, 
@@ -166,16 +150,17 @@ class Camera {
   // Camera Attributes
   std::array<GLuint,2> screen_size_;
   glm::vec3 position_;
+  glm::quat orientation_;
   glm::vec3 front_;
   glm::vec3 up_;
   glm::vec3 right_;
-  glm::vec3 euler_; // (pitch, yaw, roll)
   
   // Camera options
   GLfloat movement_speed_;
   GLfloat rotate_speed_;
   GLfloat mouse_sensitivity_;
   GLfloat zoom_; // FOV
+  GLfloat view_distance_;
   
   void UpdateCameraVectors(GLfloat angle, const glm::vec3& axis, 
       glm::vec3& dir1, glm::vec3& dir2) {
@@ -183,6 +168,7 @@ class Camera {
     glm::quat quat_rot = glm::angleAxis(angle, axis);
     glm::quat quat_dir1 = glm::quat(0.0f, dir1);
     glm::quat result = quat_rot * quat_dir1 * glm::conjugate(quat_rot);
+    orientation_ = quat_rot * orientation_;
 
     dir1.x = result.x;
     dir1.y = result.y;
