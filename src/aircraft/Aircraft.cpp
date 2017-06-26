@@ -82,6 +82,15 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   elevator_position_ = 0.0f;
   aileron_position_  = 0.0f;
   throttle_position_ = 1.0f;
+
+  // Set the angle of attack so the plane is in level flight
+  float dCL_dalpha0 = (CL_[1] - CL_[0]) / (2 * M_PI / (CL_.size() - 1));
+  float vt = glm::l2Norm(lin_momentum_) / mass_;
+  float q = 0.5f * 1.225f * vt * vt;
+  float alpha0 = (mass_ * 9.81f / q / wetted_area_ - CL_[0]) / dCL_dalpha0;
+  orientation_ = glm::angleAxis(alpha0,
+      AircraftToWorld(glm::vec3(0.0f, 1.0f, 0.0f), orientation_)) * 
+    orientation_;
 }
 
 //****************************************************************************80

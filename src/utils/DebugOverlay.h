@@ -71,8 +71,13 @@ class DebugOverlay {
       vel << std::setprecision(1) << std::fixed << 
         glm::l2Norm(aircraft.GetVelocity());
       debug_strings.push_back("Speed: " + vel.str() + " m/s");
+      
+      std::ostringstream alpha;
+      alpha << std::setprecision(1) << std::fixed << 
+        aircraft.GetAlpha() * 180.0f / M_PI;
+      debug_strings.push_back("alpha: " + alpha.str());
 
-      for (auto& s : debug_strings) {
+      for (auto const& s : debug_strings) {
         text_renderer_.Draw(s, xt, yt, scale, text_color);
         yt += dyt;
       }

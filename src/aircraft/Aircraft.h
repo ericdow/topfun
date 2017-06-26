@@ -58,6 +58,14 @@ class Aircraft {
   inline glm::vec3 GetVelocity() const { return lin_momentum_ / mass_; }
   
   //**************************************************************************80
+  //! \brief GetAlpha - get the angle of attach
+  //! returns - aircraft angle of attack (radians)
+  //**************************************************************************80
+  inline float GetAlpha() const { 
+    return CalcAlpha(WorldToAircraft(lin_momentum_, orientation_) / mass_); 
+  }
+  
+  //**************************************************************************80
   //! \brief GetThrottlePosition - get the throttle position
   //! returns - throttle position
   //**************************************************************************80
@@ -458,7 +466,7 @@ class Aircraft {
   //! returns - gravity force vector
   //**************************************************************************80
   inline glm::vec3 CalcGravityForce() const {
-    return glm::vec3(0.0f, -mass_ * 9.8f, 0.0f);
+    return glm::vec3(0.0f, -mass_ * 9.81f, 0.0f);
   }
 
   //**************************************************************************80
