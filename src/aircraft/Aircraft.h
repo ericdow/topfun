@@ -36,11 +36,6 @@ class Aircraft {
   void Draw(const Camera& camera, const Sky& sky);
   
   //**************************************************************************80
-  //! \brief Move - process keyboard input to move the aircraft
-  //**************************************************************************80
-  void Move(std::vector<bool> const& keys, float deltaTime);
-  
-  //**************************************************************************80
   //! \brief UpdateControls - process keyboard input to update ailerons, etc. 
   //**************************************************************************80
   void UpdateControls(std::vector<bool> const& keys);
@@ -192,13 +187,9 @@ class Aircraft {
   float wetted_area_;
   float chord_;
   float span_;
+  float dx_cg_x_ax_; // % chord from CG to aerodynamic center
   glm::vec3 r_tail_; // vector from center of mass to tail
   float max_thrust_;
-  
-  //**************************************************************************80
-  //! \brief Rotate - rotate the aircraft based on keyboard input
-  //**************************************************************************80
-  void Rotate(float angle, glm::vec3 axis);
   
   //**************************************************************************80
   //! \brief WorldToAircraft - convert a vector from world coordinates to 
@@ -411,15 +402,20 @@ class Aircraft {
   //! \param[in] dve - velocity across tail control surfaces 
   //! \param[in] q - dynamic pressure (1/2 rho vt^2)
   //! \param[in] de - elevator position
+  //! \param[in] lift - lift force
+  //! \param[in] drag - drag force
   //! \returns - value of pitch moment
   //**************************************************************************80
   inline float CalcPitchMoment(float alpha, float alpha_dot, 
-      const glm::vec3& omega, float vt, float dve, float q, float de) const {
+      const glm::vec3& omega, float vt, float dve, float q, float de, 
+      float lift, float drag) const {
     // Calculate the total pitch coefficient
     float Cm = InterpolateAeroCoefficient(alpha, Cm_) + (Cm_Q_*omega.y + 
         Cm_alpha_dot_*alpha_dot)*chord_/2/vt  
       + Cm_de_*de*(vt + dve)*(vt + dve)/vt/vt;
-    return q*wetted_area_*chord_*Cm;
+    float M_LD = dx_cg_x_ax_ * chord_ * (lift*cos(alpha) + drag*sin(alpha));
+    std::cout << alpha*180.0f/M_PI << " " << q*wetted_area_*chord_*Cm << " " << M_LD << std::endl;
+    return q*wetted_area_*chord_*Cm + M_LD;
   }
   
   //**************************************************************************80

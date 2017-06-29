@@ -44,17 +44,19 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
+  dx_cg_x_ax_ = 0.05f;
   r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
   max_thrust_ = 311000.0f;
   
   // Define the aerodynamic coefficients
-  CL_ = {0.0, 0.35, 0.25, 0.2, 0.14, 0.07, 0.0, 
-    -0.07, -0.14, -0.2, -0.1, -0.2, 0.0,
-    0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
+  CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
+    -0.07, -0.14, -0.2, -0.1, -0.2, 0.0, 
+    0.0, 0.35, 0.25, 0.2, 0.14, 0.07, 0.0,
     -0.07, -0.14, -0.2, -0.1, -0.2, 0.0};
-  CD_ = {0.03, 0.11, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03,
-    0.11, 0.25, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03};
-  Cm_ = {0.0, -1.0e-6, 0.0};
+  CD_ = {0.03, 0.11, 0.2, 0.4, 0.6, 0.8, 
+    1.0, 0.8, 0.6, 0.4, 0.25, 0.11, // (-pi/2, 0]
+    0.03, 0.11, 0.25, 0.4, 0.6, 0.8, // (0, pi/2]
+    1.0, 0.8, 0.6, 0.4, 0.25, 0.11, 0.03}; // (pi/2, pi]
   CL_Q_ = 0.0f;
   Cm_Q_ = -3.6f;
   CL_alpha_dot_ = 0.72f;
@@ -91,6 +93,20 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   orientation_ = glm::angleAxis(alpha0,
       AircraftToWorld(glm::vec3(0.0f, 1.0f, 0.0f), orientation_)) * 
     orientation_;
+
+  // Design Cm_ so the aircraft is stable
+  glm::vec3 omega(0.0f, 0.0f, 0.0f);
+  float lift0 = CalcLift(alpha0, 0.0f, omega, vt, 0.0f, q, 0.0f);
+  float drag0 = CalcDrag(lift0, alpha0, vt, 0.0f, q, 0.0f);
+  float M_LD0 = dx_cg_x_ax_ * chord_ * (lift0*cos(alpha0) + drag0*sin(alpha0));
+  float alpha1 = alpha0 + glm::radians(0.01f);
+  float lift1 = CalcLift(alpha1, 0.0f, omega, vt, 0.0f, q, 0.0f);
+  float drag1 = CalcDrag(lift1, alpha1, vt, 0.0f, q, 0.0f);
+  float M_LD1 = dx_cg_x_ax_ * chord_ * (lift1*cos(alpha1) + drag1*sin(alpha1));
+  float dCm_LD_dalpha = (M_LD1-M_LD0)/(alpha1-alpha0)/q/wetted_area_/ chord_;
+  float dCm_dalpha = 6.9f * dCm_LD_dalpha;
+  float Cm0 = -M_LD0 / q / wetted_area_ / chord_ - dCm_dalpha * alpha0;
+  Cm_ = {Cm0 - dCm_dalpha * (float)M_PI, Cm0, Cm0 + dCm_dalpha * (float)M_PI};
 }
 
 //****************************************************************************80
@@ -105,10 +121,10 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky) {
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Elevator control
   if(keys[GLFW_KEY_UP]) {
-    elevator_position_ = 0.25f * elevator_position_max_;
+    elevator_position_ = 0.2f * elevator_position_max_;
   }
   else if(keys[GLFW_KEY_DOWN]) {
-    elevator_position_ = -0.25f * elevator_position_max_;
+    elevator_position_ = -0.2f * elevator_position_max_;
   }
   else {
     elevator_position_ = 0.0f;
@@ -142,30 +158,6 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
     throttle_position_ -= 0.005;
     throttle_position_ = std::max(0.0f, throttle_position_);
   }
-}
-
-//****************************************************************************80
-void Aircraft::Move(std::vector<bool> const& keys, float deltaTime) {
-  if(keys[GLFW_KEY_UP]) {
-    glm::vec3 axis = AircraftToWorld(glm::vec3(0.0f, -1.0f, 0.0f), 
-        orientation_);
-    Rotate(2.0f*deltaTime, axis);
-  }
-  if(keys[GLFW_KEY_DOWN]) {
-    glm::vec3 axis = AircraftToWorld(glm::vec3(0.0f, 1.0f, 0.0f), orientation_);
-    Rotate(2.0f*deltaTime, axis);
-  }
-  if(keys[GLFW_KEY_LEFT]) {
-    glm::vec3 axis = AircraftToWorld(glm::vec3(-1.0f, 0.0f, 0.0f),
-        orientation_);
-    Rotate(2.0f*deltaTime, axis);
-  }
-  if(keys[GLFW_KEY_RIGHT]) {
-    glm::vec3 axis = AircraftToWorld(glm::vec3(1.0f, 0.0f, 0.0f), orientation_);
-    Rotate(2.0f*deltaTime, axis);
-  }
-  glm::vec3 front = AircraftToWorld(glm::vec3(1.0f, 0.0f, 0.0f), orientation_);
-  position_ += 50.0f * deltaTime * front;
 }
 
 //****************************************************************************80
@@ -231,13 +223,6 @@ void Aircraft::operator()(const std::vector<float>& state,
 
 //****************************************************************************80
 // PRIVATE FUNCTIONS
-//****************************************************************************80
-void Aircraft::Rotate(float angle, glm::vec3 axis) {
-  axis = glm::normalize(axis);
-  glm::quat quat_rot = glm::angleAxis(angle, axis);
-  orientation_ = normalize(quat_rot * orientation_);
-}
-
 //****************************************************************************80
 void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
   // Translate model to current position
@@ -316,7 +301,13 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
     torques.x = CalcRollMoment(beta, omega, vt, q, aileron_position_, 
         rudder_position_);
     torques.y = CalcPitchMoment(alpha, alpha_dot, omega, vt, dve, q, 
-        elevator_position_);
+        elevator_position_, lift, drag);
+    // TODO
+    static int iter = 0;
+    if (iter < 4) {
+      torques.y = 0.0f;
+      iter++;
+    }
     torques.z = CalcYawMoment(beta, omega, vt, q, aileron_position_, 
         rudder_position_);
   }
