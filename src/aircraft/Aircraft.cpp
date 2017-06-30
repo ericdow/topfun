@@ -50,7 +50,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   
   // Define the aerodynamic coefficients
   CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
-    -0.07, -0.14, -0.2, -0.1, -0.2, 0.0, 
+    -0.07, -0.14, -0.2, -0.1, -0.2, -0.3, 
     0.0, 0.35, 0.25, 0.2, 0.14, 0.07, 0.0,
     -0.07, -0.14, -0.2, -0.1, -0.2, 0.0};
   CD_ = {0.03, 0.11, 0.2, 0.4, 0.6, 0.8, 

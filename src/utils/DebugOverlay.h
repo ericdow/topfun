@@ -41,7 +41,7 @@ class DebugOverlay {
       
       // Display the FPS
       std::ostringstream fps;
-      fps << std::setprecision(1) << std::fixed << 1.0/delta_draw_time;
+      fps << std::setprecision(0) << std::fixed << std::round(1.0f/delta_draw_time);
       debug_strings.push_back("frames/s: " + fps.str());
 
       // Display camera info

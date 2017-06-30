@@ -103,7 +103,7 @@ class Aircraft {
 
   //**************************************************************************80
   //! \brief SetState - set the position/orientation/momentum state vector
-  //! param[in] - aircraft state vector
+  //! param[in] state - aircraft state vector
   //**************************************************************************80
   inline void SetState(const std::vector<float>& state) {
     for (int i = 0; i < 3; ++i) 
@@ -117,6 +117,33 @@ class Aircraft {
     for (int i = 0; i < 3; ++i) 
       ang_momentum_[i] = state[i+10];
     orientation_ = normalize(orientation_);
+  }
+  
+  //**************************************************************************80
+  //! \brief InterpolateState - interpolate state between timesteps
+  //**************************************************************************80
+  inline void InterpolateState(const std::vector<float>& previous_state, 
+      std::vector<float>& current_state, float alpha) {
+    for (int i = 0; i < 3; ++i) 
+      current_state[i]  = alpha * current_state[i] 
+        + (1.0f - alpha) * previous_state[i];
+    glm::quat co, po;
+    co.w = current_state[3];
+    co.x = current_state[4];
+    co.y = current_state[5];
+    co.z = current_state[6];
+    po.w = previous_state[3];
+    po.x = previous_state[4];
+    po.y = previous_state[5];
+    po.z = previous_state[6];
+    glm::quat tmp = glm::slerp(co, po, alpha);
+    current_state[3] = tmp.w;
+    current_state[4] = tmp.x;
+    current_state[5] = tmp.y;
+    current_state[6] = tmp.z;
+    for (int i = 7; i < 13; ++i) 
+      current_state[i]  = alpha * current_state[i] 
+        + (1.0f - alpha) * previous_state[i];
   }
   
   //**************************************************************************80
@@ -339,6 +366,8 @@ class Aircraft {
     float CL = InterpolateAeroCoefficient(alpha, CL_) + 
       (CL_Q_*omega.y + CL_alpha_dot_*alpha_dot)*chord_/2/vt + 
       CL_de_*de*(vt + dve)*(vt + dve)/vt/vt;
+    std::cout << glm::degrees(alpha) << " " << 
+      InterpolateAeroCoefficient(alpha, CL_) << std::endl;
     return q*wetted_area_*CL;
   }
 
@@ -414,7 +443,6 @@ class Aircraft {
         Cm_alpha_dot_*alpha_dot)*chord_/2/vt  
       + Cm_de_*de*(vt + dve)*(vt + dve)/vt/vt;
     float M_LD = dx_cg_x_ax_ * chord_ * (lift*cos(alpha) + drag*sin(alpha));
-    std::cout << alpha*180.0f/M_PI << " " << q*wetted_area_*chord_*Cm << " " << M_LD << std::endl;
     return q*wetted_area_*chord_*Cm + M_LD;
   }
   

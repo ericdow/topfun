@@ -46,26 +46,37 @@ int main(int /* argc */, char** /* argv */) {
   boost::numeric::odeint::runge_kutta4<std::vector<float>> integrator;
   
   // Game loop
-  GLfloat last_loop_time = 0.0f;
+  GLfloat last_loop_time = glfwGetTime();
   GLfloat draw_wait_time = 0.0f;
   float t_physics = 0.0f;
-  float dt_physics;
+  const float dt_physics = 0.005f; // don't make this too big or small
+  float t_accumulator = 0.0f;
+  std::vector<float> current_state = aircraft.GetState();
+  std::vector<float> previous_state = current_state;
   while(!glfwWindowShouldClose(window)) {
     // Compute loop time
-    GLfloat current_loop_time = glfwGetTime();
+    const GLfloat current_loop_time = glfwGetTime();
     dt_loop = current_loop_time - last_loop_time;
-    dt_physics = dt_loop; // TODO
     last_loop_time = current_loop_time;
+    t_accumulator += std::min(dt_loop, 0.25f);
 
     // Check and call events
     glfwPollEvents();
    
-    // Update the aircraft state 
-    // aircraft.Move(callback_world.GetKeyState(), dt_loop);
+    // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
-    std::vector<float> state = aircraft.GetState();
-    integrator.do_step(aircraft, state, t_physics, dt_physics);
-    aircraft.SetState(state);
+    // integrator.do_step(aircraft, current_state, t_physics, dt_loop);
+    // aircraft.SetState(current_state);
+    while (t_accumulator >= dt_physics) {
+      previous_state = current_state;
+      integrator.do_step(aircraft, current_state, t_physics, dt_physics);
+      aircraft.SetState(current_state);
+      t_physics += dt_physics;
+      t_accumulator -= dt_physics;
+    }
+    const float alpha = t_accumulator / dt_physics;
+    aircraft.InterpolateState(previous_state, current_state, alpha);
+    aircraft.SetState(current_state);
     
     // Update the camera position
     // camera.Move(callback_world.GetKeyState(), dt_loop);
@@ -94,8 +105,6 @@ int main(int /* argc */, char** /* argv */) {
     if (sleep_duration > std::chrono::duration<float>(0)) {
       std::this_thread::sleep_for(sleep_duration);
     }
-   
-    t_physics += dt_physics;
   } // End game loop
 
   GLEnvironment::TearDown();
