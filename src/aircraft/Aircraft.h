@@ -366,8 +366,6 @@ class Aircraft {
     float CL = InterpolateAeroCoefficient(alpha, CL_) + 
       (CL_Q_*omega.y + CL_alpha_dot_*alpha_dot)*chord_/2/vt + 
       CL_de_*de*(vt + dve)*(vt + dve)/vt/vt;
-    std::cout << glm::degrees(alpha) << " " << 
-      InterpolateAeroCoefficient(alpha, CL_) << std::endl;
     return q*wetted_area_*CL;
   }
 
