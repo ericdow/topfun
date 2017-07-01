@@ -16,6 +16,8 @@
 
 #include "shaders/Shader.h"
 
+namespace TopFun {
+
 struct Vertex {
   glm::vec3 Position;
   glm::vec3 Normal;
@@ -141,5 +143,7 @@ class Mesh {
     glBindVertexArray(0);
   }
 };
+
+} // End namespace TopFun
 
 #endif

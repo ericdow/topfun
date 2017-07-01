@@ -11,6 +11,7 @@ set(libs_to_link
   ${GLFW_LIBRARIES}
   ${FREETYPE_LIBRARIES}
 )
+
 set(include_dirs 
   ${OPENGL_INCLUDE_DIRS} 
   ${GLUT_INCLUDE_DIR} 

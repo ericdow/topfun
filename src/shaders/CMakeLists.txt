@@ -1,3 +1,10 @@
+# build the shader library
+set(SOURCES
+  Shader.cpp
+)
+
+add_library(shader STATIC ${SOURCES})
+
 # copy the shader programs over 
 set(FILES_TO_SEND
   terrain.vs
@@ -9,6 +16,7 @@ set(FILES_TO_SEND
   aircraft.vs
   aircraft.frag
   canopy.frag
+  fog.glsl
 ) 
 
 # this sends files over if they have changed

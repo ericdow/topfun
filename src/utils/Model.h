@@ -19,6 +19,8 @@
 
 #include "Mesh.h"
 
+namespace TopFun {
+
 // TODO move
 GLint TextureFromFile(const char* path, const std::string& directory);
 
@@ -230,5 +232,7 @@ inline GLint TextureFromFile(const char* path, const std::string& directory) {
   SOIL_free_image_data(image);
   return textureID;
 }
+
+} // End namespace TopFun
 
 #endif

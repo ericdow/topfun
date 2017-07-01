@@ -5,8 +5,24 @@ set(SOURCES
   TerrainTile.cpp
 )
 
-set(libs_to_link ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${GLFW_LIBRARIES} ${SOIL_LIBRARY} ${LIBNOISE_LIBRARIES})
-set(include_dirs ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SOIL_INCLUDE_DIRS} ${LIBNOISE_INCLUDE_DIR})
+set(libs_to_link 
+  ${OPENGL_LIBRARIES} 
+  ${GLUT_LIBRARY} 
+  ${GLEW_LIBRARY} 
+  ${GLFW_LIBRARIES} 
+  ${SOIL_LIBRARY} 
+  ${LIBNOISE_LIBRARIES}
+  shader
+)
+
+set(include_dirs 
+  ${OPENGL_INCLUDE_DIRS} 
+  ${GLUT_INCLUDE_DIR} 
+  ${GLEW_INCLUDE_DIRS} 
+  ${GLFW_INCLUDE_DIRS} 
+  ${SOIL_INCLUDE_DIRS} 
+  ${LIBNOISE_INCLUDE_DIR}
+)
 
 add_library(terrain STATIC ${SOURCES})
 target_include_directories(terrain PUBLIC ${include_dirs})
