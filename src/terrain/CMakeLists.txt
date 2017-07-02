@@ -27,6 +27,7 @@ set(include_dirs
 add_library(terrain STATIC ${SOURCES})
 target_include_directories(terrain PUBLIC ${include_dirs})
 target_link_libraries(terrain ${libs_to_link})
+add_dependencies(terrain libnoise)
 
 add_executable(TestTerrainTile TestTerrainTile.cpp) 
 target_include_directories(TestTerrainTile PUBLIC ${include_dirs}) 

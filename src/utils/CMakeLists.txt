@@ -25,3 +25,4 @@ set(include_dirs
 add_library(utils STATIC ${SOURCES})
 target_include_directories(utils PUBLIC ${include_dirs})
 target_link_libraries(utils ${libs_to_link})
+add_dependencies(utils assimp)

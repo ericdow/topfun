@@ -23,3 +23,4 @@ set(include_dirs
 add_library(aircraft STATIC ${SOURCES})
 target_include_directories(aircraft PUBLIC ${include_dirs})
 target_link_libraries(aircraft ${libs_to_link})
+add_dependencies(aircraft assimp)
