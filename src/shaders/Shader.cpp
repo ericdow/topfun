@@ -90,7 +90,7 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
 std::stringstream Shader::SubstituteIncludes(std::ifstream& file_stream,
     const GLchar* path) const {
   std::string line;
-  std::stringstream file_stream_out;
+  std::stringstream string_stream_out;
   // extract the path prefix
   std::string include_path(path);
   while (include_path.back() != '/') {
@@ -106,31 +106,30 @@ std::stringstream Shader::SubstituteIncludes(std::ifstream& file_stream,
       // Remove quotes
       tokens[1].erase(0,1);
       tokens[1].pop_back();
-      include_path += tokens[1];
       try {
         // Open include file
         std::ifstream include_file;
-        include_file.open(include_path);
+        include_file.open(include_path + tokens[1]);
         std::string include_line;
         // Loop over include file and insert into output
         while (include_file.good()) {
           std::getline(include_file, include_line);
-          file_stream_out << include_line << std::endl;
+          string_stream_out << include_line << std::endl;
         }
         // Close file handles
         include_file.close();
       }
       catch (std::ifstream::failure e) {
         std::cout << "ERROR::SHADER::INCLUDE_NOT_SUCCESFULLY_READ" << std::endl;
-        std::cout << include_path << std::endl;
+        std::cout << include_path + tokens[1] << std::endl;
       }
     }
     // otherwise, just write the line out
     else {
-      file_stream_out << line << std::endl;
+      string_stream_out << line << std::endl;
     }
   }
-  return file_stream_out;
+  return string_stream_out;
 }
 
 } // End namespace TopFun

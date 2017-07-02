@@ -11,8 +11,7 @@ out vec4 EyeSpacePos;
 uniform mat4 view;
 uniform mat4 projection;
 
-void main()
-{
+void main() {
   EyeSpacePos = view * vec4(position, 1.0f);
   gl_Position = projection * EyeSpacePos;
   FragPos = position;

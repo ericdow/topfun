@@ -12,8 +12,8 @@ CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
   camera_(camera), debug_overlay_(debug_overlay) {}
 
 //****************************************************************************80
-void CallBackWorld::ProcessKeyPress(int key, int scancode, int action, 
-    int mods) {
+void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action, 
+    int /* mods */) {
   // Switch between fill and line rendering on F1
   if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
     GLint state[2];

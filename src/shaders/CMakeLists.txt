@@ -7,16 +7,21 @@ add_library(shader STATIC ${SOURCES})
 
 # copy the shader programs over 
 set(FILES_TO_SEND
-  terrain.vs
-  terrain.frag
-  text.vs
-  text.frag
-  skybox.vs
-  skybox.frag
-  aircraft.vs
-  aircraft.frag
-  canopy.frag
   fog.glsl
+  shadow.glsl
+  material.glsl
+  light.glsl
+  terrain.vs
+  terrain.fs
+  text.vs
+  text.fs
+  skybox.vs
+  skybox.fs
+  aircraft.vs
+  aircraft.fs
+  canopy.fs
+  depthmap.vs
+  depthmap.fs
 ) 
 
 # this sends files over if they have changed

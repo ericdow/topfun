@@ -1,18 +1,8 @@
 #version 330 core
 
+#include "light.glsl"
+#include "material.glsl"
 #include "fog.glsl"
-
-struct Material {
-  vec3 color; 
-  float shininess;
-};  
-
-struct Light {
-  vec3 direction;
-  vec3 ambient;
-  vec3 diffuse;
-  vec3 specular;
-};
 
 in vec3 FragPos;  
 in vec3 Normal;  
@@ -31,19 +21,17 @@ uniform Fog fog;
 
 void main() {
   // Ambient
-  vec3 ambient = light.ambient * material.color;
+  vec3 ambient = CalcAmbient(light.ambient, material.specular);
 	
   // Diffuse 
   vec3 norm = normalize(Normal);
   vec3 lightDir = normalize(-light.direction);  
-  float diff = max(dot(norm, lightDir), 0.0);
-  vec3 diffuse = light.diffuse * diff * material.color;
+  vec3 diffuse = CalcDiffuse(norm, lightDir, light.diffuse, material.specular);
   
   // Specular
   vec3 viewDir = normalize(viewPos - FragPos);
-  vec3 reflectDir = reflect(-lightDir, norm); 
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-  vec3 specular = light.specular * spec * material.color;
+  vec3 specular = CalcSpecular(norm, lightDir, viewDir, light.specular, 
+    material.specular, material.shiny);
 
   vec4 base = texture(grassTexture0, TexCoord);
 

@@ -470,7 +470,7 @@ class Aircraft {
   //**************************************************************************80
   void CalcAeroForcesAndTorques(const glm::vec3& position,
       const glm::quat& orientation, const glm::vec3& lin_momentum, 
-      const glm::vec3& ang_momentum, const glm::vec3& omega, glm::vec3& forces, 
+      const glm::vec3& omega, glm::vec3& forces, 
       glm::vec3& torques) const;
 
   //**************************************************************************80

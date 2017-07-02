@@ -14,7 +14,7 @@ noise::module::Perlin Terrain::perlin_generator_;
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 Terrain::Terrain(GLfloat l, GLuint ntile) : 
-  shader_("shaders/terrain.vs", "shaders/terrain.frag") {
+  shader_("shaders/terrain.vs", "shaders/terrain.fs") {
   // Set the noise parameters
   perlin_generator_.SetOctaveCount(5);
   perlin_generator_.SetFrequency(0.05);
@@ -132,9 +132,9 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky) {
 
   // Set material uniforms
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.color"), 1.0f, 1.0f, 1.0f);
+        "material.specular"), 1.0f, 1.0f, 1.0f);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.shininess"), 1.0f);
+        "material.shiny"), 1.0f);
 
   // Set lighting uniforms
   const glm::vec3& sun_dir = sky.GetSunDirection();

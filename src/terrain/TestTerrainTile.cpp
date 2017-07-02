@@ -5,7 +5,7 @@
 
 using namespace TopFun;
 
-int main(int argc, char* argv[]) {
+int main() {
 
   // Set up the tiles
   TerrainTile::SetTileLength(10.0);

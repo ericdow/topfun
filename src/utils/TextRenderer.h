@@ -19,7 +19,7 @@ namespace TopFun {
 class TextRenderer {
  public:
   TextRenderer(std::array<GLuint,2> const& screen_size) : 
-    shader("shaders/text.vs", "shaders/text.frag") {
+    shader("shaders/text.vs", "shaders/text.fs") {
     glm::mat4 projection = glm::ortho(0.0f, 
         static_cast<GLfloat>(screen_size[0]), 0.0f, 
         static_cast<GLfloat>(screen_size[1]));

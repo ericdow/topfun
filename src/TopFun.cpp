@@ -62,7 +62,7 @@ int main(int /* argc */, char** /* argv */) {
 
     // Check and call events
     glfwPollEvents();
-   
+  
     // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
     // integrator.do_step(aircraft, current_state, t_physics, dt_loop);

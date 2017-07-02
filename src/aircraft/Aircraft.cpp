@@ -10,8 +10,8 @@ namespace TopFun {
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
-    fuselage_shader_("shaders/aircraft.vs", "shaders/aircraft.frag"),
-    canopy_shader_("shaders/aircraft.vs", "shaders/canopy.frag"),
+    fuselage_shader_("shaders/aircraft.vs", "shaders/aircraft.fs"),
+    canopy_shader_("shaders/aircraft.vs", "shaders/canopy.fs"),
     model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
     position_(position), orientation_(orientation), 
     lin_momentum_(AircraftToWorld(glm::vec3(27000.0f * 150.0f, 0.0f, 0.0f), 
@@ -177,7 +177,7 @@ void Aircraft::operator()(const std::vector<float>& state,
 
   // Update the forces and torques in the aircraft frame
   glm::vec3 forces, torques;
-  CalcAeroForcesAndTorques(position, orientation, lin_momentum, ang_momentum,
+  CalcAeroForcesAndTorques(position, orientation, lin_momentum, 
       WorldToAircraft(omega, orientation), forces, torques);
   forces += CalcEngineForce();
 
@@ -225,6 +225,19 @@ void Aircraft::operator()(const std::vector<float>& state,
 // PRIVATE FUNCTIONS
 //****************************************************************************80
 void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
+  // Set material uniforms
+  fuselage_shader_.Use();
+  glUniform3f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
+        "material.specular"), 0.7f, 0.7f, 0.7f);
+  glUniform1f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
+        "material.shiny"), 1.0f);
+  
+  canopy_shader_.Use();
+  glUniform3f(glGetUniformLocation(canopy_shader_.GetProgram(), 
+        "material.specular"), 1.0f, 1.0f, 1.0f);
+  glUniform1f(glGetUniformLocation(canopy_shader_.GetProgram(), 
+        "material.shiny"), 64.0f);
+
   // Translate model to current position
   glm::mat4 model = glm::translate(glm::mat4(), position_);
   model = glm::translate(model, delta_center_of_mass_);
@@ -236,48 +249,53 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
   model *= glm::toMat4(glm::angleAxis(glm::radians(180.0f), 
         glm::vec3(1.0f, 0.0f, 0.0f)));
   model = glm::translate(model, -delta_center_of_mass_);
-  
-  // Set model/view/projection uniforms
-  fuselage_shader_.Use();
-  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(), 
-        "view"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(),
-        "projection"), 1, GL_FALSE, 
-      glm::value_ptr(camera.GetProjectionMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(fuselage_shader_.GetProgram(), 
-        "model"), 1, GL_FALSE, glm::value_ptr(model));
-  canopy_shader_.Use();
-  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(), 
-        "view"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(),
-        "projection"), 1, GL_FALSE, 
-      glm::value_ptr(camera.GetProjectionMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(canopy_shader_.GetProgram(), 
-        "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-  /*
-  // Set lighting uniforms
-  // TODO move light direction definition to somewhere higher up
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.direction"),
-      -0.3f, -1.0f, 0.0f);
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.ambient"), 
-      0.2f, 0.2f, 0.2f);
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.diffuse"), 
-      0.5f, 0.5f, 0.5f);
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "light.specular"), 
-      1.0f, 1.0f, 1.0f);
-  
-  // Set the camera position uniform
+  std::vector<const Shader*> shaders = {&fuselage_shader_, &canopy_shader_};
+  const glm::vec3& sun_dir = sky.GetSunDirection();
+  const glm::vec3& sun_color = sky.GetSunColor();
+  const glm::vec3& fog_color = sky.GetFogColor();
+  const std::array<float,2>& fog_start_end = sky.GetFogStartEnd();
   glm::vec3 camera_pos = camera.GetPosition();
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "viewPos"), 
-      camera_pos.x, camera_pos.y, camera_pos.z);
-  */
+  for (const Shader* s : shaders) {
+    s->Use();
+    // Set model/view/projection uniforms
+    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "view"), 1, 
+        GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "projection"), 1, 
+        GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
+    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "model"), 1, 
+        GL_FALSE, glm::value_ptr(model));
+    
+    // Set lighting uniforms
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "light.direction"),
+        sun_dir.x, sun_dir.y, sun_dir.z);
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "light.ambient"), 
+        0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "light.diffuse"), 
+        0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "light.specular"), 
+        0.7*sun_color.x, 0.7*sun_color.y, 0.7*sun_color.z);
+
+    // Set fog uniforms
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "fog.Color"),
+        fog_color.x, fog_color.y, fog_color.z);
+    glUniform1f(glGetUniformLocation(s->GetProgram(), "fog.Start"), 
+        fog_start_end[0]);
+    glUniform1f(glGetUniformLocation(s->GetProgram(), "fog.End"), 
+        fog_start_end[1]);
+    glUniform1i(glGetUniformLocation(s->GetProgram(), "fog.Equation"), 
+        sky.GetFogEquation());
+    
+    // Set the camera position uniform
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "viewPos"), 
+        camera_pos.x, camera_pos.y, camera_pos.z);
+  }
 }
 
 //****************************************************************************80
 void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
     const glm::quat& orientation, const glm::vec3& lin_momentum, 
-    const glm::vec3& ang_momentum, const glm::vec3& omega, glm::vec3& forces, 
+    const glm::vec3& omega, glm::vec3& forces, 
     glm::vec3& torques) const {
   glm::vec3 va = WorldToAircraft(lin_momentum / mass_, orientation);
   float vt = glm::l2Norm(va);
