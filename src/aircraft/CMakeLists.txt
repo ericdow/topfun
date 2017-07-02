@@ -9,8 +9,8 @@ set(libs_to_link
   ${GLEW_LIBRARY} 
   ${GLFW_LIBRARIES} 
   ${SOIL_LIBRARY} 
-  ${ASSIMP_LIBRARIES}
 )
+
 set(include_dirs 
   ${OPENGL_INCLUDE_DIRS} 
   ${GLUT_INCLUDE_DIR} 

@@ -12,7 +12,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <assimp/types.h>
+// assimp includes
+#include "types.h"
 
 #include "shaders/Shader.h"
 

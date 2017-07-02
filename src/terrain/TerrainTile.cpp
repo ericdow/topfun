@@ -2,7 +2,7 @@
 #include <limits>
 #include <array>
 
-#include <noise/module/perlin.h>
+#include "module/perlin.h"
 
 #include "terrain/TerrainTile.h"
 #include "terrain/Terrain.h"

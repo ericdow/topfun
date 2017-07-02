@@ -10,6 +10,7 @@ set(libs_to_link
   ${GLEW_LIBRARY} 
   ${GLFW_LIBRARIES}
   ${FREETYPE_LIBRARIES}
+  ${ASSIMP_LIBRARIES}
 )
 
 set(include_dirs 

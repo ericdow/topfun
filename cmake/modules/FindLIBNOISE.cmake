@@ -15,29 +15,29 @@ FIND_PATH(LIBNOISE_INCLUDE_DIR "noise.h"
   ${CMAKE_SOURCE_DIR}/include
   ~/Library/Frameworks/noise/Headers
   /Library/Frameworks/noise/Headers
-  /usr/local/include/noise
+  /usr/local/include/libnoise
   /usr/local/include/noise
   /usr/local/include
-  /usr/include/noise
+  /usr/include/libnoise
   /usr/include/noise
   /usr/include
-  /sw/include/noise 
+  /sw/include/libnoise 
   /sw/include/noise 
   /sw/include # Fink
-  /opt/local/include/noise
+  /opt/local/include/libnoise
   /opt/local/include/noise
   /opt/local/include # DarwinPorts
-  /opt/csw/include/noise
+  /opt/csw/include/libnoise
   /opt/csw/include/noise
   /opt/csw/include # Blastwave
-  /opt/include/noise
+  /opt/include/libnoise
   /opt/include/noise
   /opt/include  
     PATH_SUFFIXES noise
 )
 
 FIND_LIBRARY(LIBNOISE_LIBRARY
-  NAMES libnoise noise libnoiseutils noiseutils
+  NAMES libnoise noise
   PATHS
     ${CMAKE_SOURCE_DIR}/lib
     ~/Library/Frameworks

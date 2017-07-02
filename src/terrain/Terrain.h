@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 
-#include <noise/module/perlin.h>
+#include "module/perlin.h"
 
 #include "shaders/Shader.h"
 #include "utils/Camera.h"

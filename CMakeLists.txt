@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.5.1)
+include(ExternalProject)
 
 project(TopFun)
 
@@ -26,13 +27,37 @@ find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 find_package(SOIL REQUIRED)
-find_package(ASSIMP REQUIRED)
-
-# make sure libnoise is found
-find_package(LIBNOISE REQUIRED)
 
 # make sure FreeType is found
 find_package(Freetype REQUIRED)
+
+# build and install libnoise
+ExternalProject_Add(
+libnoise
+URL ${CMAKE_SOURCE_DIR}/externals/libnoise-master.zip
+PREFIX ${CMAKE_CURRENT_BINARY_DIR}/externals/libnoise
+CMAKE_COMMAND cmake ..
+BUILD_COMMAND make
+CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}
+)
+
+SET(LIBNOISE_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include/noise)
+SET(LIBNOISE_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/lib/libnoise.so)
+
+# build and install assimp
+ExternalProject_Add(
+assimp
+URL ${CMAKE_SOURCE_DIR}/externals/assimp-3.1.1.zip
+PREFIX ${CMAKE_CURRENT_BINARY_DIR}/externals/assimp-3.1.1
+CMAKE_COMMAND cmake CMakeLists.txt -G "Unix Makefiles"
+CMAKE_ARGS -DCMAKE_CXX_FLAGS=-fPIC
+CMAKE_ARGS -DCMAKE_C_FLAGS=-fPIC
+CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}
+BUILD_COMMAND make
+)
+
+SET(ASSIMP_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include/assimp)
+SET(ASSIMP_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/lib/libassimp.so)
 
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 include_directories(${CMAKE_SOURCE_DIR}/src)
