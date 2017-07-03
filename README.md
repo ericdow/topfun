@@ -14,8 +14,6 @@ libxmu-dev
 libxi-dev
 libsoil-dev
 
-libeigen3-dev
-
 libfreetype6-dev
 
 libnoise and assimp are built alongside TopFun
