@@ -320,12 +320,6 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
         rudder_position_);
     torques.y = CalcPitchMoment(alpha, alpha_dot, omega, vt, dve, q, 
         elevator_position_, lift, drag);
-    // TODO
-    static int iter = 0;
-    if (iter < 4) {
-      torques.y = 0.0f;
-      iter++;
-    }
     torques.z = CalcYawMoment(beta, omega, vt, q, aileron_position_, 
         rudder_position_);
   }
