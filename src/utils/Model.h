@@ -145,32 +145,30 @@ class Model {
         indices.push_back(face.mIndices[j]);
     }
     // Process materials
-    if (mesh->mMaterialIndex >= 0) {
-      aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-      // Each diffuse texture should be named as 'texture_diffuseN' where N is
-      // a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-      // Same applies to other texture as the following list summarizes:
-      // Diffuse: texture_diffuseN
-      // Specular: texture_specularN
-      // Normal: texture_normalN
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    // Each diffuse texture should be named as 'texture_diffuseN' where N is
+    // a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+    // Same applies to other texture as the following list summarizes:
+    // Diffuse: texture_diffuseN
+    // Specular: texture_specularN
+    // Normal: texture_normalN
 
-      // 1. Diffuse maps
-      std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, 
-          aiTextureType_DIFFUSE, "texture_diffuse", directory);
-      textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-      // 2. Specular maps
-      std::vector<Texture> specularMaps = LoadMaterialTextures(material, 
-          aiTextureType_SPECULAR, "texture_specular", directory);
-      textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-      // 3. Normal maps
-      std::vector<Texture> normalMaps = LoadMaterialTextures(material, 
-          aiTextureType_HEIGHT, "texture_normal", directory);
-      textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-      // 3. Height maps
-      std::vector<Texture> heightMaps = LoadMaterialTextures(material, 
-          aiTextureType_AMBIENT, "texture_height", directory);
-      textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    }
+    // 1. Diffuse maps
+    std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, 
+        aiTextureType_DIFFUSE, "texture_diffuse", directory);
+    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+    // 2. Specular maps
+    std::vector<Texture> specularMaps = LoadMaterialTextures(material, 
+        aiTextureType_SPECULAR, "texture_specular", directory);
+    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+    // 3. Normal maps
+    std::vector<Texture> normalMaps = LoadMaterialTextures(material, 
+        aiTextureType_HEIGHT, "texture_normal", directory);
+    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+    // 3. Height maps
+    std::vector<Texture> heightMaps = LoadMaterialTextures(material, 
+        aiTextureType_AMBIENT, "texture_height", directory);
+    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     
     // Return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures);

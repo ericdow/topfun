@@ -20,6 +20,8 @@ set(FILES_TO_SEND
   aircraft.vs
   aircraft.fs
   canopy.fs
+  exhaust.vs
+  exhaust.fs
   depthmap.vs
   depthmap.fs
 ) 

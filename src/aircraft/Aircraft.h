@@ -28,7 +28,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief ~Aircraft - Destructor
   //**************************************************************************80
-  ~Aircraft() = default;
+  ~Aircraft();
 
   //**************************************************************************80
   //! \brief Draw - draws the aircraft
@@ -158,6 +158,7 @@ class Aircraft {
  private:
   Shader fuselage_shader_;
   Shader canopy_shader_;
+  Shader exhaust_shader_;
   Model model_;
 
   // Primary state variables (all in world frame)
@@ -209,7 +210,7 @@ class Aircraft {
 
   // Mass/Inertia/Dimensions/etc.
   float mass_;
-  glm::vec3 delta_center_of_mass_; // from model centroid
+  glm::vec3 delta_center_of_mass_; // from model origin
   glm::mat3 inertia_; // rotational inertia tensor
   float wetted_area_;
   float chord_;
@@ -217,6 +218,13 @@ class Aircraft {
   float dx_cg_x_ax_; // % chord from CG to aerodynamic center
   glm::vec3 r_tail_; // vector from center of mass to tail
   float max_thrust_;
+
+  // Data for drawing engine exhaust
+  GLuint sphere_VAO_;
+  GLuint sphere_numindices_;
+  glm::vec3 delta_exhaust_; // from model origin
+  glm::vec3 delta_flame_; // from model origin
+  GLfloat r_flame_; // only light faces within this radius
   
   //**************************************************************************80
   //! \brief WorldToAircraft - convert a vector from world coordinates to 
@@ -495,6 +503,16 @@ class Aircraft {
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
   void SetShaderData(Camera const& camera, const Sky& sky);
+  
+  //**************************************************************************80
+  //! \brief SetupDrawData - helper for setting up data to draw
+  //**************************************************************************80
+  void SetupDrawData();
+  
+  //**************************************************************************80
+  //! \brief DrawExhaust - draw the engine exhaust
+  //**************************************************************************80
+  void DrawExhaust();
 
 };
 } // End namespace TopFun

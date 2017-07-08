@@ -37,6 +37,7 @@ TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) :
   
   glBindVertexArray(VAO_);
 
+  // Set up the VBO
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), 
       vertices.data(), GL_STATIC_DRAW);
