@@ -11,10 +11,9 @@
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
 #include "aircraft/Aircraft.h"
+#include "render/SceneRenderer.h"
 
 using namespace TopFun;
-
-void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft);
 
 // Set up the GL/GLFW environment
 const std::array<GLuint,2> screen_size = {1400, 800};
@@ -89,17 +88,28 @@ int main(int /* argc */, char** /* argv */) {
     // camera.SetPosition(aircraft.GetPosition() + 
     //     2.0f * aircraft_up - 20.0f * aircraft_front);
     // camera.SetOrientation(aircraft_front, aircraft_up);
-
+  
     // Draw the scene
     draw_wait_time += dt_loop;
-    if (callback_world.IsFPSLocked()) {
-      if (draw_wait_time > 0.01666) {
-        draw_wait_time = 0.0;
-        DrawScene(terrain, sky, aircraft);
-      }
-    }
-    else {
-      DrawScene(terrain, sky, aircraft);
+    if ((callback_world.IsFPSLocked() && draw_wait_time > 0.01666) || 
+        !callback_world.IsFPSLocked()) {
+      draw_wait_time = 0.0;
+      // Compute frame time
+      GLfloat current_draw_time = glfwGetTime();
+      GLfloat dt_draw = current_draw_time - last_draw_time;
+      last_draw_time = current_draw_time;
+      
+      // Clear the colorbuffer
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      // Render the scene
+      DrawScene(terrain, sky, aircraft, camera);
+  
+      // Display the debug console last
+      debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
+  
+      // Swap the buffers
+      glfwSwapBuffers(window);
     }
 
     // Sleep (if possible)
@@ -113,23 +123,4 @@ int main(int /* argc */, char** /* argv */) {
 
   GLEnvironment::TearDown();
   return 0;
-}
-
-void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft) {
-  // Compute frame time
-  GLfloat current_draw_time = glfwGetTime();
-  GLfloat dt_draw = current_draw_time - last_draw_time;
-  last_draw_time = current_draw_time;
-  
-  // Clear the colorbuffer
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
- 
-  terrain.Draw(camera, sky);
-  sky.Draw(camera);
-  aircraft.Draw(camera, sky);
-  // Display the debug console last
-  debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
-      
-  // Swap the buffers
-  glfwSwapBuffers(window);
 }

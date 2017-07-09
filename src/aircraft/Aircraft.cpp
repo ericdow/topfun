@@ -168,11 +168,11 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
     rudder_position_ = 0.0f;
   }
   // Throttle control
-  if(keys[GLFW_KEY_W]) {
+  if(keys[GLFW_KEY_EQUAL]) {
     throttle_position_ += 0.005;
     throttle_position_ = std::min(1.0f, throttle_position_);
   }
-  else if(keys[GLFW_KEY_S]) {
+  else if(keys[GLFW_KEY_MINUS]) {
     throttle_position_ -= 0.005;
     throttle_position_ = std::max(0.0f, throttle_position_);
   }
