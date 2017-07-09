@@ -20,6 +20,7 @@ uniform vec3 flame_color;
 uniform vec3 flame1_pos;
 uniform vec3 flame2_pos;
 uniform float r_flame;
+uniform float flame_alpha;
 
 void main() {    
   vec3 tex = texture(texture_diffuse1, TexCoords).rgb;
@@ -45,7 +46,7 @@ void main() {
   if ((d2_flame1 < r_flame*r_flame || d2_flame2 < r_flame*r_flame) &&
       (dot1 > 0.0f || dot2 > 0.0f)) {
     specular *= 0.0f;
-    float alpha = exp(-d2_flame1/0.12f) + exp(-d2_flame2/0.12f);
+    float alpha = flame_alpha * (exp(-d2_flame1/0.12f) + exp(-d2_flame2/0.12f));
     ambient = alpha * flame_color + (1.0f - alpha) * ambient;
   }
 

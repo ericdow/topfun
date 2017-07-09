@@ -30,5 +30,5 @@ void main() {
 
   color = tex + vec4(specular, 1.0f);
   // Set alpha to make transparent
-  color.w = 0.8; 
+  color.w = 0.9; 
 }

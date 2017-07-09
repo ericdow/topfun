@@ -125,8 +125,12 @@ Aircraft::~Aircraft() {
 void Aircraft::Draw(Camera const& camera, const Sky& sky) {
   // Send data to the shaders
   SetShaderData(camera, sky);
+  // Enable face-culling (for cockpit drawing) 
+  glEnable(GL_CULL_FACE);
   // Draw the model
   model_.Draw();
+  // Disable face-culling
+  glDisable(GL_CULL_FACE);
   // Draw the exhaust
   DrawExhaust();
 }
@@ -336,7 +340,7 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
   }
 
   // Set data for the engine flame
-  glm::vec3 flame_color(1.0f, 0.925f, 0.698f);
+  glm::vec3 flame_color(1.0f, 0.76f, 0.44f);
   flame_color += 0.1*(float)rand()/(float)(RAND_MAX);
   fuselage_shader_.Use();
   glUniform3f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
@@ -364,37 +368,39 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky) {
   glUniform3f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
         "flame2_pos"), flame2_pos.x, flame2_pos.y, flame2_pos.z);
   glUniform1f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
-        "r_flame"), r_flame_);      
+        "r_flame"), r_flame_);
+  GLfloat flame_alpha = std::pow(throttle_position_, 5.0); 
+  glUniform1f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
+        "flame_alpha"), flame_alpha);      
 }
 
 //****************************************************************************80
 void Aircraft::SetupDrawData() {
   std::vector<GLfloat> vertices;
   std::vector<GLuint> indices;
-  GLuint nstacks = 20;
-  GLuint nslices = 5;
+  GLuint nstacks = 10;
+  GLuint nslices = 10;
   float r = 1.0f;
-  float tStep = M_PI / (float) nslices;
   float sStep = M_PI / (float) nstacks;
-  for (float t = -M_PI/2; t <= (M_PI/2)-0.0001f; t += tStep) {
+  std::vector<float> t(nslices+1);
+  t[0] = -M_PI/2;
+  t[1] = t[0] + M_PI / 4;
+  t.back() = M_PI/2;
+  float dt = 2.0 * (M_PI/2 - (t[1] - t[0])) / (nslices - 2);
+  for (GLuint i = 2; i < nslices; ++i) {
+    t[i] = t[i-1] + dt;
+  }
+  for (GLuint i = 0; i < nslices; ++i) {
     for (float s = -M_PI; s <= M_PI-0.0001f; s += sStep) {
-      float rt = r * (4.0f * t*t/M_PI/M_PI + 1.0f);
-      vertices.push_back(rt * cos(t) * cos(s));
-      vertices.push_back(r * sin(t));
-      vertices.push_back(rt * cos(t) * sin(s));
+      float rt = r * (4.0f * t[i]*t[i]/M_PI/M_PI + 1.0f);
+      vertices.push_back(rt * cos(t[i]) * cos(s));
+      vertices.push_back(r * sin(t[i]));
+      vertices.push_back(rt * cos(t[i]) * sin(s));
 
-      rt = r * (4.0f * (t+tStep)*(t+tStep)/M_PI/M_PI + 1.0f);
-      vertices.push_back(rt * cos(t+tStep) * cos(s));
-      vertices.push_back(r * sin(t+tStep));
-      vertices.push_back(rt * cos(t+tStep) * sin(s));
-      
-      // vertices.push_back(r * cos(t) * cos(s));
-      // vertices.push_back(r * sin(t));
-      // vertices.push_back(r * cos(t) * sin(s));
-
-      // vertices.push_back(r * cos(t+tStep) * cos(s));
-      // vertices.push_back(r * sin(t+tStep));
-      // vertices.push_back(r * cos(t+tStep) * sin(s));
+      rt = r * (4.0f * t[i+1]*t[i+1]/M_PI/M_PI + 1.0f);
+      vertices.push_back(rt * cos(t[i+1]) * cos(s));
+      vertices.push_back(r * sin(t[i+1]));
+      vertices.push_back(rt * cos(t[i+1]) * sin(s));
     }
   }
   for (std::size_t i = 0; i < vertices.size()/3; i++) {
@@ -454,14 +460,31 @@ void Aircraft::DrawExhaust() {
   // Set positions, transparency, etc.
   float xs = 0.433f; // width
   float ys = 1.0f; // length
-  float zs = 0.230f; // height
+  float zs = 0.210f; // height
+  zs *= 0.6 + 0.4 * throttle_position_;
   std::vector<float> lengths = {1.0f, 0.9f, 0.8f, 0.7f, 0.6f};
-  std::vector<float> alphas = {0.4f, 0.3f, 0.2f, 0.1f, 0.05f};
-
+  std::vector<float> alphas = {0.3f, 0.2f, 0.1f, 0.05f, 0.02f};
+  float tp0 = 0.6f; // throttle position where exhaust appears
+  for (float& a : alphas) {
+    if (throttle_position_ < tp0) 
+      a *= 0.0f;
+    else
+      a *= (throttle_position_ - tp0) / (1.0f - tp0);
+  }
+  for (float& l : lengths) {
+    if (throttle_position_ < tp0) 
+      l *= 0.0f;
+    else
+      l *= std::pow(throttle_position_ - tp0, 1.0f/8.0f) /
+        std::pow(1.0f - tp0, 1.0f/8.0f);
+  }
   for (std::size_t i = 0; i < lengths.size(); ++i) {
     // Set exhaust color and transparency
-    glm::vec3 color(0.8f, 0.6f, 0.5f);
-    color += 0.05*(float)rand()/(float)(RAND_MAX);
+    glm::vec3 color(0.878f, 0.597f, 0.6f);
+    glm::vec3 flame_color(1.0f, 0.76f, 0.44f);
+    float alpha = 0.5 + 0.5 * (float)i / (float)lengths.size();
+    color = alpha * color + (1.0f - alpha) * flame_color;
+    color.x += 0.1*(float)rand()/(float)(RAND_MAX);
     glUniform4f(glGetUniformLocation(exhaust_shader_.GetProgram(), 
           "exhaust_color"), color.x, color.y, color.z, alphas[i]);
  
