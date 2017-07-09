@@ -1,7 +1,6 @@
 # build the utils library
 set(SOURCES
   GLEnvironment.cpp
-  CallBackWorld.cpp
 )
 
 set(libs_to_link 
@@ -11,6 +10,7 @@ set(libs_to_link
   ${GLFW_LIBRARIES}
   ${FREETYPE_LIBRARIES}
   ${ASSIMP_LIBRARIES}
+  input
 )
 
 set(include_dirs 

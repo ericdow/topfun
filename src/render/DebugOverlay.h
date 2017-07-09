@@ -6,7 +6,7 @@
 #include <iomanip>
 
 #include "utils/Camera.h"
-#include "utils/TextRenderer.h"
+#include "render/TextRenderer.h"
 #include "aircraft/Aircraft.h"
 
 // Prints debug/performance info to the screen

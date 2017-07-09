@@ -10,7 +10,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "shaders/Shader.h"
-#include "utils/Model.h"
+#include "model/Model.h"
 #include "utils/Camera.h"
 
 namespace TopFun {

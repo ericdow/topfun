@@ -5,7 +5,7 @@
 #include <array>
 
 #include "utils/Camera.h"
-#include "utils/DebugOverlay.h"
+#include "render/DebugOverlay.h"
 
 // Manager for objects that will be modified by input callbacks
 

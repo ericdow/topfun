@@ -18,7 +18,7 @@
 #include "scene.h"
 #include "postprocess.h"
 
-#include "Mesh.h"
+#include "model/Mesh.h"
 
 namespace TopFun {
 
