@@ -53,23 +53,25 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
 }
 
 //****************************************************************************80
-void Terrain::Draw(Camera const& camera, const Sky& sky) {
-  // Activate shader
-  shader_.Use();
+void Terrain::Draw(Camera const& camera, const Sky& sky, const Shader* shader) {
+  if (!shader) {
+    // Activate shader
+    shader_.Use();
 
-  // Send data to the shaders
-  SetShaderData(camera, sky);
+    // Send data to the shaders
+    SetShaderData(camera, sky);
   
-  // Bind the texture data
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, textures_[0]);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, textures_[1]);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture1"), 1);
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, textures_[2]);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
+    // Bind the texture data
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textures_[0]);
+    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textures_[1]);
+    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture1"), 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, textures_[2]);
+    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
+  }
   
   // Loop over tiles and update LoD
   for (auto& t : tiles_) {

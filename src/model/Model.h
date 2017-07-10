@@ -37,10 +37,15 @@ class Model {
   }
 
   // Draws all the meshes in this model
-  void Draw() {
+  void Draw(const Shader* shader=NULL) {
     for(size_t i = 0; i < meshes_.size(); ++i) {
-      shaders_[i]->Use();
-      meshes_[draw_order_[i]].Draw(*(shaders_[i]));
+      if (!shader) {
+        shaders_[i]->Use();
+        meshes_[draw_order_[i]].Draw(*(shaders_[i]));
+      }
+      else {
+        meshes_[draw_order_[i]].Draw(*shader);
+      }
     }
   }
 

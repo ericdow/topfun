@@ -33,7 +33,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief Draw - draws the aircraft
   //**************************************************************************80
-  void Draw(const Camera& camera, const Sky& sky);
+  void Draw(const Camera& camera, const Sky& sky, const Shader* shader=NULL);
   
   //**************************************************************************80
   //! \brief UpdateControls - process keyboard input to update ailerons, etc. 

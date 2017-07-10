@@ -122,17 +122,22 @@ Aircraft::~Aircraft() {
 }
 
 //****************************************************************************80
-void Aircraft::Draw(Camera const& camera, const Sky& sky) {
-  // Send data to the shaders
-  SetShaderData(camera, sky);
+void Aircraft::Draw(Camera const& camera, const Sky& sky, 
+    const Shader* shader) {
+  if (!shader) {
+    // Send data to the shaders
+    SetShaderData(camera, sky);
+  }
   // Enable face-culling (for cockpit drawing) 
   glEnable(GL_CULL_FACE);
   // Draw the model
-  model_.Draw();
+  model_.Draw(shader);
   // Disable face-culling
   glDisable(GL_CULL_FACE);
-  // Draw the exhaust
-  DrawExhaust();
+  if (!shader) {
+    // Draw the exhaust last
+    DrawExhaust();
+  }
 }
 
 //****************************************************************************80

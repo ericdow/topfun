@@ -40,7 +40,7 @@ class Terrain {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw(const Camera& camera, const Sky& sky);
+  void Draw(const Camera& camera, const Sky& sky, const Shader* shader=NULL);
 
  private:
   Shader shader_;
