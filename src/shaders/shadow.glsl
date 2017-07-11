@@ -29,7 +29,7 @@ float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, vec3 lightPos,
   }
   shadow /= 9.0;
   
-  // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
+  // keep the shadow at 0.0 when outside the far_plane
   if(projCoords.z > 1.0)
     shadow = 0.0;
       

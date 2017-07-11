@@ -1,18 +1,19 @@
-#include "utils/ShadowRenderer.h"
+#include "render/DepthMapRenderer.h"
+#include "render/SceneRenderer.h"
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-ShadowRenderer::ShadowRenderer(GLuint shadow_width, GLuint shadow_height) :
-  shadow_width_(shadow_width), shadow_height_(shadow_height), 
+DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
+  map_width_(map_width), map_height_(map_height), 
   shader_("shaders/depthmap.vs", "shaders/depthmap.fs") {
   // Create depth texture
   glGenFramebuffers(1, &depth_mapFBO_);
   glGenTextures(1, &depth_map_);
   glBindTexture(GL_TEXTURE_2D, depth_map_);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width_, 
-      shadow_height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width_, 
+      map_height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -29,8 +30,9 @@ ShadowRenderer::ShadowRenderer(GLuint shadow_width, GLuint shadow_height) :
 }
 
 //****************************************************************************80
-void ShadowRenderer::RenderDepthMap(const glm::vec3& light_pos) {
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+void DepthMapRenderer::Render(Terrain& terrain, Sky& sky, 
+    Aircraft& aircraft, const Camera& camera, const glm::vec3& light_pos) {
+  shader_.Use();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Render scene from light's point of view
@@ -42,16 +44,23 @@ void ShadowRenderer::RenderDepthMap(const glm::vec3& light_pos) {
       far_plane);
   lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
   lightSpaceMatrix = lightProjection * lightView;
-  shader_.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(),
+        "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
-  glViewport(0, 0, shadow_width_, shadow_height_);
+  // Get the size of the viewport
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  GLint screen_width = viewport[2];
+  GLint screen_height = viewport[3];
+
+  glViewport(0, 0, map_width_, map_height_);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_mapFBO_);
   glClear(GL_DEPTH_BUFFER_BIT);
-  renderScene(simpleDepthShader);
+  DrawScene(terrain, sky, aircraft, camera, &shader_); 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Reset viewport
-  glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+  glViewport(0, 0, screen_width, screen_height);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

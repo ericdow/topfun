@@ -1,3 +1,6 @@
+#ifndef SCENERENDERER_H
+#define SCENERENDERER_H
+
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
 #include "aircraft/Aircraft.h"
@@ -6,7 +9,7 @@
 
 namespace TopFun {
 
-void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
+inline void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
     const Camera& camera, const Shader* shader=NULL) {
   terrain.Draw(camera, sky, shader);
   sky.Draw(camera);
@@ -15,3 +18,5 @@ void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft,
 }
 
 } // End namespace TopFun
+
+#endif

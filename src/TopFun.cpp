@@ -12,6 +12,7 @@
 #include "terrain/Sky.h"
 #include "aircraft/Aircraft.h"
 #include "render/SceneRenderer.h"
+#include "render/DepthMapRenderer.h"
 
 using namespace TopFun;
 
@@ -37,6 +38,7 @@ int main(int /* argc */, char** /* argv */) {
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 20);
   Sky sky;
+  DepthMapRenderer depthmap_renderer(screen_size[0], screen_size[1]);
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);
@@ -98,6 +100,10 @@ int main(int /* argc */, char** /* argv */) {
       GLfloat current_draw_time = glfwGetTime();
       GLfloat dt_draw = current_draw_time - last_draw_time;
       last_draw_time = current_draw_time;
+
+      // Render the depth map for drawing shadows
+      depthmap_renderer.Render(terrain, sky, aircraft, camera,
+         sky.GetSunDirection()); 
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
