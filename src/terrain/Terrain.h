@@ -15,6 +15,7 @@
 
 namespace TopFun {
 
+class DepthMapRenderer;
 class Sky;
 
 class Terrain {
@@ -40,7 +41,8 @@ class Terrain {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw(const Camera& camera, const Sky& sky, const Shader* shader=NULL);
+  void Draw(const Camera& camera, const Sky& sky, 
+      const DepthMapRenderer& depthmap_renderer, const Shader* shader=NULL);
 
  private:
   Shader shader_;
@@ -56,7 +58,8 @@ class Terrain {
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera, const Sky& sky);
+  void SetShaderData(Camera const& camera, const Sky& sky,
+      const DepthMapRenderer& depthmap_renderer);
   
 };
 } // End namespace TopFun

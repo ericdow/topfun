@@ -33,7 +33,11 @@ class Model {
     // Default: draw meshes in order of appearance in .obj file
     draw_order_.resize(meshes_.size());
     std::iota(draw_order_.begin(), draw_order_.end(), 0);
-    FormAABB(); 
+    FormAABB();
+    num_textures_ = 0;
+    for (auto const& mesh : meshes_) {
+      num_textures_ += mesh.GetNumTextures();
+    }
   }
 
   // Draws all the meshes in this model
@@ -58,12 +62,15 @@ class Model {
   void SetShaders(const std::vector<Shader*>& shaders) {
     shaders_ = shaders;
   }
+
+  inline GLuint GetNumTextures() { return num_textures_; }
   
  private:
   std::vector<Mesh> meshes_;
   std::vector<unsigned int> draw_order_; // order to draw the meshes
   std::vector<Shader*> shaders_; // shaders to use for each mesh
   std::array<std::array<float,2>,3> AABB_; // min/max extent for x,y,z
+  GLuint num_textures_; 
 
   // Loads a model with supported ASSIMP extensions from file
   void LoadModel(const std::string& path) {

@@ -20,7 +20,11 @@ class DepthMapRenderer {
 
   ~DepthMapRenderer() = default;
 
-  inline GLuint GetDepthMap() { return depth_map_; }
+  inline GLuint GetDepthMap() const { return depth_map_; }
+  
+  inline const glm::mat4& GetLightSpaceMatrix() const { 
+    return light_space_matrix_; 
+  }
 
   void Render(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
       const Camera& camera, const glm::vec3& light_pos);
@@ -31,6 +35,7 @@ class DepthMapRenderer {
   Shader shader_; // depth map shader
   GLuint depth_map_; // texture storing depth map
   GLuint depth_mapFBO_;
+  glm::mat4 light_space_matrix_;
 
 };
 } // End namespace TopFun

@@ -3,6 +3,7 @@
 
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
+#include "render/DepthMapRenderer.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -17,7 +18,7 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
   shader_("shaders/terrain.vs", "shaders/terrain.fs") {
   // Set the noise parameters
   perlin_generator_.SetOctaveCount(5);
-  perlin_generator_.SetFrequency(0.05);
+  perlin_generator_.SetFrequency(0.04);
   perlin_generator_.SetPersistence(0.5);
 
   // Load the textures
@@ -53,24 +54,11 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
 }
 
 //****************************************************************************80
-void Terrain::Draw(Camera const& camera, const Sky& sky, const Shader* shader) {
+void Terrain::Draw(Camera const& camera, const Sky& sky, 
+    const DepthMapRenderer& depthmap_renderer, const Shader* shader) {
   if (!shader) {
-    // Activate shader
-    shader_.Use();
-
     // Send data to the shaders
-    SetShaderData(camera, sky);
-  
-    // Bind the texture data
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textures_[0]);
-    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, textures_[1]);
-    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture1"), 1);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, textures_[2]);
-    glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
+    SetShaderData(camera, sky, depthmap_renderer);
   }
   
   // Loop over tiles and update LoD
@@ -86,7 +74,7 @@ void Terrain::Draw(Camera const& camera, const Sky& sky, const Shader* shader) {
 
 //****************************************************************************80
 GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
-  return 2.0f * perlin_generator_.GetValue(x/10, z/10, 0.5);
+  return 4.0f * perlin_generator_.GetValue(x/10, z/10, 0.5);
 }
 
 //****************************************************************************80
@@ -125,7 +113,10 @@ void Terrain::LoadTextures() {
 }
 
 //****************************************************************************80
-void Terrain::SetShaderData(Camera const& camera, const Sky& sky) {
+void Terrain::SetShaderData(Camera const& camera, const Sky& sky, 
+    const DepthMapRenderer& depthmap_renderer) {
+  // Activate shader
+  shader_.Use();
   // Set view/projection uniforms  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
       GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
@@ -166,6 +157,25 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky) {
   glm::vec3 camera_pos = camera.GetPosition();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "viewPos"), 
       camera_pos.x, camera_pos.y, camera_pos.z);
+    
+  // Bind the texture data
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textures_[0]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, textures_[1]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture1"), 1);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, textures_[2]);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
+  
+  // Set the shadow data
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), 
+        "lightSpaceMatrix"), 1, GL_FALSE, 
+      glm::value_ptr(depthmap_renderer.GetLightSpaceMatrix()));
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "depthMap"), 3);
 }
 
 } // End namespace TopFun

@@ -3,11 +3,12 @@
 #include "material.glsl"
 #include "light.glsl"
 #include "fog.glsl"
+#include "shadow.glsl"
 
 in vec3 FragPos;  
 in vec3 Normal;  
 in vec2 TexCoords;
-in vec4 EyeSpacePos;
+in vec4 FragPosEyeSpace;
 
 out vec4 color;
 

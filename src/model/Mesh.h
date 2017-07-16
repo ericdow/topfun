@@ -104,6 +104,8 @@ class Mesh {
     return AABB;
   }
 
+  inline GLuint GetNumTextures() const { return textures_.size(); }
+
  private:
   std::vector<Vertex> vertices_;
   std::vector<GLuint> indices_;

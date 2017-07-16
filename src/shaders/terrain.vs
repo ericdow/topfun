@@ -6,15 +6,18 @@ layout (location = 2) in vec2 texCoord;
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoord;
-out vec4 EyeSpacePos;
+out vec4 FragPosEyeSpace;
+out vec4 FragPosLightSpace;
 
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix;
 
 void main() {
-  EyeSpacePos = view * vec4(position, 1.0f);
-  gl_Position = projection * EyeSpacePos;
+  FragPosEyeSpace = view * vec4(position, 1.0f);
+  gl_Position = projection * FragPosEyeSpace;
   FragPos = position;
   Normal = normal;  
 	TexCoord = texCoord;
+  FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 } 

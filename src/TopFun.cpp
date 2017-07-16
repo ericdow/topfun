@@ -16,16 +16,47 @@
 
 using namespace TopFun;
 
+///////////////////////////////////////////////////////////////////////////////
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+///////////////////////////////////////////////////////////////////////////////
+
 // Set up the GL/GLFW environment
 const std::array<GLuint,2> screen_size = {1400, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
-GLfloat terrain_size = 10000.0f; 
+GLfloat terrain_size = 200.0f; // 10000.0f;
 glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
-Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
+Aircraft aircraft(glm::vec3(terrain_size/2, 5.0f, terrain_size/2), 
     glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 CallBackWorld callback_world(camera, debug_overlay, screen_size);
 
@@ -38,6 +69,8 @@ int main(int /* argc */, char** /* argv */) {
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 20);
   Sky sky;
+
+  // Set up data for rendering shadows
   DepthMapRenderer depthmap_renderer(screen_size[0], screen_size[1]);
 
   // Point callback to correct location  
@@ -45,6 +78,18 @@ int main(int /* argc */, char** /* argv */) {
 
   // Set up ODE integrator
   boost::numeric::odeint::runge_kutta4<std::vector<float>> integrator;
+    
+  // TODO remove
+  Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
+  depthmap_renderer.Render(terrain, sky, aircraft, camera,
+     -sky.GetSunDirection()); 
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	debug_shader.Use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
+  glUniform1i(glGetUniformLocation(debug_shader.GetProgram(), "depthMap"), 0);
+  renderQuad();
+  glfwSwapBuffers(window);
   
   // Game loop
   GLfloat last_loop_time = glfwGetTime();
@@ -92,6 +137,7 @@ int main(int /* argc */, char** /* argv */) {
     // camera.SetOrientation(aircraft_front, aircraft_up);
   
     // Draw the scene
+    /*
     draw_wait_time += dt_loop;
     if ((callback_world.IsFPSLocked() && draw_wait_time > 0.01666) || 
         !callback_world.IsFPSLocked()) {
@@ -103,13 +149,13 @@ int main(int /* argc */, char** /* argv */) {
 
       // Render the depth map for drawing shadows
       depthmap_renderer.Render(terrain, sky, aircraft, camera,
-         sky.GetSunDirection()); 
+         -sky.GetSunDirection()); 
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       // Render the scene
-      DrawScene(terrain, sky, aircraft, camera);
+      DrawScene(terrain, sky, aircraft, camera, depthmap_renderer);
   
       // Display the debug console last
       debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
@@ -117,6 +163,7 @@ int main(int /* argc */, char** /* argv */) {
       // Swap the buffers
       glfwSwapBuffers(window);
     }
+    */
 
     // Sleep (if possible)
     GLfloat end_loop_time = glfwGetTime();

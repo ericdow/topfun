@@ -36,16 +36,17 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Render scene from light's point of view
-  glm::mat4 lightProjection, lightView;
-  glm::mat4 lightSpaceMatrix;
+  glm::mat4 light_projection, light_view;
   // TODO these control how far the shadows travel
   float near_plane = 1.0f, far_plane = 2000.0f;
-  lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, 
+  light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, 
       far_plane);
-  lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-  lightSpaceMatrix = lightProjection * lightView;
+  light_view = glm::lookAt(light_pos, glm::vec3(0.0f), 
+      glm::vec3(0.0f, 1.0f, 0.0f));
+  light_space_matrix_ = light_projection * light_view;
+  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(),
-        "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(light_space_matrix_));
 
   // Get the size of the viewport
   GLint viewport[4];
@@ -56,7 +57,7 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   glViewport(0, 0, map_width_, map_height_);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_mapFBO_);
   glClear(GL_DEPTH_BUFFER_BIT);
-  DrawScene(terrain, sky, aircraft, camera, &shader_); 
+  DrawScene(terrain, sky, aircraft, camera, *this, &shader_); 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Reset viewport
