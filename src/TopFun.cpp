@@ -21,29 +21,30 @@ unsigned int quadVAO = 0;
 unsigned int quadVBO;
 void renderQuad()
 {
-    if (quadVAO == 0)
-    {
-        float quadVertices[] = {
-            // positions        // texture Coords
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        };
-        // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
+  if (quadVAO == 0) {
+   float quadVertices[] = {
+     // positions        // texture Coords
+     -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+     -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+      1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+      1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+   };
+   // setup plane VAO
+   glGenVertexArrays(1, &quadVAO);
+   glGenBuffers(1, &quadVBO);
+   glBindVertexArray(quadVAO);
+   glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, 
+       GL_STATIC_DRAW);
+   glEnableVertexAttribArray(0);
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+   glEnableVertexAttribArray(1);
+   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
+       (void*)(3 * sizeof(float)));
+  }
+  glBindVertexArray(quadVAO);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glBindVertexArray(0);
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -78,18 +79,6 @@ int main(int /* argc */, char** /* argv */) {
 
   // Set up ODE integrator
   boost::numeric::odeint::runge_kutta4<std::vector<float>> integrator;
-    
-  // TODO remove
-  Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
-  depthmap_renderer.Render(terrain, sky, aircraft, camera,
-     -sky.GetSunDirection()); 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	debug_shader.Use();
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
-  glUniform1i(glGetUniformLocation(debug_shader.GetProgram(), "depthMap"), 0);
-  renderQuad();
-  glfwSwapBuffers(window);
   
   // Game loop
   GLfloat last_loop_time = glfwGetTime();
@@ -164,6 +153,18 @@ int main(int /* argc */, char** /* argv */) {
       glfwSwapBuffers(window);
     }
     */
+    
+    // TODO remove
+    Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
+    depthmap_renderer.Render(terrain, sky, aircraft, camera,
+       -sky.GetSunDirection()); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  	debug_shader.Use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
+    glUniform1i(glGetUniformLocation(debug_shader.GetProgram(), "depthMap"), 0);
+    renderQuad();
+    glfwSwapBuffers(window);
 
     // Sleep (if possible)
     GLfloat end_loop_time = glfwGetTime();

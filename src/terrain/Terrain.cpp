@@ -60,6 +60,9 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
     // Send data to the shaders
     SetShaderData(camera, sky, depthmap_renderer);
   }
+  else {
+    shader->Use();
+  }
   
   // Loop over tiles and update LoD
   for (auto& t : tiles_) {
