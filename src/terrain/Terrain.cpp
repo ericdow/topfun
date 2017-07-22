@@ -62,6 +62,9 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
   }
   else {
     shader->Use();
+    glm::mat4 model;
+    glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "model"), 1, 
+        GL_FALSE, glm::value_ptr(model));
   }
   
   // Loop over tiles and update LoD

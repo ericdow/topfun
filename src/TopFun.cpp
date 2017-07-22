@@ -154,6 +154,7 @@ int main(int /* argc */, char** /* argv */) {
     }
     */
     
+    //////////////////////////////////////////////////////////////////////////////
     // TODO remove
     Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
     depthmap_renderer.Render(terrain, sky, aircraft, camera,
@@ -165,6 +166,7 @@ int main(int /* argc */, char** /* argv */) {
     glUniform1i(glGetUniformLocation(debug_shader.GetProgram(), "depthMap"), 0);
     renderQuad();
     glfwSwapBuffers(window);
+    //////////////////////////////////////////////////////////////////////////////
 
     // Sleep (if possible)
     GLfloat end_loop_time = glfwGetTime();

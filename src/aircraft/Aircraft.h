@@ -500,6 +500,24 @@ class Aircraft {
   inline glm::vec3 CalcGravityForce() const {
     return glm::vec3(0.0f, -mass_ * 9.81f, 0.0f);
   }
+  
+  //**************************************************************************80
+  //! \brief GetAircraftModel - get the model matrix for the aircraft
+  //**************************************************************************80
+  inline glm::mat4 GetAircraftModel() const {
+    // Translate model to current position
+    glm::mat4 aircraft_model = glm::translate(glm::mat4(), position_);
+    aircraft_model = glm::translate(aircraft_model, delta_center_of_mass_);
+    // Rotate model to current orientation
+    aircraft_model *= glm::toMat4(orientation_);
+    // Rotate model to align with aircraft axis definition
+    aircraft_model *= glm::toMat4(glm::angleAxis(glm::radians(90.0f), 
+          glm::vec3(0.0f, 0.0f, 1.0f)));
+    aircraft_model *= glm::toMat4(glm::angleAxis(glm::radians(180.0f), 
+          glm::vec3(1.0f, 0.0f, 0.0f)));
+    aircraft_model = glm::translate(aircraft_model, -delta_center_of_mass_);
+    return aircraft_model;
+  }
 
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader

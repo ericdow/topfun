@@ -129,6 +129,13 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
     // Send data to the shaders
     SetShaderData(camera, sky, depthmap_renderer);
   }
+  else {
+    shader->Use();
+    // Send the model info
+    glm::mat4 aircraft_model = GetAircraftModel();
+    glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "model"), 1, 
+        GL_FALSE, glm::value_ptr(aircraft_model));
+  }
   // Enable face-culling (for cockpit drawing) 
   glEnable(GL_CULL_FACE);
   // Draw the model
@@ -282,18 +289,6 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
         "material.specular"), 1.0f, 1.0f, 1.0f);
   glUniform1f(glGetUniformLocation(canopy_shader_.GetProgram(), 
         "material.shiny"), 64.0f);
-
-  // Translate model to current position
-  glm::mat4 aircraft_model = glm::translate(glm::mat4(), position_);
-  aircraft_model = glm::translate(aircraft_model, delta_center_of_mass_);
-  // Rotate model to current orientation
-  aircraft_model *= glm::toMat4(orientation_);
-  // Rotate model to align with aircraft axis definition
-  aircraft_model *= glm::toMat4(glm::angleAxis(glm::radians(90.0f), 
-        glm::vec3(0.0f, 0.0f, 1.0f)));
-  aircraft_model *= glm::toMat4(glm::angleAxis(glm::radians(180.0f), 
-        glm::vec3(1.0f, 0.0f, 0.0f)));
-  aircraft_model = glm::translate(aircraft_model, -delta_center_of_mass_);
   
   // Set common data
   std::vector<const Shader*> all_shaders = {&fuselage_shader_, &canopy_shader_,
@@ -320,6 +315,7 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
   }
 
   // Set data for aircraft
+  glm::mat4 aircraft_model = GetAircraftModel();
   std::vector<const Shader*> model_shaders = {&fuselage_shader_, 
     &canopy_shader_};
   const glm::vec3& sun_dir = sky.GetSunDirection();
