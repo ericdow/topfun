@@ -45,27 +45,13 @@ void main() {
   
   // Shadow
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace, lightDir,
-    Normal);
+    norm);
   
   color = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f)
     * highlight0 * highlight1;
 
-  // TODO 
-  // // Fog
-  // float FogCoord = abs(FragPosEyeSpace.z/FragPosEyeSpace.w);
+  // Fog
+  float FogCoord = abs(FragPosEyeSpace.z/FragPosEyeSpace.w);
 
-  // color = mix(color, vec4(fog.Color, 1.0f), CalcFogFactor(fog, FogCoord));
-  
-  /////////////////////////////////////////////////////////////////////////
-  // perform perspective divide
-  vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
-  // transform to [0,1] range
-  projCoords = projCoords * 0.5 + 0.5;
-  // get closest depth value from light's perspective 
-  // (using [0,1] range fragPosLight as coords)
-  float closestDepth = texture(depthMap, projCoords.xy).r; 
-  color = vec4(closestDepth);
-  // color = vec4(projCoords, 1.0);
-  color.w = 1.0; 
-  /////////////////////////////////////////////////////////////////////////
+  color = mix(color, vec4(fog.Color, 1.0f), CalcFogFactor(fog, FogCoord));
 } 

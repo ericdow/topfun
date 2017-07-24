@@ -9,6 +9,7 @@ in vec3 FragPos;
 in vec3 Normal;  
 in vec2 TexCoords;
 in vec4 FragPosEyeSpace;
+in vec4 FragPosLightSpace;
 
 out vec4 color;
 
@@ -50,6 +51,10 @@ void main() {
     float alpha = flame_alpha * (exp(-d2_flame1/0.12f) + exp(-d2_flame2/0.12f));
     ambient = alpha * flame_color + (1.0f - alpha) * ambient;
   }
+  
+  // Shadow
+  float shadow = ShadowCalculation(FragPos, FragPosLightSpace, lightDir,
+    norm);
 
-  color = vec4(ambient + diffuse + specular, 1.0f);
+  color = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f);
 }

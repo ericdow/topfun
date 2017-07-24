@@ -3,11 +3,13 @@
 #include "light.glsl"
 #include "material.glsl"
 #include "fog.glsl"
+#include "shadow.glsl"
 
 in vec3 FragPos;  
 in vec3 Normal;  
 in vec2 TexCoords;
-in vec4 EyeSpacePos;
+in vec4 FragPosEyeSpace;
+in vec4 FragPosLightSpace;
 
 out vec4 color;
 
@@ -27,8 +29,14 @@ void main() {
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 specular = CalcSpecular(norm, lightDir, viewDir, light.specular, 
     material.specular, material.shiny);
+  
+  // Shadow
+  float shadow = ShadowCalculation(FragPos, FragPosLightSpace, lightDir,
+    Normal);
 
-  color = tex + vec4(specular, 1.0f);
+  // TODO Fog
+
+  color = tex + (1.0 - shadow) * vec4(specular, 1.0f);
   // Set alpha to make transparent
   color.w = 0.9; 
 }

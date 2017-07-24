@@ -375,6 +375,19 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
   GLfloat flame_alpha = std::pow(throttle_position_, 5.0); 
   glUniform1f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
         "flame_alpha"), flame_alpha);      
+  
+  // Set the shadow data
+  GLuint num_textures = model_.GetNumTextures();
+  for (const Shader* s : model_shaders) {
+    s->Use();
+    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), 
+          "lightSpaceMatrix"), 1, GL_FALSE, 
+        glm::value_ptr(depthmap_renderer.GetLightSpaceMatrix()));
+    glActiveTexture(GL_TEXTURE0 + num_textures);
+    glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
+    glUniform1i(glGetUniformLocation(s->GetProgram(), "depthMap"), 
+        num_textures);
+  }
 }
 
 //****************************************************************************80

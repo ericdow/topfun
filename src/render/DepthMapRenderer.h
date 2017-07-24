@@ -27,7 +27,8 @@ class DepthMapRenderer {
   }
 
   void Render(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
-      const Camera& camera, const glm::vec3& light_pos);
+      const Camera& camera, const glm::vec3& light_pos, 
+      const glm::vec3& scene_center);
 
  private:
   GLuint map_width_;
