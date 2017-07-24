@@ -40,8 +40,8 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   // Render scene from light's point of view
   glm::mat4 light_projection, light_view;
   // TODO these control how far the shadows travel
-  float near_plane = 1.0f, far_plane = 1000.0f;
-  float width = 50.0f;
+  float near_plane = 1.0f, far_plane = 125.0f;
+  float width = 20.0f;
   light_projection = glm::ortho(-width, width, -width, width, near_plane, 
       far_plane);
   light_view = glm::lookAt(light_pos, scene_center, 

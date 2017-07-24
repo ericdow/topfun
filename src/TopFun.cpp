@@ -53,7 +53,7 @@ const std::array<GLuint,2> screen_size = {1400, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
-GLfloat terrain_size = 1000.0f; // 10000.0f;
+GLfloat terrain_size = 100.0f; // 10000.0f;
 glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
@@ -125,7 +125,10 @@ int main(int /* argc */, char** /* argv */) {
     // camera.SetPosition(aircraft.GetPosition() + 
     //     2.0f * aircraft_up - 20.0f * aircraft_front);
     // camera.SetOrientation(aircraft_front, aircraft_up);
-  
+
+    if (true) {
+    // if (false) {
+
     // Draw the scene
     draw_wait_time += dt_loop;
     if ((callback_world.IsFPSLocked() && draw_wait_time > 0.01666) || 
@@ -139,7 +142,7 @@ int main(int /* argc */, char** /* argv */) {
       // Render the depth map for drawing shadows
       depthmap_renderer.Render(terrain, sky, aircraft, camera,
          // -sky.GetSunDirection(), scene_center);
-         -200.0f*sky.GetSunDirection(), scene_center); // TODO
+         scene_center - 100.0f * sky.GetSunDirection(), scene_center);
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -153,13 +156,14 @@ int main(int /* argc */, char** /* argv */) {
       // Swap the buffers
       glfwSwapBuffers(window);
     }
-   
-    /* 
+
+    } else {
+  
     //////////////////////////////////////////////////////////////////////////////
     // TODO remove
     Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
     depthmap_renderer.Render(terrain, sky, aircraft, camera,
-       -100.0f*sky.GetSunDirection(), scene_center); 
+       scene_center - 100.0f*sky.GetSunDirection(), scene_center); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   	debug_shader.Use();
     glActiveTexture(GL_TEXTURE0);
@@ -168,7 +172,8 @@ int main(int /* argc */, char** /* argv */) {
     renderQuad();
     glfwSwapBuffers(window);
     //////////////////////////////////////////////////////////////////////////////
-    */
+    
+    }
 
     // Sleep (if possible)
     GLfloat end_loop_time = glfwGetTime();
