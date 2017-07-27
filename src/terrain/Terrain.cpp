@@ -21,10 +21,6 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
   perlin_generator_.SetFrequency(0.04);
   perlin_generator_.SetPersistence(0.5);
   
-  perlin_generator_.SetOctaveCount(1);
-  perlin_generator_.SetFrequency(0.0);
-  perlin_generator_.SetPersistence(0.0);
-
   // Load the textures
   LoadTextures();
     

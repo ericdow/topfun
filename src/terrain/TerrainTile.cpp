@@ -146,10 +146,10 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
       glm::vec3 e13(vertices[v3_ix].position[0] - vertices[v1_ix].position[0],
                     vertices[v3_ix].position[1] - vertices[v1_ix].position[1],
                     vertices[v3_ix].position[2] - vertices[v1_ix].position[2]);
-      glm::vec3 n0 = cross(e01,  e02) + cross( e02, -e30);
-      glm::vec3 n1 = cross(e12,  e13) + cross( e13, -e01);
-      glm::vec3 n2 = cross(e23, -e02) + cross(-e02, -e12);
-      glm::vec3 n3 = cross(e30, -e13) + cross(-e13, -e23);
+      glm::vec3 n0 = -cross(e01,  e02) - cross( e02, -e30);
+      glm::vec3 n1 = -cross(e12,  e13) - cross( e13, -e01);
+      glm::vec3 n2 = -cross(e23, -e02) - cross(-e02, -e12);
+      glm::vec3 n3 = -cross(e30, -e13) - cross(-e13, -e23);
       for (int d = 0; d < 3; ++d) {
         vertices[v0_ix].normal[d] += n0[d];
         vertices[v1_ix].normal[d] += n1[d];

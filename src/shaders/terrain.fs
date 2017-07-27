@@ -27,7 +27,7 @@ void main() {
 	
   // Diffuse 
   vec3 norm = normalize(Normal);
-  vec3 lightDir = normalize(light.direction);  
+  vec3 lightDir = normalize(-light.direction);  
   vec3 diffuse = CalcDiffuse(norm, lightDir, light.diffuse, material.specular);
   
   // Specular
