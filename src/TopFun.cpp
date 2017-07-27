@@ -16,38 +16,6 @@
 
 using namespace TopFun;
 
-///////////////////////////////////////////////////////////////////////////////
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-  if (quadVAO == 0) {
-   float quadVertices[] = {
-     // positions        // texture Coords
-     -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-     -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-      1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-      1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-   };
-   // setup plane VAO
-   glGenVertexArrays(1, &quadVAO);
-   glGenBuffers(1, &quadVBO);
-   glBindVertexArray(quadVAO);
-   glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, 
-       GL_STATIC_DRAW);
-   glEnableVertexAttribArray(0);
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-   glEnableVertexAttribArray(1);
-   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
-       (void*)(3 * sizeof(float)));
-  }
-  glBindVertexArray(quadVAO);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glBindVertexArray(0);
-}
-///////////////////////////////////////////////////////////////////////////////
-
 // Set up the GL/GLFW environment
 const std::array<GLuint,2> screen_size = {1400, 800};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
@@ -58,9 +26,13 @@ glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
+DepthMapRenderer depthmap_renderer(screen_size[0], screen_size[1]);
+CallBackWorld callback_world(camera, debug_overlay, depthmap_renderer, 
+    screen_size);
+
+// Set up the aircraft
 Aircraft aircraft(glm::vec3(terrain_size/2, 5.0f, terrain_size/2), 
     glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-CallBackWorld callback_world(camera, debug_overlay, screen_size);
 
 GLfloat last_draw_time = 0.0f;
 GLfloat dt_loop = 0.0f;
@@ -71,9 +43,6 @@ int main(int /* argc */, char** /* argv */) {
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 20);
   Sky sky;
-
-  // Set up data for rendering shadows
-  DepthMapRenderer depthmap_renderer(screen_size[0], screen_size[1]);
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);
@@ -146,32 +115,12 @@ int main(int /* argc */, char** /* argv */) {
 
       // Render the scene
       DrawScene(terrain, sky, aircraft, camera, depthmap_renderer);
+
+      // Display the depth map
+      depthmap_renderer.Display();
   
       // Display the debug console last
       debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
-      
-      //////////////////////////////////////////////////////////////////////////
-      // Grab the original viewport size
-      GLint viewport[4];
-      glGetIntegerv(GL_VIEWPORT, viewport);
-      
-      GLuint x0 = 3*viewport[2]/4;
-      GLuint y0 = 3*viewport[3]/4;
-      glViewport(x0,y0,screen_size[0]/4,screen_size[1]/4);
-      glScissor(x0,y0,screen_size[0]/4,screen_size[1]/4);
-      glEnable(GL_SCISSOR_TEST);
-      Shader debug_shader("shaders/debug_quad.vs", "shaders/debug_quad.fs");
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  	  debug_shader.Use();
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
-      glUniform1i(glGetUniformLocation(debug_shader.GetProgram(), "depthMap"), 0);
-      renderQuad();
-      glDisable(GL_SCISSOR_TEST);
-      
-      // Reset viewport
-      glViewport(0, 0, viewport[2], viewport[3]);
-      //////////////////////////////////////////////////////////////////////////
       
       // Swap the buffers
       glfwSwapBuffers(window);

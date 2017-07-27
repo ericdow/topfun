@@ -11,10 +11,13 @@
 
 namespace TopFun {
 
+class DepthMapRenderer;
+
 class CallBackWorld {
  public:
   CallBackWorld(Camera& camera, DebugOverlay& debug_overlay, 
-      std::array<GLuint,2> const& screen_size);
+     DepthMapRenderer& depthmap_renderer, 
+     std::array<GLuint,2> const& screen_size);
 
   ~CallBackWorld() = default;
 
@@ -40,6 +43,7 @@ class CallBackWorld {
   
   Camera& camera_;
   DebugOverlay& debug_overlay_;
+  DepthMapRenderer& depthmap_renderer_;
 
 };
 } // End namespace TopFun

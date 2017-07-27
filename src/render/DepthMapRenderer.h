@@ -30,10 +30,20 @@ class DepthMapRenderer {
       const Camera& camera, const glm::vec3& light_pos, 
       const glm::vec3& scene_center);
 
+  inline void ToggleVisible() {
+    visible_ = !visible_;
+  }
+  
+  void Display(); 
+
  private:
   GLuint map_width_;
   GLuint map_height_;
   Shader shader_; // depth map shader
+  Shader debug_shader_; // shader to display depth map texture
+  bool visible_; // controls if texture is rendered for debugging
+  GLuint quadVAO_; // for rendering depth map texture
+  GLuint quadVBO_; // for rendering depth map texture
   GLuint depth_map_; // texture storing depth map
   GLuint depth_mapFBO_;
   glm::mat4 light_space_matrix_;

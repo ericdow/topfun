@@ -7,7 +7,9 @@ namespace TopFun {
 //****************************************************************************80
 DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
   map_width_(map_width), map_height_(map_height), 
-  shader_("shaders/depthmap.vs", "shaders/depthmap.fs") {
+  shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
+  debug_shader_("shaders/debug_quad.vs", "shaders/debug_quad.fs"),
+  visible_(true) {
   // Create depth texture
   glGenFramebuffers(1, &depth_mapFBO_);
   glGenTextures(1, &depth_map_);
@@ -20,6 +22,7 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+  
   // Attach depth texture as FBO's depth buffer
   glBindFramebuffer(GL_FRAMEBUFFER, depth_mapFBO_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 
@@ -28,6 +31,26 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  // Set up the quad for rendering the depth map for debugging
+  float quadVertices[] = {
+    // positions        // texture Coords
+    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+  };
+  glGenVertexArrays(1, &quadVAO_);
+  glGenBuffers(1, &quadVBO_);
+  glBindVertexArray(quadVAO_);
+  glBindBuffer(GL_ARRAY_BUFFER, quadVBO_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, 
+      GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
+      (void*)(3 * sizeof(float)));
 }
 
 //****************************************************************************80
@@ -81,6 +104,37 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
     print = false;
   }
   */
+}
+
+//****************************************************************************80
+void DepthMapRenderer::Display() {
+  if (visible_) {
+    // Grab the original viewport size
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    
+    // Set the viewport to only show the upper right corner 
+    GLuint x0 = 3*viewport[2]/4;
+    GLuint y0 = 3*viewport[3]/4;
+    glViewport(x0,y0,viewport[2]/4,viewport[3]/4);
+    glScissor(x0,y0,viewport[2]/4,viewport[3]/4);
+    glEnable(GL_SCISSOR_TEST);
+
+    // Render the depth map texture
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	  debug_shader_.Use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depth_map_);
+    glUniform1i(glGetUniformLocation(debug_shader_.GetProgram(), "depthMap"), 
+        0);
+    glBindVertexArray(quadVAO_);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+    
+    // Reset viewport
+    glDisable(GL_SCISSOR_TEST);
+    glViewport(0, 0, viewport[2], viewport[3]);
+  }
 }
 
 } // End namespace TopFun
