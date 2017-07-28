@@ -63,8 +63,8 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   // Render scene from light's point of view
   glm::mat4 light_projection, light_view;
   // TODO these control how far the shadows travel
-  float near_plane = 1.0f, far_plane = 125.0f;
-  float width = 20.0f;
+  float near_plane = 1.0f, far_plane = 150.0f;
+  float width = 50.0f;
   light_projection = glm::ortho(-width, width, -width, width, near_plane, 
       far_plane);
   light_view = glm::lookAt(light_pos, scene_center, 
@@ -89,21 +89,6 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   // Reset viewport
   glViewport(0, 0, screen_width, screen_height);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  /*
-  // Grab and print the depth texture data
-  std::vector<GLfloat> texture_data(map_width_ * map_height_);
-  glBindTexture(GL_TEXTURE_2D, depth_map_);
-  glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 
-      texture_data.data());
-  static bool print = true;
-  if (print) {
-    for (auto const& d : texture_data) {
-      std::cout << d << std::endl;
-    }
-    print = false;
-  }
-  */
 }
 
 //****************************************************************************80

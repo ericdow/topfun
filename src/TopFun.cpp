@@ -108,7 +108,8 @@ int main(int /* argc */, char** /* argv */) {
       // Render the depth map for drawing shadows
       depthmap_renderer.Render(terrain, sky, aircraft, camera,
          // -sky.GetSunDirection(), scene_center);
-         scene_center - 100.0f * sky.GetSunDirection(), scene_center);
+         camera.GetPosition() - 100.0f * sky.GetSunDirection(), 
+         camera.GetPosition());
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
