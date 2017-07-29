@@ -83,17 +83,39 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   // glm::vec4 tmp = light_space * glm::vec4(vls_mid, 1.0f);
   // vls_mid = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
   
-  // glm::vec3 vls_mid(0.0f);
-  // for (const auto& v : frustrum_vertices) {
-  //   vls_mid += v / 8.0f;
-  // }
+  glm::vec3 vls_mid(0.0f);
+  for (const auto& v : frustrum_vertices) {
+    vls_mid += v / 8.0f;
+  }
+  vls_mid = camera.GetPosition()+scale_factor_*(vls_mid - camera.GetPosition());
   
-  glm::vec3 vls_mid = camera.GetPosition();
+  // glm::vec3 vls_mid = camera.GetPosition();
+  
+  // for (int d = 0; d < 3; ++d) {
+  //   std::cout << vls_max[d] << " ";
+  // }
+  // std::cout << std::endl;
+  // 
+  // for (int d = 0; d < 3; ++d) {
+  //   std::cout << vls_min[d] << " ";
+  // }
+  // std::cout << std::endl;
+  // 
+  // for (int d = 0; d < 3; ++d) {
+  //   std::cout << vls_mid[d] << " ";
+  // }
+  // std::cout << std::endl;
+  // std::cout << std::endl;
  
   // Construct an orthographic projection matrix using the bounding box
   GLfloat width  = scale_factor_ * (vls_max.x - vls_min.x); 
   GLfloat height = scale_factor_ * (vls_max.y - vls_min.y);
   GLfloat depth  = scale_factor_ * (vls_max.z - vls_min.z);
+  // TODO
+  // width = 50.0f;
+  // height = 50.0f;
+  // depth = 50.0f;
+  // width /= scale_factor_; height /= scale_factor_; depth /= scale_factor_;
   glm::mat4 light_projection = glm::ortho(-width / 2.0f, width / 2.0f, 
       -height / 2.0f, height / 2.0f, -depth / 2.0f, depth / 2.0f);
 

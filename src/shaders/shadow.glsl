@@ -13,7 +13,7 @@ float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, vec3 lightDir,
   float currentDepth = projCoords.z;
   // calculate bias (based on depth map resolution and slope)
   normal = normalize(normal);
-  float bias = max(0.001 * (1.0 - dot(normal, lightDir)), 0.005);
+  float bias = max(0.002 * (1.0 - dot(normal, lightDir)), 0.002);
   // bias = 0.0; // allows depth map frustrum to be visualized
   // check whether current frag pos is in shadow
   // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
