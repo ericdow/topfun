@@ -8,7 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shaders/Shader.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 
 namespace TopFun {
 

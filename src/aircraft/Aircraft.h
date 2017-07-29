@@ -11,7 +11,7 @@
 
 #include "shaders/Shader.h"
 #include "model/Model.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 
 namespace TopFun {
 

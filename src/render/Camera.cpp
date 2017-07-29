@@ -1,4 +1,4 @@
-#include "utils/Camera.h"
+#include "render/Camera.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -80,6 +80,26 @@ void Camera::ProcessMouseScroll(GLfloat yoffset) {
     zoom_ = 1.0f;
   if (zoom_ >= 45.0f)
     zoom_ = 45.0f;
+}
+
+//****************************************************************************80
+std::array<glm::vec3,8> Camera::GetFrustrumVertices() const {
+  glm::mat4 inv_view_proj = 
+    glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+  std::array<glm::vec3,8> vertices = {
+    glm::vec3(-1.0f,-1.0f,-1.0f),
+    glm::vec3( 1.0f,-1.0f,-1.0f),
+    glm::vec3( 1.0f, 1.0f,-1.0f),
+    glm::vec3(-1.0f, 1.0f,-1.0f),
+    glm::vec3(-1.0f,-1.0f, 1.0f),
+    glm::vec3( 1.0f,-1.0f, 1.0f),
+    glm::vec3( 1.0f, 1.0f, 1.0f),
+    glm::vec3(-1.0f, 1.0f, 1.0f)};
+  for (auto& v : vertices) {
+    glm::vec4 tmp = inv_view_proj * glm::vec4(v, 1.0f);
+    v = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+  }
+  return vertices;
 }
 
 //****************************************************************************80

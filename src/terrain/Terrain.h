@@ -10,7 +10,7 @@
 #include "module/perlin.h"
 
 #include "shaders/Shader.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 #include "terrain/TerrainTile.h"
 
 namespace TopFun {

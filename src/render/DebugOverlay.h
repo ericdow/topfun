@@ -5,7 +5,7 @@
 #include <array>
 #include <iomanip>
 
-#include "utils/Camera.h"
+#include "render/Camera.h"
 #include "render/TextRenderer.h"
 #include "aircraft/Aircraft.h"
 

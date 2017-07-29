@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shaders/Shader.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 
 namespace TopFun {
 
@@ -27,8 +27,7 @@ class DepthMapRenderer {
   }
 
   void Render(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
-      const Camera& camera, const glm::vec3& light_pos, 
-      const glm::vec3& scene_center);
+      const Camera& camera, const glm::vec3& light_dir); 
 
   inline void ToggleVisible() {
     visible_ = !visible_;
@@ -47,6 +46,7 @@ class DepthMapRenderer {
   GLuint depth_map_; // texture storing depth map
   GLuint depth_mapFBO_;
   glm::mat4 light_space_matrix_;
+  const GLfloat scale_factor_ = 0.1f; // factor of camera view distance
 
 };
 } // End namespace TopFun

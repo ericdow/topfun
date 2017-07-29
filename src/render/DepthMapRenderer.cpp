@@ -55,20 +55,50 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
 
 //****************************************************************************80
 void DepthMapRenderer::Render(Terrain& terrain, Sky& sky, 
-    Aircraft& aircraft, const Camera& camera, const glm::vec3& light_pos,
-    const glm::vec3& scene_center) {
+    Aircraft& aircraft, const Camera& camera, const glm::vec3& light_dir) {
+  // Render scene from light's point of view
   shader_.Use();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Render scene from light's point of view
-  glm::mat4 light_projection, light_view;
-  // TODO these control how far the shadows travel
-  float near_plane = 1.0f, far_plane = 150.0f;
-  float width = 50.0f;
-  light_projection = glm::ortho(-width, width, -width, width, near_plane, 
-      far_plane);
-  light_view = glm::lookAt(light_pos, scene_center, 
+  // Determine light-space bounding box of the camera frustrum
+  glm::mat4 light_space = glm::lookAt(light_dir, glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::mat4 inv_light_space = glm::inverse(light_space);
+  std::array<glm::vec3,8> frustrum_vertices = camera.GetFrustrumVertices();
+  glm::vec3 vls_min(std::numeric_limits<float>::max());
+  glm::vec3 vls_max(std::numeric_limits<float>::lowest());
+  for (const auto& v : frustrum_vertices) {
+    glm::vec4 tmp = inv_light_space * glm::vec4(v, 1.0f);
+    glm::vec3 vls = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+    for (int d = 0; d < 3; ++d) {
+      if (vls[d] < vls_min[d])
+        vls_min[d] = vls[d];
+      if (vls[d] > vls_max[d])
+        vls_max[d] = vls[d];
+    }
+  }
+
+  // Determine the world-space center of the bounding box
+  // glm::vec3 vls_mid = 0.5f * (vls_max + vls_min);
+  // glm::vec4 tmp = light_space * glm::vec4(vls_mid, 1.0f);
+  // vls_mid = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+  
+  // glm::vec3 vls_mid(0.0f);
+  // for (const auto& v : frustrum_vertices) {
+  //   vls_mid += v / 8.0f;
+  // }
+  
+  glm::vec3 vls_mid = camera.GetPosition();
+ 
+  // Construct an orthographic projection matrix using the bounding box
+  GLfloat width  = scale_factor_ * (vls_max.x - vls_min.x); 
+  GLfloat height = scale_factor_ * (vls_max.y - vls_min.y);
+  GLfloat depth  = scale_factor_ * (vls_max.z - vls_min.z);
+  glm::mat4 light_projection = glm::ortho(-width / 2.0f, width / 2.0f, 
+      -height / 2.0f, height / 2.0f, -depth / 2.0f, depth / 2.0f);
+
+  glm::mat4 light_view = glm::lookAt(vls_mid, 
+      vls_mid - light_dir, glm::vec3(0.0f, 1.0f, 0.0f));
   light_space_matrix_ = light_projection * light_view;
  
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(),

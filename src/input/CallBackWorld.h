@@ -4,7 +4,7 @@
 #include <vector>
 #include <array>
 
-#include "utils/Camera.h"
+#include "render/Camera.h"
 #include "render/DebugOverlay.h"
 
 // Manager for objects that will be modified by input callbacks

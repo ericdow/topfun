@@ -4,7 +4,7 @@
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
 #include "aircraft/Aircraft.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 #include "shaders/Shader.h"
 
 namespace TopFun {

@@ -6,7 +6,7 @@
 
 #include "utils/GLEnvironment.h"
 #include "input/CallBackWorld.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 #include "render/DebugOverlay.h"
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
@@ -26,7 +26,7 @@ glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
-DepthMapRenderer depthmap_renderer(screen_size[0], screen_size[1]);
+DepthMapRenderer depthmap_renderer(8*screen_size[0], 8*screen_size[1]);
 CallBackWorld callback_world(camera, debug_overlay, depthmap_renderer, 
     screen_size);
 
@@ -70,7 +70,6 @@ int main(int /* argc */, char** /* argv */) {
 
     // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
-    /*
     // integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
     //     dt_loop);    
     // aircraft.SetState(current_state);
@@ -85,15 +84,14 @@ int main(int /* argc */, char** /* argv */) {
     const float alpha = t_accumulator / dt_physics;
     aircraft.InterpolateState(previous_state, current_state, alpha);
     aircraft.SetState(current_state);
-    */
     
     // Update the camera position
     camera.Move(callback_world.GetKeyState(), dt_loop);
-    // glm::vec3 aircraft_front = aircraft.GetFrontDirection();
-    // glm::vec3 aircraft_up = aircraft.GetUpDirection();
-    // camera.SetPosition(aircraft.GetPosition() + 
-    //     2.0f * aircraft_up - 20.0f * aircraft_front);
-    // camera.SetOrientation(aircraft_front, aircraft_up);
+    glm::vec3 aircraft_front = aircraft.GetFrontDirection();
+    glm::vec3 aircraft_up = aircraft.GetUpDirection();
+    camera.SetPosition(aircraft.GetPosition() + 
+        2.0f * aircraft_up - 20.0f * aircraft_front);
+    camera.SetOrientation(aircraft_front, aircraft_up);
 
     // Draw the scene
     draw_wait_time += dt_loop;
@@ -107,9 +105,7 @@ int main(int /* argc */, char** /* argv */) {
 
       // Render the depth map for drawing shadows
       depthmap_renderer.Render(terrain, sky, aircraft, camera,
-         // -sky.GetSunDirection(), scene_center);
-         camera.GetPosition() - 100.0f * sky.GetSunDirection(), 
-         camera.GetPosition());
+         -sky.GetSunDirection());
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

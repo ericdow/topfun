@@ -1,7 +1,6 @@
 # build the utils library
 set(SOURCES
   GLEnvironment.cpp
-  Camera.cpp
 )
 
 set(libs_to_link 

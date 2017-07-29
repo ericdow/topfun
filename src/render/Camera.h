@@ -88,6 +88,8 @@ class Camera {
   // Processes input received from a mouse scroll-wheel event. Only requires 
   // input on the vertical wheel-axis
   void ProcessMouseScroll(GLfloat yoffset);
+  
+  std::array<glm::vec3,8> GetFrustrumVertices() const;
 
  private:
   // Camera Attributes
@@ -97,7 +99,6 @@ class Camera {
   glm::vec3 front_;
   glm::vec3 up_;
   glm::vec3 right_;
-  std::array<std::array<GLfloat,3>,8> frustrum_vertices_;
   
   // Camera options
   GLfloat movement_speed_;

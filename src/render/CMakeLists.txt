@@ -1,6 +1,7 @@
 # build the render library
 set(SOURCES
   DepthMapRenderer.cpp
+  Camera.cpp
 )
 
 set(include_dirs 

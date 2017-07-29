@@ -10,7 +10,7 @@
 #include <noise/module/perlin.h>
 
 #include "shaders/Shader.h"
-#include "utils/Camera.h"
+#include "render/Camera.h"
 
 namespace TopFun {
 
