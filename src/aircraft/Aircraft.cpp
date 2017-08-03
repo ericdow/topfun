@@ -49,8 +49,14 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   dx_cg_x_ax_ = 0.05f;
   r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
   max_thrust_ = 311000.0f;
-  
-  // Define the aerodynamic coefficients
+  rudder_axis_ = {glm::vec3(-1.57663f, -6.48513f, -0.12633f),
+    glm::vec3(-2.8431f, -5.20638f, 2.38069f)};
+  aileron_axis_ = {glm::vec3(-4.53069f, -4.33568f, -0.668355f),
+    glm::vec3(-5.88987f, -3.94238f, -0.753365f)};
+  elevator_axis_ = {glm::vec3(-2.00298f, -6.8562f, -0.625643f),
+    glm::vec3(-2.22848, -6.87988, -0.625643)};
+
+  // Define the aerodynamic performance coefficients
   CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
     -0.07, -0.14, -0.2, -0.1, -0.2, -0.3, 
     0.0, 0.55, 0.25, 0.2, 0.14, 0.07, 0.0,
