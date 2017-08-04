@@ -21,19 +21,23 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
     ang_momentum_(0.0f, 0.0f, 0.0f),
     acceleration_(0.0f, 0.0f, 0.0f) {
   // Draw the canopy last since it's transparent
-  std::vector<unsigned int> draw_order(22);
+  std::vector<unsigned int> draw_order(model_.GetNumMeshes());
   std::iota(draw_order.begin(), draw_order.end(), 0);
   draw_order.back() = 2;
   draw_order[2] = draw_order.size() - 1;
   model_.SetDrawOrder(draw_order);
   
   // Set the shader pointers for each mesh
-  std::vector<Shader*> shaders(22);
-  for (size_t i = 0; i < shaders.size()-1; i++) {
-    shaders[i] = &fuselage_shader_;
-  }
-  shaders.back() = &canopy_shader_;
+  std::vector<const Shader*> shaders(model_.GetNumMeshes(), &fuselage_shader_);
+  shaders[2] = &canopy_shader_;
   model_.SetShaders(shaders);
+
+  // Set the mesh indices for the various aircraft components
+  rudder_mesh_indices_ = {17, 16}; // left, right
+  aileron_mesh_indices_ = {13, 12}; // left, right
+  elevator_mesh_indices_ = {8, 9}; // left, right
+  airframe_mesh_indices_ = {0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 
+    14, 15, 18, 19, 20, 21};
   
   // Set the physical dimensions of the aircraft
   mass_ = 27000.0f; 
@@ -50,11 +54,11 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
   max_thrust_ = 311000.0f;
   rudder_axis_ = {glm::vec3(-1.57663f, -6.48513f, -0.12633f),
-    glm::vec3(-2.8431f, -5.20638f, 2.38069f)};
+    glm::vec3(-0.410372f, 0.414351f, 0.812345f)};
   aileron_axis_ = {glm::vec3(-4.53069f, -4.33568f, -0.668355f),
-    glm::vec3(-5.88987f, -3.94238f, -0.753365f)};
+    glm::vec3(-0.958864f, 0.277462f, -0.0599722f)};
   elevator_axis_ = {glm::vec3(-2.00298f, -6.8562f, -0.625643f),
-    glm::vec3(-2.22848, -6.87988, -0.625643)};
+    glm::vec3(-0.994531f, -0.104437f, 0.0f)};
 
   // Define the aerodynamic performance coefficients
   CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
@@ -135,12 +139,10 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
     // Send data to the shaders
     SetShaderData(camera, sky, depthmap_renderer);
   }
-  else {
-    shader->Use();
-    // Send the model info
-    glm::mat4 aircraft_model = GetAircraftModel();
-    glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "model"), 1, 
-        GL_FALSE, glm::value_ptr(aircraft_model));
+  // Send the model orientation info
+  glm::mat4 aircraft_model = GetAircraftModel();
+  for (size_t i = 0; i < model_.GetNumMeshes(); ++i) {
+    model_.SetModelMatrix(&aircraft_model, i);
   }
   // Enable face-culling (for cockpit drawing) 
   glEnable(GL_CULL_FACE);
@@ -321,7 +323,6 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
   }
 
   // Set data for aircraft
-  glm::mat4 aircraft_model = GetAircraftModel();
   std::vector<const Shader*> model_shaders = {&fuselage_shader_, 
     &canopy_shader_};
   const glm::vec3& sun_dir = sky.GetSunDirection();
@@ -329,10 +330,6 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
   glm::vec3 camera_pos = camera.GetPosition();
   for (const Shader* s : model_shaders) {
     s->Use();
-    // Set model uniforms
-    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "model"), 1, 
-        GL_FALSE, glm::value_ptr(aircraft_model));
-
     // Set lighting uniforms
     glUniform3f(glGetUniformLocation(s->GetProgram(), "light.direction"),
         sun_dir.x, sun_dir.y, sun_dir.z);

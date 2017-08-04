@@ -33,23 +33,30 @@ class Model {
     // Default: draw meshes in order of appearance in .obj file
     draw_order_.resize(meshes_.size());
     std::iota(draw_order_.begin(), draw_order_.end(), 0);
-    FormAABB();
+    // Gather the total number of textures for all meshes
     num_textures_ = 0;
     for (auto const& mesh : meshes_) {
       num_textures_ += mesh.GetNumTextures();
     }
+    // Initialize model matrices to point to NULL
+    pmodel_matrices_ = std::vector<const glm::mat4*>(meshes_.size(), NULL);
+    FormAABB();
   }
 
   // Draws all the meshes in this model
   void Draw(const Shader* shader=NULL) {
-    for(size_t i = 0; i < meshes_.size(); ++i) {
+    for(size_t i : draw_order_) {
+      const Shader* current_shader;
       if (!shader) {
-        shaders_[i]->Use();
-        meshes_[draw_order_[i]].Draw(*(shaders_[i]));
+        current_shader = shaders_[i];
       }
       else {
-        meshes_[draw_order_[i]].Draw(*shader);
+        current_shader = shader;
       }
+      current_shader->Use();
+      glUniformMatrix4fv(glGetUniformLocation(current_shader->GetProgram(), 
+            "model"), 1, GL_FALSE, glm::value_ptr(*(pmodel_matrices_[i])));
+      meshes_[i].Draw(*current_shader);
     }
   }
 
@@ -59,16 +66,24 @@ class Model {
   }
   
   // Sets the shader pointer for each mesh
-  void SetShaders(const std::vector<Shader*>& shaders) {
+  void SetShaders(const std::vector<const Shader*>& shaders) {
     shaders_ = shaders;
+  }
+  
+  // Sets the model oreintation matrix for a mesh
+  void SetModelMatrix(const glm::mat4* pm, int mesh_idx) {
+    pmodel_matrices_[mesh_idx] = pm;
   }
 
   inline GLuint GetNumTextures() { return num_textures_; }
   
+  inline GLuint GetNumMeshes() { return meshes_.size(); }
+  
  private:
   std::vector<Mesh> meshes_;
   std::vector<unsigned int> draw_order_; // order to draw the meshes
-  std::vector<Shader*> shaders_; // shaders to use for each mesh
+  std::vector<const Shader*> shaders_; // shaders to use for each mesh
+  std::vector<const glm::mat4*> pmodel_matrices_; // mesh orientations
   std::array<std::array<float,2>,3> AABB_; // min/max extent for x,y,z
   GLuint num_textures_; 
 

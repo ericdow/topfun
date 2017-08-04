@@ -221,10 +221,18 @@ class Aircraft {
   glm::vec3 r_tail_; // vector from center of mass to tail
   float max_thrust_;
 
-  // Rotation axes for control surfaces (axis is line segment connecting points)
+  // Rotation axes for control surfaces 
+  // First vector points to "base" of axis from origin
+  // Second vector points in the axis direction
   std::array<glm::vec3,2> rudder_axis_;
   std::array<glm::vec3,2> aileron_axis_;
   std::array<glm::vec3,2> elevator_axis_;
+
+  // Mesh indices for control surfaces
+  std::vector<int> rudder_mesh_indices_;
+  std::vector<int> aileron_mesh_indices_;
+  std::vector<int> elevator_mesh_indices_;
+  std::vector<int> airframe_mesh_indices_; // non-control surface components
 
   // Data for drawing engine exhaust
   GLuint sphere_VAO_;
