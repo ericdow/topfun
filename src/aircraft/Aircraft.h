@@ -176,9 +176,9 @@ class Aircraft {
   float rudder_position_;
   float elevator_position_;
   float aileron_position_;
-  const float rudder_position_max_ = 0.2618f;
-  const float elevator_position_max_ = 0.5236f;
-  const float aileron_position_max_ = 0.5236f;
+  const float rudder_position_max_ = 0.5f;
+  const float elevator_position_max_ = 0.7f;
+  const float aileron_position_max_ = 0.5f;
   float throttle_position_; // between 0.0 and 1.0
 
   // Longitudinal coefficients
@@ -515,9 +515,9 @@ class Aircraft {
   }
   
   //**************************************************************************80
-  //! \brief GetAircraftModel - get the model matrix for the aircraft
+  //! \brief GetAircraftModelMatrix - get the model matrix for the aircraft
   //**************************************************************************80
-  inline glm::mat4 GetAircraftModel() const {
+  inline glm::mat4 GetAircraftModelMatrix() const {
     // Translate model to current position
     glm::mat4 aircraft_model = glm::translate(glm::mat4(), position_);
     aircraft_model = glm::translate(aircraft_model, delta_center_of_mass_);
@@ -530,6 +530,30 @@ class Aircraft {
           glm::vec3(1.0f, 0.0f, 0.0f)));
     aircraft_model = glm::translate(aircraft_model, -delta_center_of_mass_);
     return aircraft_model;
+  }
+  
+  //**************************************************************************80
+  //! \brief GetControlSurfaceModelMatrix - get model matrix for control surface
+  //! \param[in] displacement - vector from model origin to rotation axis 
+  //! \param[in] axis - axis to rotate around 
+  //! \param[in] deflection_angle - angle to rotate control surface (radians)
+  //! \param[in] right - true if right control surface
+  //**************************************************************************80
+  inline glm::mat4 GetControlSurfaceModelMatrix(glm::vec3 displacement,
+      glm::vec3 axis, float deflection_angle, bool right=false) const {
+    if (right) {
+      displacement.x = -displacement.x;
+      axis.x = -axis.x;
+    }
+    // Translate model to aircraft model origin
+    glm::mat4 model = glm::translate(glm::mat4(), displacement);
+    // Rotate the model around its axis
+    model *= glm::toMat4(glm::angleAxis(deflection_angle, axis));
+    // Translate model back to original position
+    model = glm::translate(model, -displacement);
+    // Apply the model matrix of the airframe
+    model = GetAircraftModelMatrix() * model;
+    return model;
   }
 
   //**************************************************************************80

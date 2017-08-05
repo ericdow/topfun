@@ -89,7 +89,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   Cl_da_ = 0.08f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 
-  Cn_dr_ = 0.232f; 
+  Cn_dr_ = 0.18f; 
   
   // Set the initial values for control inputs
   rudder_position_   = 0.0f;
@@ -139,19 +139,44 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
     // Send data to the shaders
     SetShaderData(camera, sky, depthmap_renderer);
   }
+
   // Send the model orientation info
-  glm::mat4 aircraft_model = GetAircraftModel();
-  for (size_t i = 0; i < model_.GetNumMeshes(); ++i) {
+  glm::mat4 aircraft_model = GetAircraftModelMatrix();
+  for (int i : airframe_mesh_indices_) {
     model_.SetModelMatrix(&aircraft_model, i);
   }
+  glm::mat4 left_rudder_model = GetControlSurfaceModelMatrix(rudder_axis_[0], 
+      rudder_axis_[1], rudder_position_ * rudder_position_max_);
+  model_.SetModelMatrix(&left_rudder_model, rudder_mesh_indices_[0]);
+  glm::mat4 right_rudder_model = GetControlSurfaceModelMatrix(rudder_axis_[0], 
+      rudder_axis_[1], rudder_position_ * rudder_position_max_, true);
+  model_.SetModelMatrix(&right_rudder_model, rudder_mesh_indices_[1]);
+  glm::mat4 left_aileron_model = GetControlSurfaceModelMatrix(aileron_axis_[0], 
+      aileron_axis_[1], -aileron_position_ * aileron_position_max_);
+  model_.SetModelMatrix(&left_aileron_model, aileron_mesh_indices_[0]);
+  glm::mat4 right_aileron_model = GetControlSurfaceModelMatrix(aileron_axis_[0], 
+      aileron_axis_[1], -aileron_position_ * aileron_position_max_, true);
+  model_.SetModelMatrix(&right_aileron_model, aileron_mesh_indices_[1]);
+  glm::mat4 left_elevator_model = GetControlSurfaceModelMatrix(
+      elevator_axis_[0], elevator_axis_[1], 
+      -elevator_position_ * elevator_position_max_);
+  model_.SetModelMatrix(&left_elevator_model, elevator_mesh_indices_[0]);
+  glm::mat4 right_elevator_model = GetControlSurfaceModelMatrix(
+      elevator_axis_[0], elevator_axis_[1], 
+      elevator_position_ * elevator_position_max_, true);
+  model_.SetModelMatrix(&right_elevator_model, elevator_mesh_indices_[1]);
+
   // Enable face-culling (for cockpit drawing) 
   glEnable(GL_CULL_FACE);
+
   // Draw the model
   model_.Draw(shader);
+
   // Disable face-culling
   glDisable(GL_CULL_FACE);
+
+  // Draw the exhaust last
   if (!shader) {
-    // Draw the exhaust last
     DrawExhaust();
   }
 }
