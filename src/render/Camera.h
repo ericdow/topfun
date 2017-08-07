@@ -89,7 +89,7 @@ class Camera {
   // input on the vertical wheel-axis
   void ProcessMouseScroll(GLfloat yoffset);
   
-  std::array<glm::vec3,8> GetFrustrumVertices() const;
+  std::array<glm::vec3,8> GetFrustumVertices() const;
 
  private:
   // Camera Attributes

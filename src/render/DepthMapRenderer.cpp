@@ -60,14 +60,37 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   shader_.Use();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Determine light-space bounding box of the camera frustrum
+  // Determine light-space bounding box of the camera frustum
   glm::mat4 light_space = glm::lookAt(light_dir, glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3(0.0f, 1.0f, 0.0f));
   glm::mat4 inv_light_space = glm::inverse(light_space);
-  std::array<glm::vec3,8> frustrum_vertices = camera.GetFrustrumVertices();
+  std::array<glm::vec3,8> frustum_vertices = camera.GetFrustumVertices();
+  for (int i = 4; i < 8; ++i) {
+    frustum_vertices[i] = (1.0f - scale_factor_) * frustum_vertices[i-4] + 
+      scale_factor_ * frustum_vertices[i];
+  }
+  glm::vec3 v_min(std::numeric_limits<float>::max());
+  glm::vec3 v_max(std::numeric_limits<float>::lowest());
+  for (const auto& v : frustum_vertices) {
+    for (int d = 0; d < 3; ++d) {
+      if (v[d] < v_min[d])
+        v_min[d] = v[d];
+      if (v[d] > v_max[d])
+        v_max[d] = v[d];
+    }
+  }
+  std::array<glm::vec3,8> bb_vertices = {
+    glm::vec3(v_min.x, v_min.y, v_min.z), 
+    glm::vec3(v_max.x, v_min.y, v_min.z), 
+    glm::vec3(v_max.x, v_max.y, v_min.z), 
+    glm::vec3(v_min.x, v_max.y, v_min.z), 
+    glm::vec3(v_min.x, v_min.y, v_max.z), 
+    glm::vec3(v_max.x, v_min.y, v_max.z), 
+    glm::vec3(v_max.x, v_max.y, v_max.z), 
+    glm::vec3(v_min.x, v_max.y, v_max.z)}; 
   glm::vec3 vls_min(std::numeric_limits<float>::max());
   glm::vec3 vls_max(std::numeric_limits<float>::lowest());
-  for (const auto& v : frustrum_vertices) {
+  for (const auto& v : bb_vertices) {
     glm::vec4 tmp = inv_light_space * glm::vec4(v, 1.0f);
     glm::vec3 vls = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
     for (int d = 0; d < 3; ++d) {
@@ -79,43 +102,14 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   }
 
   // Determine the world-space center of the bounding box
-  // glm::vec3 vls_mid = 0.5f * (vls_max + vls_min);
-  // glm::vec4 tmp = light_space * glm::vec4(vls_mid, 1.0f);
-  // vls_mid = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+  glm::vec3 vls_mid = 0.5f * (vls_max + vls_min);
+  glm::vec4 tmp = light_space * glm::vec4(vls_mid, 1.0f);
+  vls_mid = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
   
-  glm::vec3 vls_mid(0.0f);
-  for (const auto& v : frustrum_vertices) {
-    vls_mid += v / 8.0f;
-  }
-  vls_mid = camera.GetPosition()+scale_factor_*(vls_mid - camera.GetPosition());
-  
-  // glm::vec3 vls_mid = camera.GetPosition();
-  
-  // for (int d = 0; d < 3; ++d) {
-  //   std::cout << vls_max[d] << " ";
-  // }
-  // std::cout << std::endl;
-  // 
-  // for (int d = 0; d < 3; ++d) {
-  //   std::cout << vls_min[d] << " ";
-  // }
-  // std::cout << std::endl;
-  // 
-  // for (int d = 0; d < 3; ++d) {
-  //   std::cout << vls_mid[d] << " ";
-  // }
-  // std::cout << std::endl;
-  // std::cout << std::endl;
- 
   // Construct an orthographic projection matrix using the bounding box
-  GLfloat width  = scale_factor_ * (vls_max.x - vls_min.x); 
-  GLfloat height = scale_factor_ * (vls_max.y - vls_min.y);
-  GLfloat depth  = scale_factor_ * (vls_max.z - vls_min.z);
-  // TODO
-  // width = 50.0f;
-  // height = 50.0f;
-  // depth = 50.0f;
-  // width /= scale_factor_; height /= scale_factor_; depth /= scale_factor_;
+  GLfloat width  = vls_max.x - vls_min.x; 
+  GLfloat height = vls_max.y - vls_min.y;
+  GLfloat depth  = vls_max.z - vls_min.z;
   glm::mat4 light_projection = glm::ortho(-width / 2.0f, width / 2.0f, 
       -height / 2.0f, height / 2.0f, -depth / 2.0f, depth / 2.0f);
 

@@ -176,7 +176,7 @@ class Aircraft {
   float rudder_position_;
   float elevator_position_;
   float aileron_position_;
-  const float rudder_position_max_ = 0.5f;
+  const float rudder_position_max_ = 0.7f;
   const float elevator_position_max_ = 0.7f;
   const float aileron_position_max_ = 0.5f;
   float throttle_position_; // between 0.0 and 1.0

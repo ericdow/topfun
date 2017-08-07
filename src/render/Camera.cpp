@@ -83,7 +83,7 @@ void Camera::ProcessMouseScroll(GLfloat yoffset) {
 }
 
 //****************************************************************************80
-std::array<glm::vec3,8> Camera::GetFrustrumVertices() const {
+std::array<glm::vec3,8> Camera::GetFrustumVertices() const {
   glm::mat4 inv_view_proj = 
     glm::inverse(GetProjectionMatrix() * GetViewMatrix());
   std::array<glm::vec3,8> vertices = {

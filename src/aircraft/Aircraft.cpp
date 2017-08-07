@@ -84,12 +84,12 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   Cn_R_ = -0.35f; 
   CL_de_ = 0.36f; 
   CD_de_ = 0.08f; 
-  CY_dr_ = 0.17f; 
+  CY_dr_ = 0.12f; 
   Cm_de_ = -0.5f; 
   Cl_da_ = 0.08f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 
-  Cn_dr_ = 0.18f; 
+  Cn_dr_ = 0.12f; 
   
   // Set the initial values for control inputs
   rudder_position_   = 0.0f;
