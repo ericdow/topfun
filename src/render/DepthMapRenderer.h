@@ -46,7 +46,7 @@ class DepthMapRenderer {
   GLuint depth_map_; // texture storing depth map
   GLuint depth_mapFBO_;
   glm::mat4 light_space_matrix_;
-  const GLfloat scale_factor_ = 0.1f; // factor of camera view distance
+  const GLfloat scale_factor_ = 0.01f; // factor of camera view distance
 
 };
 } // End namespace TopFun
