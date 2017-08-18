@@ -9,15 +9,15 @@
 
 namespace TopFun {
 
-class DepthMapRenderer;
+class ShadowCascadeRenderer;
 
 inline void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
-    const Camera& camera, const DepthMapRenderer& depthmap_renderer, 
+    const Camera& camera, const ShadowCascadeRenderer* pshadow_renderer,
     const Shader* shader=NULL) {
-  terrain.Draw(camera, sky, depthmap_renderer, shader);
+  terrain.Draw(camera, sky, pshadow_renderer, shader);
   sky.Draw(camera);
   // Always draw the aircraft last for canopy
-  aircraft.Draw(camera, sky, depthmap_renderer, shader);
+  aircraft.Draw(camera, sky, pshadow_renderer, shader);
 }
 
 } // End namespace TopFun

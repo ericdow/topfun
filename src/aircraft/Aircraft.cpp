@@ -4,7 +4,7 @@
 
 #include "aircraft/Aircraft.h"
 #include "terrain/Sky.h"
-#include "render/DepthMapRenderer.h"
+#include "render/ShadowCascadeRenderer.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -134,10 +134,10 @@ Aircraft::~Aircraft() {
 
 //****************************************************************************80
 void Aircraft::Draw(Camera const& camera, const Sky& sky, 
-    const DepthMapRenderer& depthmap_renderer, const Shader* shader) {
+    const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader) {
   if (!shader) {
     // Send data to the shaders
-    SetShaderData(camera, sky, depthmap_renderer);
+    SetShaderData(camera, sky, *pshadow_renderer);
   }
 
   // Send the model orientation info
@@ -309,7 +309,7 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
 
 //****************************************************************************80
 void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
-    const DepthMapRenderer& depthmap_renderer) {
+    const ShadowCascadeRenderer& shadow_renderer) {
   // Set material uniforms
   fuselage_shader_.Use();
   glUniform3f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
@@ -408,13 +408,35 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
   GLuint num_textures = model_.GetNumTextures();
   for (const Shader* s : model_shaders) {
     s->Use();
-    glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), 
-          "lightSpaceMatrix"), 1, GL_FALSE, 
-        glm::value_ptr(depthmap_renderer.GetLightSpaceMatrix()));
-    glActiveTexture(GL_TEXTURE0 + num_textures);
-    glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
-    glUniform1i(glGetUniformLocation(s->GetProgram(), "depthMap"), 
-        num_textures);
+    glUniform1i(glGetUniformLocation(s->GetProgram(), "num_cascades"), 
+        shadow_renderer.GetNumCascades());
+    const std::vector<GLfloat>& subfrusta_extents = 
+      shadow_renderer.GetSubfrustaExtents();
+    for (int i = 0; i < shadow_renderer.GetNumCascades(); ++i) { 
+      // Send the depth maps
+      glActiveTexture(GL_TEXTURE0 + num_textures + i);
+      glBindTexture(GL_TEXTURE_2D, shadow_renderer.GetDepthMap(i));
+      std::string tmp = "depthMap[" + std::to_string(i) + "]";
+      glUniform1i(glGetUniformLocation(s->GetProgram(), tmp.c_str()), 
+          num_textures + i);
+      // Send the subfrusta end points
+      tmp = "subfrusta_extents[" + std::to_string(i) + "]";
+      glUniform1f(glGetUniformLocation(s->GetProgram(), tmp.c_str()), 
+          subfrusta_extents[i]);
+      // Send the light space matrices
+      tmp = "lightSpaceMatrix[" + std::to_string(i) + "]";
+      glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), tmp.c_str()), 
+          1, GL_FALSE, glm::value_ptr(shadow_renderer.GetLightSpaceMatrix(i)));
+    }
+    glm::vec3 camera_front = camera.GetFront();
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "cameraFront"), 
+        camera_front.x, camera_front.y, camera_front.z);
+    glm::vec3 frustum_origin = camera.GetFrustumOrigin();
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "frustumOrigin"), 
+        frustum_origin.x, frustum_origin.y, frustum_origin.z);
+    glm::vec3 frustum_terminus = camera.GetFrustumTerminus();
+    glUniform3f(glGetUniformLocation(s->GetProgram(), "frustumTerminus"), 
+        frustum_terminus.x, frustum_terminus.y, frustum_terminus.z);
   }
 }
 

@@ -1,7 +1,16 @@
-uniform sampler2D depthMap;
+const int MAX_NUM_CASCADES = 10;
 
-float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, vec3 lightDir, 
-    vec3 normal) {
+uniform mat4 lightSpaceMatrix[MAX_NUM_CASCADES];
+uniform sampler2D depthMap[MAX_NUM_CASCADES];
+uniform float subfrusta_extents[MAX_NUM_CASCADES];
+uniform int num_cascades;
+
+uniform vec3 frustumOrigin;
+uniform vec3 frustumTerminus;
+uniform vec3 cameraFront;
+
+float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, 
+    sampler2D depthMap, vec3 lightDir, vec3 normal) {
   // perform perspective divide
   vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
   // transform to [0,1] range
@@ -14,7 +23,7 @@ float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, vec3 lightDir,
   // calculate bias (based on depth map resolution and slope)
   normal = normalize(normal);
   float bias = max(0.002 * (1.0 - dot(normal, lightDir)), 0.002);
-  bias = 0.0; // allows depth map frustrum to be visualized
+  // bias = 0.0; // allows depth map frustrum to be visualized
   // check whether current frag pos is in shadow
   // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
   // PCF
@@ -34,4 +43,15 @@ float ShadowCalculation(vec3 fragPos, vec4 fragPosLightSpace, vec3 lightDir,
     shadow = 0.0;
       
   return shadow;
+}
+
+int GetCascadeIndex(vec3 fragPos) {
+  float d = dot(cameraFront, fragPos - frustumOrigin) / 
+    length(frustumTerminus - frustumOrigin);
+  for (int i = 0; i < num_cascades; ++i) {
+    if (d < subfrusta_extents[i]) {
+      return i;
+    }
+  }
+  return num_cascades - 1;
 }

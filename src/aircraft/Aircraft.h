@@ -15,7 +15,7 @@
 
 namespace TopFun {
 
-class DepthMapRenderer;
+class ShadowCascadeRenderer;
 class Sky;
 
 class Aircraft {
@@ -35,7 +35,7 @@ class Aircraft {
   //! \brief Draw - draws the aircraft
   //**************************************************************************80
   void Draw(const Camera& camera, const Sky& sky, 
-      const DepthMapRenderer& depthmap_renderer, const Shader* shader=NULL);
+      const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader=NULL);
   
   //**************************************************************************80
   //! \brief UpdateControls - process keyboard input to update ailerons, etc. 
@@ -560,7 +560,7 @@ class Aircraft {
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
   void SetShaderData(Camera const& camera, const Sky& sky,
-      const DepthMapRenderer& depthmap_renderer);
+      const ShadowCascadeRenderer& shadow_renderer);
   
   //**************************************************************************80
   //! \brief SetupDrawData - helper for setting up data to draw

@@ -3,7 +3,7 @@
 
 #include "terrain/Terrain.h"
 #include "terrain/Sky.h"
-#include "render/DepthMapRenderer.h"
+#include "render/ShadowCascadeRenderer.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -55,10 +55,10 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
 
 //****************************************************************************80
 void Terrain::Draw(Camera const& camera, const Sky& sky, 
-    const DepthMapRenderer& depthmap_renderer, const Shader* shader) {
+    const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader) {
   if (!shader) {
     // Send data to the shaders
-    SetShaderData(camera, sky, depthmap_renderer);
+    SetShaderData(camera, sky, *pshadow_renderer);
   }
   else {
     shader->Use();
@@ -120,7 +120,7 @@ void Terrain::LoadTextures() {
 
 //****************************************************************************80
 void Terrain::SetShaderData(Camera const& camera, const Sky& sky, 
-    const DepthMapRenderer& depthmap_renderer) {
+    const ShadowCascadeRenderer& shadow_renderer) {
   // Activate shader
   shader_.Use();
   // Set view/projection uniforms  
@@ -176,12 +176,34 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
   
   // Set the shadow data
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), 
-        "lightSpaceMatrix"), 1, GL_FALSE, 
-      glm::value_ptr(depthmap_renderer.GetLightSpaceMatrix()));
-  glActiveTexture(GL_TEXTURE3);
-  glBindTexture(GL_TEXTURE_2D, depthmap_renderer.GetDepthMap());
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "depthMap"), 3);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "num_cascades"), 
+      shadow_renderer.GetNumCascades());
+  const std::vector<GLfloat>& subfrusta_extents = 
+    shadow_renderer.GetSubfrustaExtents();
+  for (int i = 0; i < shadow_renderer.GetNumCascades(); ++i) { 
+    // Send the depth maps
+    glActiveTexture(GL_TEXTURE3 + i);
+    glBindTexture(GL_TEXTURE_2D, shadow_renderer.GetDepthMap(i));
+    std::string tmp = "depthMap[" + std::to_string(i) + "]";
+    glUniform1i(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 3 + i);
+    // Send the subfrusta end points
+    tmp = "subfrusta_extents[" + std::to_string(i) + "]";
+    glUniform1f(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 
+        subfrusta_extents[i]);
+    // Send the light space matrices
+    tmp = "lightSpaceMatrix[" + std::to_string(i) + "]";
+    glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 
+        1, GL_FALSE, glm::value_ptr(shadow_renderer.GetLightSpaceMatrix(i)));
+  }
+  glm::vec3 camera_front = camera.GetFront();
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "cameraFront"), 
+      camera_front.x, camera_front.y, camera_front.z);
+  glm::vec3 frustum_origin = camera.GetFrustumOrigin();
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "frustumOrigin"), 
+      frustum_origin.x, frustum_origin.y, frustum_origin.z);
+  glm::vec3 frustum_terminus = camera.GetFrustumTerminus();
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "frustumTerminus"), 
+      frustum_terminus.x, frustum_terminus.y, frustum_terminus.z);
 }
 
 } // End namespace TopFun

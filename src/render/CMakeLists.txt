@@ -1,6 +1,7 @@
 # build the render library
 set(SOURCES
   DepthMapRenderer.cpp
+  ShadowCascadeRenderer.cpp
   Camera.cpp
 )
 

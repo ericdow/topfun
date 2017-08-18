@@ -9,7 +9,7 @@ in vec3 FragPos;
 in vec3 Normal;  
 in vec2 TexCoords;
 in vec4 FragPosEyeSpace;
-in vec4 FragPosLightSpace;
+in vec4 FragPosLightSpace[MAX_NUM_CASCADES];
 
 out vec4 color;
 
@@ -53,8 +53,9 @@ void main() {
   }
   
   // Shadow
-  float shadow = ShadowCalculation(FragPos, FragPosLightSpace, lightDir,
-    norm);
+  int cascade_idx = GetCascadeIndex(FragPos);
+  float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 
+    depthMap[cascade_idx], lightDir, norm);
 
   color = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f);
 }

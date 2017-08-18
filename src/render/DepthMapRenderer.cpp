@@ -5,17 +5,25 @@ namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
-  map_width_(map_width), map_height_(map_height), 
-  shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
-  debug_shader_("shaders/debug_quad.vs", "shaders/debug_quad.fs"),
-  visible_(true) {
+DepthMapRenderer::DepthMapRenderer(GLfloat subfrustum_near, 
+    GLfloat subfrustum_far, GLuint map_width, GLuint map_height) : 
+  subfrustum_near_(subfrustum_near), subfrustum_far_(subfrustum_far),
+  map_width_(map_width), map_height_(map_height) {
+  
+  // Check that the subfrusta is valid
+  if (subfrustum_near_ > subfrustum_far_ 
+      || subfrustum_near_ < 0.0f || subfrustum_near_ > 1.0f 
+      || subfrustum_far_ < 0.0f || subfrustum_far_ > 1.0f) {
+    std::string message = "Invalid subfrusta\n";
+    throw std::invalid_argument(message);
+  }
+
   // Create depth texture
   glGenFramebuffers(1, &depth_mapFBO_);
   glGenTextures(1, &depth_map_);
   glBindTexture(GL_TEXTURE_2D, depth_map_);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width_, 
-      map_height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width, 
+      map_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -31,33 +39,14 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
-
-  // Set up the quad for rendering the depth map for debugging
-  float quadVertices[] = {
-    // positions        // texture Coords
-    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-  };
-  glGenVertexArrays(1, &quadVAO_);
-  glGenBuffers(1, &quadVBO_);
-  glBindVertexArray(quadVAO_);
-  glBindBuffer(GL_ARRAY_BUFFER, quadVBO_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, 
-      GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
-      (void*)(3 * sizeof(float)));
 }
 
 //****************************************************************************80
 void DepthMapRenderer::Render(Terrain& terrain, Sky& sky, 
-    Aircraft& aircraft, const Camera& camera, const glm::vec3& light_dir) {
+    Aircraft& aircraft, const Camera& camera, const glm::vec3& light_dir, 
+    const Shader& shader) {
   // Render scene from light's point of view
-  shader_.Use();
+  shader.Use();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Determine light-space bounding box of the camera frustum
@@ -65,9 +54,14 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
       glm::vec3(0.0f, 1.0f, 0.0f));
   glm::mat4 inv_light_space = glm::inverse(light_space);
   std::array<glm::vec3,8> frustum_vertices = camera.GetFrustumVertices();
+  // Set near plane
+  for (int i = 0; i < 4; ++i) {
+    frustum_vertices[i] = (1.0f - subfrustum_near_) * frustum_vertices[i] + 
+      subfrustum_near_ * frustum_vertices[i+4];
+  }
   for (int i = 4; i < 8; ++i) {
-    frustum_vertices[i] = (1.0f - scale_factor_) * frustum_vertices[i-4] + 
-      scale_factor_ * frustum_vertices[i];
+    frustum_vertices[i] = subfrustum_far_ * frustum_vertices[i] + 
+      (1.0f - subfrustum_far_) * frustum_vertices[i-4];
   }
   glm::vec3 v_min(std::numeric_limits<float>::max());
   glm::vec3 v_max(std::numeric_limits<float>::lowest());
@@ -117,7 +111,7 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
       vls_mid - light_dir, glm::vec3(0.0f, 1.0f, 0.0f));
   light_space_matrix_ = light_projection * light_view;
  
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(),
+  glUniformMatrix4fv(glGetUniformLocation(shader.GetProgram(),
         "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(light_space_matrix_));
 
   // Get the size of the viewport
@@ -129,43 +123,12 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
   glViewport(0, 0, map_width_, map_height_);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_mapFBO_);
   glClear(GL_DEPTH_BUFFER_BIT);
-  DrawScene(terrain, sky, aircraft, camera, *this, &shader_); 
+  DrawScene(terrain, sky, aircraft, camera, nullptr, &shader); 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Reset viewport
   glViewport(0, 0, screen_width, screen_height);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-//****************************************************************************80
-void DepthMapRenderer::Display() {
-  if (visible_) {
-    // Grab the original viewport size
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    
-    // Set the viewport to only show the upper right corner 
-    GLuint x0 = 3*viewport[2]/4;
-    GLuint y0 = 3*viewport[3]/4;
-    glViewport(x0,y0,viewport[2]/4,viewport[3]/4);
-    glScissor(x0,y0,viewport[2]/4,viewport[3]/4);
-    glEnable(GL_SCISSOR_TEST);
-
-    // Render the depth map texture
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	  debug_shader_.Use();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depth_map_);
-    glUniform1i(glGetUniformLocation(debug_shader_.GetProgram(), "depthMap"), 
-        0);
-    glBindVertexArray(quadVAO_);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-    
-    // Reset viewport
-    glDisable(GL_SCISSOR_TEST);
-    glViewport(0, 0, viewport[2], viewport[3]);
-  }
 }
 
 } // End namespace TopFun

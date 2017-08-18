@@ -13,6 +13,7 @@ set(libs_to_link
   ${SOIL_LIBRARY} 
   ${LIBNOISE_LIBRARIES}
   shader
+  render
 )
 
 set(include_dirs 

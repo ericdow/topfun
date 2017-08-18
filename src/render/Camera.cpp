@@ -103,6 +103,26 @@ std::array<glm::vec3,8> Camera::GetFrustumVertices() const {
 }
 
 //****************************************************************************80
+glm::vec3 Camera::GetFrustumOrigin() const {
+  glm::mat4 inv_view_proj = 
+    glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+  glm::vec3 vert = glm::vec3(0.0f,0.0f,-1.0f);
+  glm::vec4 tmp = inv_view_proj * glm::vec4(vert, 1.0f);
+  vert = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+  return vert;
+}
+
+//****************************************************************************80
+glm::vec3 Camera::GetFrustumTerminus() const {
+  glm::mat4 inv_view_proj = 
+    glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+  glm::vec3 vert = glm::vec3(0.0f,0.0f,1.0f);
+  glm::vec4 tmp = inv_view_proj * glm::vec4(vert, 1.0f);
+  vert = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+  return vert;
+}
+
+//****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
 void Camera::UpdateCameraVectors(GLfloat angle, const glm::vec3& axis, 

@@ -1,18 +1,18 @@
 #include "input/CallBackWorld.h"
-#include "render/DepthMapRenderer.h"
+#include "render/ShadowCascadeRenderer.h"
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
-    DepthMapRenderer& depthmap_renderer,
+    ShadowCascadeRenderer& shadow_renderer,
     std::array<GLuint,2> const& screen_size) : 
   first_mouse_(true), last_mouse_pos_({(double)screen_size[0]/2, 
   (double)screen_size[1]/2}), key_state_(1024,false), fps_locked_(true), 
   w_double_pressed_(false), last_w_press_time_(-100.0f),
   camera_(camera), debug_overlay_(debug_overlay), 
-  depthmap_renderer_(depthmap_renderer) {}
+  shadow_renderer_(shadow_renderer) {}
 
 //****************************************************************************80
 void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action, 
@@ -41,7 +41,7 @@ void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action,
   
   // Toggle depth map overlay on F4
   if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
-    depthmap_renderer_.ToggleVisible();
+    shadow_renderer_.ToggleVisible();
   }
   
   // Check for double press on W

@@ -69,6 +69,12 @@ class Camera {
 
   inline GLfloat GetZoom() const { return zoom_; }
 
+  inline const glm::vec3& GetFront() const { return front_; }
+
+  glm::vec3 GetFrustumOrigin() const;
+  
+  glm::vec3 GetFrustumTerminus() const;
+
   inline void SetMovementSpeed(GLfloat speed) {
     movement_speed_ = speed;
   }
