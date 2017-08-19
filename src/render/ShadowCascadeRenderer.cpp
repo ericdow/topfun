@@ -8,11 +8,13 @@ namespace TopFun {
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 ShadowCascadeRenderer::ShadowCascadeRenderer(GLuint map_width, 
-    GLuint map_height, const std::vector<GLfloat>& subfrusta_extents) :
+    GLuint map_height, const std::vector<GLfloat>& subfrusta_extents,
+    const std::vector<GLfloat>& shadow_biases) :
   map_width_(map_width), map_height_(map_height), 
   shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
   debug_shader_("shaders/debug_quad.vs", "shaders/debug_quad.fs"),
-  subfrusta_extents_(subfrusta_extents), visible_(true) {
+  subfrusta_extents_(subfrusta_extents), shadow_biases_(shadow_biases),
+  visible_(true) {
 
   // Check that the subfrusta are valid
   for (auto ep : subfrusta_extents_) {
@@ -23,6 +25,12 @@ ShadowCascadeRenderer::ShadowCascadeRenderer(GLuint map_width,
   }
   if (!std::is_sorted(subfrusta_extents_.begin(), subfrusta_extents_.end())) {
     std::string message = "Invalid subfrusta: not sorted\n";
+    throw std::invalid_argument(message);
+  }
+
+  // Check that the input dimensions agree
+  if (subfrusta_extents_.size() != shadow_biases_.size()) {
+    std::string message = "Inconsistent sizes: subfrusta extents and biases\n";
     throw std::invalid_argument(message);
   }
 

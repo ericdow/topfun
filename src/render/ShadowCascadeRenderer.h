@@ -18,7 +18,8 @@ class Aircraft;
 class ShadowCascadeRenderer {
  public:
   ShadowCascadeRenderer(GLuint map_width, GLuint map_height, 
-      const std::vector<float>& subfrusta_extents);
+      const std::vector<float>& subfrusta_extents,
+      const std::vector<float>& shadow_biases);
 
   ~ShadowCascadeRenderer() = default;
 
@@ -35,9 +36,11 @@ class ShadowCascadeRenderer {
     return depth_map_renderers_[i].GetLightSpaceMatrix(); 
   }
 
-  inline const std::vector<GLfloat>& GetSubfrustaExtents() const {
-    return subfrusta_extents_;
+  inline GLfloat GetSubfrustaExtent(int i) const {
+    return subfrusta_extents_[i];
   }
+  
+  inline GLfloat GetShadowBias(int i) const { return shadow_biases_[i]; }
 
   inline void ToggleVisible() {
     visible_ = !visible_;
@@ -51,6 +54,7 @@ class ShadowCascadeRenderer {
   Shader shader_; // depth map shader
   Shader debug_shader_; // shader to display depth map textures
   std::vector<GLfloat> subfrusta_extents_;
+  std::vector<GLfloat> shadow_biases_;
   std::vector<DepthMapRenderer> depth_map_renderers_;
   bool visible_; // controls if textures are rendered for debugging
   GLuint quadVAO_; // for rendering depth map texture

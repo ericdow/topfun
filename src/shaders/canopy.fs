@@ -33,7 +33,7 @@ void main() {
   // Shadow
   int cascade_idx = GetCascadeIndex(FragPos);
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 
-    depthMap[cascade_idx], lightDir, norm);
+    depthMap[cascade_idx], shadow_bias[cascade_idx], lightDir, norm);
 
   color = tex + (1.0 - shadow) * vec4(specular, 1.0f);
   // Set alpha to make transparent

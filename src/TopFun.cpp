@@ -27,7 +27,7 @@ glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1], 
-    {0.01, 0.03, 0.1, 0.2, 0.8});
+    {0.01, 0.03, 0.1, 0.2, 0.8}, {0.002, 0.005, 0.007, 0.010, 0.010});
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 

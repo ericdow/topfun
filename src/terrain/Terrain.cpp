@@ -178,8 +178,6 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
   // Set the shadow data
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "num_cascades"), 
       shadow_renderer.GetNumCascades());
-  const std::vector<GLfloat>& subfrusta_extents = 
-    shadow_renderer.GetSubfrustaExtents();
   for (int i = 0; i < shadow_renderer.GetNumCascades(); ++i) { 
     // Send the depth maps
     glActiveTexture(GL_TEXTURE3 + i);
@@ -189,11 +187,15 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
     // Send the subfrusta end points
     tmp = "subfrusta_extents[" + std::to_string(i) + "]";
     glUniform1f(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 
-        subfrusta_extents[i]);
+        shadow_renderer.GetSubfrustaExtent(i));
     // Send the light space matrices
     tmp = "lightSpaceMatrix[" + std::to_string(i) + "]";
     glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 
         1, GL_FALSE, glm::value_ptr(shadow_renderer.GetLightSpaceMatrix(i)));
+    // Send the shadow biases
+    tmp = "shadow_bias[" + std::to_string(i) + "]";
+    glUniform1f(glGetUniformLocation(shader_.GetProgram(), tmp.c_str()), 
+        shadow_renderer.GetShadowBias(i));
   }
   glm::vec3 camera_front = camera.GetFront();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "cameraFront"), 
