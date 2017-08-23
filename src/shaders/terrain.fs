@@ -46,7 +46,7 @@ void main() {
   // Shadow
   int cascade_idx = GetCascadeIndex(FragPos);
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 
-    depthMap[cascade_idx], shadow_bias[cascade_idx], lightDir, norm);
+    cascade_idx, shadow_bias[cascade_idx], lightDir, norm);
   
   color = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f)
     * highlight0 * highlight1;
