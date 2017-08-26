@@ -15,6 +15,7 @@ A (very) simple flight simulator written in C++
 * libfreetype6-dev
 
 libnoise and assimp are built alongside TopFun
+
 Make sure to add -fPIC to C/C++ flags in CMake when compiling assimp
 
 # Features

@@ -189,9 +189,10 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
     const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &num_axes);
-    throttle_position_ = 0.5f * (1.0f - axes[2]);
-    elevator_position_ = -axes[1] * elevator_position_max_;
     aileron_position_  = axes[0] * aileron_position_max_;
+    elevator_position_ = -axes[1] * elevator_position_max_;
+    throttle_position_ = 0.5f * (1.0f - axes[2]);
+    rudder_position_   = axes[5] * rudder_position_max_;
   }
   else {
     // Elevator control
