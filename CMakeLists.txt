@@ -59,6 +59,5 @@ SET(ASSIMP_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/lib/libassimp.so)
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_subdirectory(externals)
 add_subdirectory(src)
 

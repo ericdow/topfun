@@ -183,44 +183,56 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
 
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
-  // Elevator control
-  if(keys[GLFW_KEY_UP]) {
-    elevator_position_ = 0.2f * elevator_position_max_;
-  }
-  else if(keys[GLFW_KEY_DOWN]) {
-    elevator_position_ = -0.2f * elevator_position_max_;
-  }
-  else {
-    elevator_position_ = 0.0f;
-  }
-  // Aileron control
-  if(keys[GLFW_KEY_RIGHT]) {
-    aileron_position_ = 0.5f * aileron_position_max_;
-  }
-  else if(keys[GLFW_KEY_LEFT]) {
-    aileron_position_ = -0.5f * aileron_position_max_;
+  // Check for joystick to determine input mode
+  int present = glfwJoystickPresent(GLFW_JOYSTICK_1);
+  if (present == GL_TRUE) {
+    // Grab joystick state and set control surfaces/throttle
+    int num_axes;
+    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &num_axes);
+    throttle_position_ = 0.5f * (1.0f - axes[2]);
+    elevator_position_ = -axes[1] * elevator_position_max_;
+    aileron_position_  = axes[0] * aileron_position_max_;
   }
   else {
-    aileron_position_ = 0.0f;
-  }
-  // Rudder control
-  if(keys[GLFW_KEY_D]) {
-    rudder_position_ = 0.5f * rudder_position_max_;
-  }
-  else if(keys[GLFW_KEY_A]) {
-    rudder_position_ = -0.5f * rudder_position_max_;
-  }
-  else {
-    rudder_position_ = 0.0f;
-  }
-  // Throttle control
-  if(keys[GLFW_KEY_EQUAL]) {
-    throttle_position_ += 0.005;
-    throttle_position_ = std::min(1.0f, throttle_position_);
-  }
-  else if(keys[GLFW_KEY_MINUS]) {
-    throttle_position_ -= 0.005;
-    throttle_position_ = std::max(0.0f, throttle_position_);
+    // Elevator control
+    if(keys[GLFW_KEY_UP]) {
+      elevator_position_ = 0.2f * elevator_position_max_;
+    }
+    else if(keys[GLFW_KEY_DOWN]) {
+      elevator_position_ = -0.2f * elevator_position_max_;
+    }
+    else {
+      elevator_position_ = 0.0f;
+    }
+    // Aileron control
+    if(keys[GLFW_KEY_RIGHT]) {
+      aileron_position_ = 0.5f * aileron_position_max_;
+    }
+    else if(keys[GLFW_KEY_LEFT]) {
+      aileron_position_ = -0.5f * aileron_position_max_;
+    }
+    else {
+      aileron_position_ = 0.0f;
+    }
+    // Rudder control
+    if(keys[GLFW_KEY_D]) {
+      rudder_position_ = 0.5f * rudder_position_max_;
+    }
+    else if(keys[GLFW_KEY_A]) {
+      rudder_position_ = -0.5f * rudder_position_max_;
+    }
+    else {
+      rudder_position_ = 0.0f;
+    }
+    // Throttle control
+    if(keys[GLFW_KEY_EQUAL]) {
+      throttle_position_ += 0.005;
+      throttle_position_ = std::min(1.0f, throttle_position_);
+    }
+    else if(keys[GLFW_KEY_MINUS]) {
+      throttle_position_ -= 0.005;
+      throttle_position_ = std::max(0.0f, throttle_position_);
+    }
   }
 }
 
