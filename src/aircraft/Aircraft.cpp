@@ -61,9 +61,9 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
     glm::vec3(-0.994531f, -0.104437f, 0.0f)};
 
   // Define the aerodynamic performance coefficients
-  CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, 
-    -0.07, -0.14, -0.2, -0.1, -0.2, -0.3, 
-    0.0, 0.55, 0.25, 0.2, 0.14, 0.07, 0.0,
+  CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, // (-pi/2, 0] 
+    -0.07, -0.14, -0.2, -0.1, -0.2, -0.3, // (0, pi/2]
+    0.0, 0.55, 0.45, 0.3, 0.14, 0.07, 0.0, // (pi/2, pi]
     -0.07, -0.14, -0.2, -0.1, -0.2, 0.0};
   CD_ = {0.03, 0.11, 0.2, 0.4, 0.6, 0.8, 
     1.0, 0.8, 0.6, 0.4, 0.25, 0.11, // (-pi/2, 0]
@@ -116,7 +116,7 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   float drag1 = CalcDrag(lift1, alpha1, vt, 0.0f, q, 0.0f);
   float M_LD1 = dx_cg_x_ax_ * chord_ * (lift1*cos(alpha1) + drag1*sin(alpha1));
   float dCm_LD_dalpha = (M_LD1-M_LD0)/(alpha1-alpha0)/q/wetted_area_/ chord_;
-  float dCm_dalpha = 1.6f * dCm_LD_dalpha;
+  float dCm_dalpha = 8.0f * dCm_LD_dalpha; // increasing this causes nose up
   float Cm0 = -M_LD0 / q / wetted_area_ / chord_ - dCm_dalpha * alpha0;
   Cm_ = {Cm0 - dCm_dalpha * (float)M_PI, Cm0, Cm0 + dCm_dalpha * (float)M_PI};
 
