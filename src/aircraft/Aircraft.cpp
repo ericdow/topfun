@@ -184,11 +184,10 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Check for joystick to determine input mode
-  int present = glfwJoystickPresent(GLFW_JOYSTICK_1);
-  if (present == GL_TRUE) {
+  if (glfwJoystickPresent(GLFW_JOYSTICK_2) == GL_TRUE) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
-    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &num_axes);
+    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_2, &num_axes);
     aileron_position_  = axes[0] * aileron_position_max_;
     elevator_position_ = -axes[1] * elevator_position_max_;
     throttle_position_ = 0.5f * (1.0f - axes[2]);

@@ -87,7 +87,7 @@ int main(int /* argc */, char** /* argv */) {
     aircraft.SetState(current_state);
     
     // Update the camera position
-    camera.Move(callback_world.GetKeyState(), dt_loop);
+    // camera.Move(callback_world.GetKeyState(), dt_loop);
     glm::vec3 aircraft_front = aircraft.GetFrontDirection();
     glm::vec3 aircraft_up = aircraft.GetUpDirection();
     camera.SetPosition(aircraft.GetPosition() + 
