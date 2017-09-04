@@ -66,6 +66,11 @@ class Camera {
         (GLfloat)screen_size_[0] / 
         (GLfloat)screen_size_[1], 1.0f, view_distance_);
   }
+  
+  // Returns the inverse of the projection x view matrix 
+  inline glm::mat4 GetInverseProjectionViewMatrix() const {
+    return glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+  }
 
   inline GLfloat GetZoom() const { return zoom_; }
 

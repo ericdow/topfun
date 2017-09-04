@@ -49,11 +49,6 @@ void SetCallback(GLFWwindow* window, CallBackWorld& callback_world) {
 }
 
 //****************************************************************************80
-void TearDown() {
-  glfwTerminate();
-}
-
-//****************************************************************************80
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, 
     int mods) {
   // Close by pressing escape key
@@ -70,6 +65,18 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
   CallBackWorld* callback_world = 
     reinterpret_cast<CallBackWorld*>(glfwGetWindowUserPointer(window));
   callback_world->ProcessMouseMovement(xpos, ypos);
+}
+
+//****************************************************************************80
+glm::ivec4 GetViewport() {
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  return glm::ivec4(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+//****************************************************************************80
+void TearDown() {
+  glfwTerminate();
 }
 
 } // End namespace GLEnvironment

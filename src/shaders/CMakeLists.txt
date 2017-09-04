@@ -11,6 +11,7 @@ set(FILES_TO_SEND
   shadow.glsl
   material.glsl
   light.glsl
+  raymarch.glsl
   terrain.vs
   terrain.fs
   text.vs

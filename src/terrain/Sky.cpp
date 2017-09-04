@@ -1,5 +1,9 @@
 #include "SOIL.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
+
 #include "terrain/Sky.h"
+#include "utils/GLEnvironment.h"
 
 namespace TopFun {
 //****************************************************************************80
@@ -139,6 +143,13 @@ void Sky::SetShaderData(Camera const& camera) {
       GL_FALSE, glm::value_ptr(view));
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"), 
       1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
+
+  // Send the data for generating clouds
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "inv_projview"),
+      1, GL_FALSE, glm::value_ptr(camera.GetInverseProjectionViewMatrix()));
+  glm::ivec4 vp = GLEnvironment::GetViewport();
+  glUniform4i(glGetUniformLocation(shader_.GetProgram(), "viewport"), 
+      vp[0], vp[1], vp[2], vp[3]);
 }
 
 } // End namespace TopFun

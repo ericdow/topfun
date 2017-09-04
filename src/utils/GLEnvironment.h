@@ -7,6 +7,7 @@
 // GLEW
 #define GLEW_STATIC
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 // GLFW
 #include <GLFW/glfw3.h>
@@ -25,6 +26,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
     int mods);
 
 void MouseCallback(GLFWwindow* window, double xpos, double ypos);
+
+glm::ivec4 GetViewport();
 
 void TearDown();
 

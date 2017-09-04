@@ -15,7 +15,10 @@ inline void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft,
     const Camera& camera, const ShadowCascadeRenderer* pshadow_renderer,
     const Shader* shader=NULL) {
   terrain.Draw(camera, sky, pshadow_renderer, shader);
-  sky.Draw(camera);
+  // Only draw the sky if not rendering shadows
+  if (!shader) {
+    sky.Draw(camera);
+  }
   // Always draw the aircraft last for canopy
   aircraft.Draw(camera, sky, pshadow_renderer, shader);
 }
