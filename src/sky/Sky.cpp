@@ -2,7 +2,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
 
-#include "terrain/Sky.h"
+#include "sky/Sky.h"
 #include "utils/GLEnvironment.h"
 
 namespace TopFun {

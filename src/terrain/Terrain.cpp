@@ -2,7 +2,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "terrain/Terrain.h"
-#include "terrain/Sky.h"
+#include "sky/Sky.h"
 #include "render/ShadowCascadeRenderer.h"
 
 namespace TopFun {

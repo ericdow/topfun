@@ -9,7 +9,7 @@
 #include "render/Camera.h"
 #include "render/DebugOverlay.h"
 #include "terrain/Terrain.h"
-#include "terrain/Sky.h"
+#include "sky/Sky.h"
 #include "aircraft/Aircraft.h"
 #include "render/SceneRenderer.h"
 #include "render/ShadowCascadeRenderer.h"

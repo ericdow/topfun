@@ -2,7 +2,7 @@
 #define SCENERENDERER_H
 
 #include "terrain/Terrain.h"
-#include "terrain/Sky.h"
+#include "sky/Sky.h"
 #include "aircraft/Aircraft.h"
 #include "render/Camera.h"
 #include "shaders/Shader.h"

@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "aircraft/Aircraft.h"
-#include "terrain/Sky.h"
+#include "sky/Sky.h"
 #include "render/ShadowCascadeRenderer.h"
 
 namespace TopFun {

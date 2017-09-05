@@ -1,9 +1,10 @@
 add_executable(TopFun TopFun.cpp) 
 target_include_directories(TopFun PUBLIC terrain utils input)
-target_link_libraries(TopFun terrain utils aircraft render)
+target_link_libraries(TopFun terrain sky utils aircraft render)
 
 add_subdirectory(utils)
 add_subdirectory(terrain)
+add_subdirectory(sky)
 add_subdirectory(shaders)
 add_subdirectory(geometry)
 add_subdirectory(aircraft)
