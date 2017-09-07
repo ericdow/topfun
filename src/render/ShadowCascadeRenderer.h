@@ -33,7 +33,7 @@ class ShadowCascadeRenderer {
   }
   
   inline const glm::mat4& GetLightSpaceMatrix(int i) const { 
-    return depth_map_renderers_[i].GetLightSpaceMatrix(); 
+    return light_space_matrices_[i];
   }
 
   inline GLfloat GetSubfrustaExtent(int i) const {
@@ -59,6 +59,10 @@ class ShadowCascadeRenderer {
   bool visible_; // controls if textures are rendered for debugging
   GLuint quadVAO_; // for rendering depth map texture
   GLuint quadVBO_; // for rendering depth map texture
+  std::vector<glm::mat4> light_space_matrices_;
+
+  void UpdateLightSpaceMatrices(const Camera& camera, 
+      const glm::vec3& light_dir);
 
 };
 } // End namespace TopFun
