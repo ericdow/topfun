@@ -13,7 +13,8 @@ Sky::Sky() : shader_("shaders/skybox.vs", "shaders/skybox.fs"),
   sun_dir_(glm::vec3(0.3078f, -0.3256f, 0.8940f)), 
   sun_color_(glm::vec3(1.0f, 1.0f, 1.0f)),
   fog_color_(glm::vec3(249.0/256.0, 250.0/256.0, 247.0/256.0)),
-  fog_start_end_({1000.0f, 2500.0f}), fog_eq_(0) {
+  fog_start_end_({1000.0f, 2500.0f}), fog_eq_(0),
+  cloud_start_end_({500.0f, 550.0f}) {
   
   GLfloat vertices[] = {
   // Positions          
@@ -145,11 +146,23 @@ void Sky::SetShaderData(Camera const& camera) {
       1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
 
   // Send the data for generating clouds
+  glm::mat4 proj_view = camera.GetProjectionMatrix() * camera.GetViewMatrix();
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projview"),
+      1, GL_FALSE, glm::value_ptr(proj_view));
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "inv_projview"),
-      1, GL_FALSE, glm::value_ptr(camera.GetInverseProjectionViewMatrix()));
+      1, GL_FALSE, glm::value_ptr(glm::inverse(proj_view)));
   glm::ivec4 vp = GLEnvironment::GetViewport();
   glUniform4i(glGetUniformLocation(shader_.GetProgram(), "viewport"), 
       vp[0], vp[1], vp[2], vp[3]);
+  std::array<float,2> near_far = camera.GetNearFar();
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "camera_near"), 
+      near_far[0]);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "camera_far"), 
+      near_far[1]);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "cloud_start"), 
+      cloud_start_end_[0]);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "cloud_end"), 
+      cloud_start_end_[1]);
 }
 
 } // End namespace TopFun

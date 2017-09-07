@@ -64,17 +64,14 @@ class Camera {
   inline glm::mat4 GetProjectionMatrix() const {
     return glm::perspective(glm::radians(zoom_),
         (GLfloat)screen_size_[0] / 
-        (GLfloat)screen_size_[1], 1.0f, view_distance_);
-  }
-  
-  // Returns the inverse of the projection x view matrix 
-  inline glm::mat4 GetInverseProjectionViewMatrix() const {
-    return glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+        (GLfloat)screen_size_[1], near_, far_);
   }
 
   inline GLfloat GetZoom() const { return zoom_; }
 
   inline const glm::vec3& GetFront() const { return front_; }
+
+  inline const std::array<float,2> GetNearFar() const { return {near_, far_}; }
 
   glm::vec3 GetFrustumOrigin() const;
   
@@ -116,7 +113,8 @@ class Camera {
   GLfloat rotate_speed_;
   GLfloat mouse_sensitivity_;
   GLfloat zoom_; // FOV
-  GLfloat view_distance_;
+  GLfloat near_; // near plane distance
+  GLfloat far_; // far plane distance
   
   void UpdateCameraVectors(GLfloat angle, const glm::vec3& axis, 
       glm::vec3& dir1, glm::vec3& dir2);
