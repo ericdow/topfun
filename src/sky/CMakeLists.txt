@@ -1,6 +1,7 @@
 # build the sky library
 set(SOURCES
   Sky.cpp
+  CloudRenderer.cpp
 )
 
 set(libs_to_link 

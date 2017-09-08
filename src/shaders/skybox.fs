@@ -11,8 +11,4 @@ uniform float cloud_end;
 
 void main() {    
   color = texture(skybox, TexCoords);
-  
-  // ray-march test...
-  Ray r = GetFragRay();
-  color = vec4(abs(normalize(r.dir)), 1.0);
 }

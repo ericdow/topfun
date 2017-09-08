@@ -21,7 +21,7 @@ Ray GetFragRay() {
   vec4 far = near + inv_projview[2];
   near.xyz /= near.w;
   far.xyz /= far.w;
-  return Ray(near.xyz, far.xyz-near.xyz);
+  return Ray(near.xyz, normalize(far.xyz-near.xyz));
 }
 
 // Computes the t-coordinate of intersection with a ray and a play at height y

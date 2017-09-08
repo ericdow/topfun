@@ -321,7 +321,7 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
 
 //****************************************************************************80
 void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
-    const ShadowCascadeRenderer& shadow_renderer) {
+    const ShadowCascadeRenderer& shadow_renderer) const {
   // Set material uniforms
   fuselage_shader_.Use();
   glUniform3f(glGetUniformLocation(fuselage_shader_.GetProgram(), 
@@ -520,7 +520,7 @@ void Aircraft::SetupDrawData() {
 }
 
 //****************************************************************************80
-void Aircraft::DrawExhaust() {
+void Aircraft::DrawExhaust() const {
   exhaust_shader_.Use();
 
   // Enable face-culling 

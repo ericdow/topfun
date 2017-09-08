@@ -75,7 +75,7 @@ class Model {
     pmodel_matrices_[mesh_idx] = pm;
   }
 
-  inline GLuint GetNumTextures() { return num_textures_; }
+  inline GLuint GetNumTextures() const { return num_textures_; }
   
   inline GLuint GetNumMeshes() { return meshes_.size(); }
   

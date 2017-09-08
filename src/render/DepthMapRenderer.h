@@ -22,7 +22,7 @@ class DepthMapRenderer {
 
   inline GLuint GetDepthMap() const { return depth_map_; }
 
-  void Render(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
+  void Render(Terrain& terrain, const Sky& sky, Aircraft& aircraft,
       const Camera& camera, const glm::mat4& proj_view, 
       const Shader& shader);
 

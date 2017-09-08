@@ -27,6 +27,8 @@ set(FILES_TO_SEND
   depthmap.fs
   debug_quad.vs
   debug_quad.fs
+  clouds.vs
+  clouds.fs
 ) 
 
 # this sends files over if they have changed

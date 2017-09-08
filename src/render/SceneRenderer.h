@@ -11,9 +11,9 @@ namespace TopFun {
 
 class ShadowCascadeRenderer;
 
-inline void DrawScene(Terrain& terrain, Sky& sky, Aircraft& aircraft, 
-    const Camera& camera, const ShadowCascadeRenderer* pshadow_renderer,
-    const Shader* shader=NULL) {
+inline void DrawScene(Terrain& terrain, const Sky& sky, 
+    Aircraft& aircraft, const Camera& camera, 
+    const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader=NULL) {
   terrain.Draw(camera, sky, pshadow_renderer, shader);
   // Only draw the sky if not rendering shadows
   if (!shader) {

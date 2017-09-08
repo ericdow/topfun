@@ -1,3 +1,4 @@
+#include "utils/GLEnvironment.h"
 #include "render/DepthMapRenderer.h"
 #include "render/SceneRenderer.h"
 
@@ -32,7 +33,7 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
 }
 
 //****************************************************************************80
-void DepthMapRenderer::Render(Terrain& terrain, Sky& sky, 
+void DepthMapRenderer::Render(Terrain& terrain, const Sky& sky, 
     Aircraft& aircraft, const Camera& camera, const glm::mat4& proj_view, 
     const Shader& shader) {
   // Render the scene and store the depth buffer
@@ -43,8 +44,7 @@ void DepthMapRenderer::Render(Terrain& terrain, Sky& sky,
         "projection_view"), 1, GL_FALSE, glm::value_ptr(proj_view));
 
   // Get the size of the viewport
-  GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
+  glm::ivec4 viewport = GLEnvironment::GetViewport();
   GLint screen_width = viewport[2];
   GLint screen_height = viewport[3];
 

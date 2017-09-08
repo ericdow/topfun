@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "utils/GLEnvironment.h"
 #include "render/ShadowCascadeRenderer.h"
 #include "render/SceneRenderer.h"
 
@@ -76,8 +77,7 @@ void ShadowCascadeRenderer::Render(Terrain& terrain, Sky& sky,
 void ShadowCascadeRenderer::Display() {
   if (visible_) {
     // Grab the original viewport size
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    glm::ivec4 viewport = GLEnvironment::GetViewport();
     
     // Set the viewport to only show the upper right corner 
     GLuint x0 = 3*viewport[2]/4;

@@ -560,7 +560,7 @@ class Aircraft {
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
   void SetShaderData(Camera const& camera, const Sky& sky,
-      const ShadowCascadeRenderer& shadow_renderer);
+      const ShadowCascadeRenderer& shadow_renderer) const;
   
   //**************************************************************************80
   //! \brief SetupDrawData - helper for setting up data to draw
@@ -570,7 +570,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief DrawExhaust - draw the engine exhaust
   //**************************************************************************80
-  void DrawExhaust();
+  void DrawExhaust() const;
 
 };
 } // End namespace TopFun

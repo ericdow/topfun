@@ -28,7 +28,7 @@ class Sky {
   //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
-  void Draw(Camera const& camera);
+  void Draw(Camera const& camera) const;
   
   //**************************************************************************80
   //! \brief GetSunDirection - gets the direction of the sun
@@ -83,20 +83,6 @@ class Sky {
   //! \brief SetFogEquation - sets the equation index used to compute fog
   //**************************************************************************80
   inline void SetFogEquation(GLuint fog_eq) { fog_eq_ = fog_eq; }
-  
-  //**************************************************************************80
-  //! \brief GetCloudStartEnd - gets the start and end altitudes of the clouds
-  //**************************************************************************80
-  inline const std::array<float,2>& GetCloudStartEnd() const {
-    return cloud_start_end_; 
-  }
-  
-  //**************************************************************************80
-  //! \brief SetCloudStartEnd - sets the start and end altitudes of the clouds
-  //**************************************************************************80
-  inline void SetCloudStartEnd(const std::array<float,2>& cloud_start_end) {
-    cloud_start_end_ = cloud_start_end;
-  }
 
  private:
   Shader shader_;
@@ -108,13 +94,10 @@ class Sky {
   std::array<float,2> fog_start_end_; // start and end distances of fog
   GLuint fog_eq_; // equation index used to compute fog
 
-  // Cloud related data
-  std::array<float,2> cloud_start_end_; // start and end altitudes of clouds
-
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera);
+  void SetShaderData(Camera const& camera) const;
   
   //**************************************************************************80
   //! \brief LoadCubemap - loads the texture data for the cubemap

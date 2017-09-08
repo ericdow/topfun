@@ -10,6 +10,7 @@
 #include "render/DebugOverlay.h"
 #include "terrain/Terrain.h"
 #include "sky/Sky.h"
+#include "sky/CloudRenderer.h"
 #include "aircraft/Aircraft.h"
 #include "render/SceneRenderer.h"
 #include "render/ShadowCascadeRenderer.h"
@@ -44,6 +45,7 @@ int main(int /* argc */, char** /* argv */) {
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 20);
   Sky sky;
+  CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);
@@ -106,15 +108,21 @@ int main(int /* argc */, char** /* argv */) {
       GLfloat dt_draw = current_draw_time - last_draw_time;
       last_draw_time = current_draw_time;
 
-      // Render the depth map for drawing shadows
+      // Render the depth maps for drawing shadows
       shadow_renderer.Render(terrain, sky, aircraft, camera,
           -sky.GetSunDirection());
+
+      // Render the clouds
+      cloud_renderer.Render(terrain, sky, aircraft, camera);
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       // Render the scene
       DrawScene(terrain, sky, aircraft, camera, &shadow_renderer);
+
+      // TODO remove...
+      cloud_renderer.Render(terrain, sky, aircraft, camera);
 
       // Display the depth map
       shadow_renderer.Display();
