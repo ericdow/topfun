@@ -47,6 +47,7 @@ class CloudRenderer {
   GLuint quadVAO_; // for rendering cloud texture
   GLuint quadVBO_; // for rendering cloud texture
   std::array<float,2> cloud_start_end_; // start and end altitudes of clouds
+  float l_stop_max_;
 
   void SetShaderData(const Sky& sky, const Camera& camera) const;
 
