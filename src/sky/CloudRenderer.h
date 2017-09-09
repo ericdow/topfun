@@ -8,6 +8,7 @@
 #include "shaders/Shader.h"
 #include "render/Camera.h"
 #include "render/DepthMapRenderer.h"
+#include "sky/NoiseCube.h"
 
 namespace TopFun {
 
@@ -48,6 +49,9 @@ class CloudRenderer {
   GLuint quadVBO_; // for rendering cloud texture
   std::array<float,2> cloud_start_end_; // start and end altitudes of clouds
   float l_stop_max_;
+
+  // Cloud texture data
+  NoiseCube detail_;
 
   void SetShaderData(const Sky& sky, const Camera& camera) const;
 

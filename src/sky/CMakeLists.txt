@@ -2,6 +2,7 @@
 set(SOURCES
   Sky.cpp
   CloudRenderer.cpp
+  NoiseCube.cpp
 )
 
 set(libs_to_link 
