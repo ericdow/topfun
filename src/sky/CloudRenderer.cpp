@@ -12,9 +12,10 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   shader_("shaders/clouds.vs", "shaders/clouds.fs"),
   depth_map_renderer_(map_width, map_height),
   cloud_start_end_({100.0f, 150.0f}), l_stop_max_(100.0f),
-  detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}) {
+  detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
+  detail_scale_(20.0f) {
 
-  // Check that the star and end heights of the clouds are valid
+  // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
     std::string message = "Invalid cloud star/end points\n";
     throw std::invalid_argument(message);
@@ -39,6 +40,11 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
       (void*)(3 * sizeof(float)));
+}
+
+//****************************************************************************80
+CloudRenderer::~CloudRenderer() {
+  glDeleteVertexArrays(1, &quadVAO_);
 }
 
 //****************************************************************************80
@@ -87,6 +93,12 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
       cloud_start_end_[1]);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "l_stop_max"), 
       l_stop_max_);
+  // Cloud detail texture
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_3D, detail_.GetTexture());
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "detail"), 1);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "detail_scale"), 
+      detail_scale_);
 }
 
 } // End namespace TopFun

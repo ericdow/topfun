@@ -20,7 +20,7 @@ class CloudRenderer {
  public:
   CloudRenderer(GLuint map_width, GLuint map_height);
 
-  ~CloudRenderer() = default;
+  ~CloudRenderer();
 
   void Render(Terrain& terrain, const Sky& sky, Aircraft& aircraft, 
       const Camera& camera);
@@ -52,6 +52,7 @@ class CloudRenderer {
 
   // Cloud texture data
   NoiseCube detail_;
+  float detail_scale_; // world space dimensions of the detail texture
 
   void SetShaderData(const Sky& sky, const Camera& camera) const;
 

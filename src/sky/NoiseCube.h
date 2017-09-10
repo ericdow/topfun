@@ -4,6 +4,8 @@
 #include <array>
 #include <vector>
 
+#include <GL/glew.h>
+
 // Class for generating tileable noise textures for cloud generation
 
 namespace TopFun {
@@ -36,9 +38,15 @@ class NoiseCube {
   //**************************************************************************80
   //! \brief ~NoiseCube - Destructor
   //**************************************************************************80
-  ~NoiseCube();
+  ~NoiseCube() = default;
+  
+  //**************************************************************************80
+  //! \brief GetTexture - Returns the 3D texture 
+  //**************************************************************************80
+  GLuint GetTexture() const { return texture_; }
   
  private:
+  GLuint texture_;
   
   //**************************************************************************80
   //! \brief GenerateWorleyNoise - generate tileable Worley noise data

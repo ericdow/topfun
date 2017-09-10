@@ -21,16 +21,40 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
   }
 
   // Loop through components of the texture and generate noise
+  std::vector<unsigned char> pixels(size[0] * size[1] * size[2] * 4, 
+      (unsigned char)255);
   for (unsigned c = 0; c < num_components; ++c) {
+    // Generate the data for this component
+    std::vector<float> data;
     if (type[c].compare("worley") == 0) {
-      std::vector<float> data = GenerateWorleyNoise(size, params[c]);
+      data = GenerateWorleyNoise(size, params[c]);
+    }
+    else if (type[c].compare("perlin") == 0) {
+      data = GeneratePerlinNoise(size, params[c]);
+    }
+    else {
+      std::string message = "Invalid noise type\n";
+      throw std::invalid_argument(message);
+    }
+    // Convert float data to color data
+    for (std::size_t n = 0; n < data.size(); ++n) {
+      unsigned char v = (unsigned char)std::round(data[n] * 255);
+      pixels[4*n + c] = v;
     }
   }
-}
 
-//****************************************************************************80
-NoiseCube::~NoiseCube() {
-  // TODO
+  // Load the texture
+  glGenTextures(1, &texture_);
+  glBindTexture(GL_TEXTURE_3D, texture_); 
+  // Set our texture parameters
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size[0], size[1], size[2], 0, GL_RGBA, 
+      GL_UNSIGNED_BYTE, (GLvoid*)pixels.data());
+  glBindTexture(GL_TEXTURE_3D, 0);
 }
 
 //****************************************************************************80

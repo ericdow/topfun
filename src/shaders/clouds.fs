@@ -10,12 +10,18 @@ uniform sampler2D depth_map; // depth map of scene
 uniform float cloud_start;
 uniform float cloud_end;
 
+// Cloud texture data
+uniform sampler3D detail; // cloud detail texture
+uniform float detail_scale;
+
+////////////////////////////////////////////////////////////////////
 // TODO remove...
 float LinearizeDepth(float depth) {
   float z = depth * 2.0 - 1.0; // Back to NDC 
   return (2.0 * camera_near * camera_far) / 
       (camera_far + camera_near - z * (camera_far - camera_near));	
 }
+////////////////////////////////////////////////////////////////////
 
 void main() {    
   // Compute ray passing through each fragment
@@ -71,13 +77,18 @@ void main() {
   }
   l_stop_march = min(l_stop_march, l_stop_max);
   
+  ////////////////////////////////////////////////////////////////////
   // TODO remove...
   if (l_start_march > 0.0f) {
     color = vec4(abs(ray.dir), 1.0);
+    
+    vec3 c = abs(ray.origin + l_start_march * ray.dir) / detail_scale;
+    color = texture(detail, c);
   }
   else {
     float scene_depth = texture(depth_map, TexCoord).r;
     color = vec4(vec3(LinearizeDepth(scene_depth) / camera_far), 1.0);
   }
+  ////////////////////////////////////////////////////////////////////
   
 }
