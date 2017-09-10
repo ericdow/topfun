@@ -56,13 +56,9 @@ std::vector<float> NoiseCube::GenerateWorleyNoise(
   // Generate a cube of random seed points
   std::vector<glm::vec3> seeds(n_cells[0] * n_cells[1] * n_cells[2]);
   for (std::size_t i = 0; i < n_cells[0]; ++i) {
-    float x0 = cell_size * i;
     for (std::size_t j = 0; j < n_cells[1]; ++j) {
-      float y0 = cell_size * j;
       for (std::size_t k = 0; k < n_cells[2]; ++k) {
-        float z0 = cell_size * k;
         std::size_t n = n_cells[0] * n_cells[1] * k + n_cells[0] * j + i;
-        seeds[n] = glm::vec3(x0, y0, z0);
         for (int d = 0; d < 3; ++d) {
           float r = ((float) rand() / (RAND_MAX));
           seeds[n][d] += r * cell_size;
@@ -74,34 +70,39 @@ std::vector<float> NoiseCube::GenerateWorleyNoise(
   // Generate the data by finding the closest seed point for each data point
   std::vector<float> data(size[0] * size[1] * size[2]);
   for (std::size_t i = 0; i < size[0]; ++i) {
-    std::size_t ic = i / (size[0] / n_cells[0]);
+    int ic = i / (size[0] / n_cells[0]);
     for (std::size_t j = 0; j < size[1]; ++j) {
-      std::size_t jc = j / (size[1] / n_cells[1]);
+      int jc = j / (size[1] / n_cells[1]);
       for (std::size_t k = 0; k < size[2]; ++k) {
-        std::size_t kc = k / (size[2] / n_cells[2]);
+        int kc = k / (size[2] / n_cells[2]);
         glm::vec3 cent = glm::vec3(i + 0.5, j + 0.5, k + 0.5) * pixel_size;
         // Find closest seed point
+        glm::vec3 cell0;
         float dist_min = std::numeric_limits<float>::max();
         for (int ii = -1; ii <= 1; ++ii) {
           int icn = ic + ii;
-          if (icn < 0) icn = n_cells[0];
+          if (icn < 0) icn = n_cells[0] - 1;
           if (icn == (int)n_cells[0]) icn = 0;
+          cell0[0] = cell_size * (ic + ii);
           for (int jj = -1; jj <= 1; ++jj) {
             int jcn = jc + jj;
-            if (jcn < 0) jcn = n_cells[1];
+            if (jcn < 0) jcn = n_cells[1] - 1;
             if (jcn == (int)n_cells[1]) jcn = 0;
+            cell0[1] = cell_size * (jc + jj);
             for (int kk = -1; kk <= 1; ++kk) {
               int kcn = kc + kk;
-              if (kcn < 0) kcn = n_cells[2];
+              if (kcn < 0) kcn = n_cells[2] - 1;
               if (kcn == (int)n_cells[2]) kcn = 0;
+              cell0[2] = cell_size * (kc + kk);
               std::size_t n = 
                 n_cells[0] * n_cells[1] * kcn + n_cells[0] * jcn + icn;
-              dist_min = std::min(glm::distance(cent, seeds[n]), dist_min);                
+              dist_min = 
+                std::min(glm::distance(cent, cell0 + seeds[n]), dist_min);
             }
           }
         }
         std::size_t n = size[0] * size[1] * k + size[0] * j + i;
-        data[n] = dist_min;
+        data[n] = 1 - dist_min;
       }
     }
   }
