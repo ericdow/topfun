@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <glm/glm.hpp>
+#include "module/perlin.h"
 
 #include "sky/NoiseCube.h"
 
@@ -11,7 +12,7 @@ namespace TopFun {
 //****************************************************************************80
 NoiseCube::NoiseCube(const std::array<unsigned,3>& size, 
     const std::vector<std::string>& type, 
-    const std::vector<std::array<NoiseParams,3>>& params) {
+    const std::vector<std::vector<NoiseParams>>& params) {
   // Check for consistent data sizes
   unsigned num_components = type.size();
   if ((num_components != 3 && num_components != 4)
@@ -62,7 +63,7 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
 //****************************************************************************80
 std::vector<float> NoiseCube::GenerateWorleyNoise(
     const std::array<unsigned,3>& size,
-    const std::array<NoiseParams,3>& params) const {
+    const std::vector<NoiseParams>& params) const {
   // Check for data size consistency
   std::array<unsigned,3> n_cells;
   glm::vec3 pixel_size;
@@ -136,8 +137,50 @@ std::vector<float> NoiseCube::GenerateWorleyNoise(
 //****************************************************************************80
 std::vector<float> NoiseCube::GeneratePerlinNoise(
     const std::array<unsigned,3>& size,
-    const std::array<NoiseParams,3>& params) const {
-
+    const std::vector<NoiseParams>& params) const {
+  noise::module::Perlin perlin_generator;
+  perlin_generator.SetOctaveCount(params[0].n_octaves_);
+  perlin_generator.SetFrequency(params[0].frequency_);
+  perlin_generator.SetPersistence(params[0].persistence_);
+  std::vector<float> data(size[0] * size[1] * size[2]);
+  float xfactor = 1.0 / size[0];
+  float yfactor = 1.0 / size[1];
+  float zfactor = 1.0 / size[2];
+  for(std::size_t i = 0; i < size[0]; ++i) {
+    for(std::size_t j = 0 ; j < size[1]; ++j) {
+      for(std::size_t k = 0 ; k < size[2]; ++k) {
+        float x = xfactor * i;
+        float y = yfactor * j;
+        float z = zfactor * k;
+        float val = 0.0f;
+        float a = perlin_generator.GetValue(x    ,y ,   z    );
+        float b = perlin_generator.GetValue(x+1.0,y ,   z    );
+        float c = perlin_generator.GetValue(x    ,y+1.0,z    );
+        float d = perlin_generator.GetValue(x+1.0,y+1.0,z    );
+        float e = perlin_generator.GetValue(x    ,y ,   z+1.0);
+        float f = perlin_generator.GetValue(x+1.0,y ,   z+1.0);
+        float g = perlin_generator.GetValue(x    ,y+1.0,z+1.0);
+        float h = perlin_generator.GetValue(x+1.0,y+1.0,z+1.0);
+        float xmix = 1.0 - x;
+        float ymix = 1.0 - y;
+        float zmix = 1.0 - z;
+        float x1 = glm::mix(a, b, xmix);
+        float x2 = glm::mix(c, d, xmix);
+        float x3 = glm::mix(e, f, xmix);
+        float x4 = glm::mix(g, h, xmix);
+        float y1 = glm::mix(x1, x2, ymix); 
+        float y2 = glm::mix(x3, x4, ymix); 
+        val = glm::mix(y1, y2, zmix);
+        // Scale to roughly between 0 and 1
+        val = (val + 1.0f) * 0.5f;
+        // Clamp strictly between 0 and 1
+        val = val> 1.0 ? 1.0 :val;
+        val = val< 0.0 ? 0.0 :val;
+        data[size[0] * size[1] * k + size[0] * j + i] = val;
+      }
+    }
+  }
+  return data;
 }
 
 } // End namespace TopFun

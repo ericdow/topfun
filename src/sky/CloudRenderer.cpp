@@ -1,3 +1,5 @@
+#include "module/perlin.h"
+
 #include "sky/CloudRenderer.h"
 #include "render/SceneRenderer.h"
 #include "utils/GLEnvironment.h"
@@ -13,7 +15,10 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   depth_map_renderer_(map_width, map_height),
   cloud_start_end_({100.0f, 150.0f}), l_stop_max_(100.0f),
   detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
-  detail_scale_(20.0f) {
+  detail_scale_(20.0f),
+  shape_({128, 32, 128}, {"perlin", "worley", "worley", "worley"}, 
+      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(20.0f),
+  weather_scale_(200.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
@@ -99,6 +104,21 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "detail"), 1);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "detail_scale"), 
       detail_scale_);
+  // Cloud shape texture
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_3D, shape_.GetTexture());
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "shape"), 2);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "shape_scale"), 
+      shape_scale_);
+}
+
+//****************************************************************************80
+void CloudRenderer::GenerateWeatherTexture() {
+  noise::module::Perlin perlin_generator;
+  // TODO
+  // perlin_generator.SetOctaveCount();
+  // perlin_generator.SetFrequency();
+  // perlin_generator.SetPersistence();
 }
 
 } // End namespace TopFun

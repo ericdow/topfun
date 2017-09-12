@@ -33,7 +33,7 @@ class NoiseCube {
   //**************************************************************************80
   NoiseCube(const std::array<unsigned,3>& size, 
       const std::vector<std::string>& type, 
-      const std::vector<std::array<NoiseParams,3>>& params);
+      const std::vector<std::vector<NoiseParams>>& params);
   
   //**************************************************************************80
   //! \brief ~NoiseCube - Destructor
@@ -53,14 +53,14 @@ class NoiseCube {
   //! \param[in] params - noise parameters for each dimension
   //**************************************************************************80
   std::vector<float> GenerateWorleyNoise(const std::array<unsigned,3>& size,
-      const std::array<NoiseParams,3>& params) const;
+      const std::vector<NoiseParams>& params) const;
   
   //**************************************************************************80
   //! \brief GeneratePerlinNoise - generate tileable Perlin noise data
   //! \param[in] params - noise parameters for each dimension
   //**************************************************************************80
   std::vector<float> GeneratePerlinNoise(const std::array<unsigned,3>& size,
-      const std::array<NoiseParams,3>& params) const;
+      const std::vector<NoiseParams>& params) const;
 
 };
 } // End namespace TopFun

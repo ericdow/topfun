@@ -13,6 +13,8 @@ uniform float cloud_end;
 // Cloud texture data
 uniform sampler3D detail; // cloud detail texture
 uniform float detail_scale;
+uniform sampler3D shape; // cloud shape texture
+uniform float shape_scale;
 
 ////////////////////////////////////////////////////////////////////
 // TODO remove...
@@ -83,7 +85,8 @@ void main() {
     color = vec4(abs(ray.dir), 1.0);
     
     vec3 c = abs(ray.origin + l_start_march * ray.dir) / detail_scale;
-    color = texture(detail, c);
+    // color = texture(detail, c);
+    color = vec4(vec3(texture(shape, c).r), 1.0);
   }
   else {
     float scene_depth = texture(depth_map, TexCoord).r;

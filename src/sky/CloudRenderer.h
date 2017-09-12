@@ -53,8 +53,20 @@ class CloudRenderer {
   // Cloud texture data
   NoiseCube detail_;
   float detail_scale_; // world space dimensions of the detail texture
+  NoiseCube shape_;
+  float shape_scale_; // world space dimensions of the shape texture
+  GLuint weather_; // 2D texture with coverage/height/altitude
+  float weather_scale_; // world space dimensions of the weather texture
 
+  //**************************************************************************80
+  //! \brief SetShaderData - send the data to be rendered to the shader
+  //**************************************************************************80
   void SetShaderData(const Sky& sky, const Camera& camera) const;
+  
+  //**************************************************************************80
+  //! \brief GenerateWeatherTexture - generate the data for the weather texture
+  //**************************************************************************80
+  void GenerateWeatherTexture();
 
 };
 } // End namespace TopFun
