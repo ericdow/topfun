@@ -65,8 +65,9 @@ class CloudRenderer {
   
   //**************************************************************************80
   //! \brief GenerateWeatherTexture - generate the data for the weather texture
+  //! \param[in] size - number of pixels in x/y dimensions of the texture
   //**************************************************************************80
-  void GenerateWeatherTexture();
+  void GenerateWeatherTexture(unsigned size);
 
 };
 } // End namespace TopFun

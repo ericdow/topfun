@@ -15,6 +15,8 @@ uniform sampler3D detail; // cloud detail texture
 uniform float detail_scale;
 uniform sampler3D shape; // cloud shape texture
 uniform float shape_scale;
+uniform sampler2D weather; // weather texture
+uniform float weather_scale;
 
 ////////////////////////////////////////////////////////////////////
 // TODO remove...
@@ -84,9 +86,9 @@ void main() {
   if (l_start_march > 0.0f) {
     color = vec4(abs(ray.dir), 1.0);
     
-    vec3 c = abs(ray.origin + l_start_march * ray.dir) / detail_scale;
+    vec3 c = abs(ray.origin + l_start_march * ray.dir) / weather_scale;
     // color = texture(detail, c);
-    color = vec4(vec3(texture(shape, c).r), 1.0);
+    color = vec4(vec3(texture(weather, c.xz).r), 1.0);
   }
   else {
     float scene_depth = texture(depth_map, TexCoord).r;

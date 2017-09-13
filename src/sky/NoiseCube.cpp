@@ -53,6 +53,7 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // Bind the data
   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size[0], size[1], size[2], 0, GL_RGBA, 
       GL_UNSIGNED_BYTE, (GLvoid*)pixels.data());
   glBindTexture(GL_TEXTURE_3D, 0);

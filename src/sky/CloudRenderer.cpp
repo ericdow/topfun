@@ -18,13 +18,16 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   detail_scale_(20.0f),
   shape_({128, 32, 128}, {"perlin", "worley", "worley", "worley"}, 
       {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(20.0f),
-  weather_scale_(200.0f) {
+  weather_scale_(500.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
     std::string message = "Invalid cloud star/end points\n";
     throw std::invalid_argument(message);
   }
+
+  // Generate the weather texture
+  GenerateWeatherTexture(1024);
 
   // Set up the quad for rendering the cloud texture
   float quadVertices[] = {
@@ -110,15 +113,60 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "shape"), 2);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "shape_scale"), 
       shape_scale_);
+  // Cloud weather texture
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, weather_);
+  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "weather"), 3);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "weather_scale"), 
+      weather_scale_);
 }
 
 //****************************************************************************80
-void CloudRenderer::GenerateWeatherTexture() {
+void CloudRenderer::GenerateWeatherTexture(unsigned size) {
+  // Generate the coverge and height data
   noise::module::Perlin perlin_generator;
+  perlin_generator.SetOctaveCount(5);
+  perlin_generator.SetFrequency(2.0);
+  perlin_generator.SetPersistence(0.4);
+  std::vector<unsigned char> pixels(size * size * 3);
+  for (std::size_t i = 0; i < size; ++i) {
+    for (std::size_t j = 0; j < size; ++j) {
+      float x = (float)i / size;
+      float y = (float)j / size;
+      float a = perlin_generator.GetValue(x    ,y ,   0.0);
+      float b = perlin_generator.GetValue(x+1.0,y ,   0.0);
+      float c = perlin_generator.GetValue(x    ,y+1.0,0.0);
+      float d = perlin_generator.GetValue(x+1.0,y+1.0,0.0);
+      float xmix = 1.0 - x;
+      float ymix = 1.0 - y;
+      float x1 = glm::mix(a, b, xmix);
+      float x2 = glm::mix(c, d, xmix);
+      float val = glm::mix(x1, x2, ymix);
+      // Clamp strictly between 0 and 1
+      val = val> 1.0 ? 1.0 :val;
+      val = val< 0.0 ? 0.0 :val;
+      std::size_t n = size * j + i;
+      pixels[3*n    ] = (unsigned char)std::round(val * 255);
+      pixels[3*n + 1] = (unsigned char)std::round(val * 255);
+    }
+  }
+  // Generate the altitude data
   // TODO
-  // perlin_generator.SetOctaveCount();
-  // perlin_generator.SetFrequency();
-  // perlin_generator.SetPersistence();
+  for (std::size_t n = 0; n < size * size; ++n)
+    pixels[3*n + 2] = (unsigned char)255;
+  
+  // Load the texture
+  glGenTextures(1, &weather_);
+  glBindTexture(GL_TEXTURE_2D, weather_); 
+  // Set our texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // Bind the data
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, 
+      GL_UNSIGNED_BYTE, (GLvoid*)pixels.data());
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 } // End namespace TopFun
