@@ -7,7 +7,7 @@ uniform float l_stop_max; // max marching distance
 
 struct Ray {
   vec3 origin; // origin
-  vec3 dir; // direction
+  vec3 dir; // direction (normalized)
 };
 
 // Computes the ray (in world-space) that passes through the current fragment

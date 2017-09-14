@@ -52,11 +52,13 @@ float GetDensity(vec3 position) {
   return density;
 }
 
-void main() {    
-  // Compute ray passing through each fragment
-  Ray ray = GetFragRay();
-  
-  // Check where this ray intersects the cloud layer
+// Compute phase function, given normalized vectors
+CalcPhaseFunction(vec3 ray_dir, vec3 sun_dir) {
+
+}
+
+// Compute start/stop positions for ray marching through atmosphere
+vec2 GetRayAtmosphereIntersection(Ray ray) {
   float l_start_march = -1.0f; // only march ray if this is positive
   float l_stop_march;
   if (ray.origin.y < cloud_end && ray.dir.y > 0.0f ||
@@ -105,6 +107,17 @@ void main() {
     }
   }
   l_stop_march = min(l_stop_march, l_stop_max);
+  return vec2(l_start_march, l_stop_march);
+}
+
+void main() {    
+  // Compute ray passing through each fragment
+  Ray ray = GetFragRay();
+  
+  // Check where this ray intersects the cloud layer
+  vec2 start_stop = GetRayAtmosphereIntersection(ray);
+  float l_start_march = start_stop.x;
+  float l_stop_march = start_stop.y;
   
   ////////////////////////////////////////////////////////////////////
   // TODO remove...
