@@ -13,12 +13,13 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   depth_map_shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
   shader_("shaders/clouds.vs", "shaders/clouds.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({100.0f, 150.0f}), l_stop_max_(100.0f),
+  cloud_start_end_({100.0f, 150.0f}), l_stop_max_(100.0f), 
+  max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0]) / 4.0f),
   detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
-  detail_scale_(20.0f),
+  detail_scale_(1.0f / 20.0f),
   shape_({128, 32, 128}, {"perlin", "worley", "worley", "worley"}, 
-      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(20.0f),
-  weather_scale_(500.0f) {
+      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(1.0f / 20.0f),
+  weather_scale_(1.0f / 500.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
@@ -101,6 +102,8 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
       cloud_start_end_[1]);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "l_stop_max"), 
       l_stop_max_);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "max_cloud_height"), 
+      max_cloud_height_);
   // Cloud detail texture
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_3D, detail_.GetTexture());
@@ -153,7 +156,7 @@ void CloudRenderer::GenerateWeatherTexture(unsigned size) {
   // Generate the altitude data
   // TODO
   for (std::size_t n = 0; n < size * size; ++n)
-    pixels[3*n + 2] = (unsigned char)255;
+    pixels[3*n + 2] = (unsigned char)0;
   
   // Load the texture
   glGenTextures(1, &weather_);

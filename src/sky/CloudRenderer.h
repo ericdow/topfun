@@ -49,6 +49,7 @@ class CloudRenderer {
   GLuint quadVBO_; // for rendering cloud texture
   std::array<float,2> cloud_start_end_; // start and end altitudes of clouds
   float l_stop_max_;
+  float max_cloud_height_;
 
   // Cloud texture data
   NoiseCube detail_;
