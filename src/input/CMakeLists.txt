@@ -16,3 +16,4 @@ set(include_dirs
 add_library(input STATIC ${SOURCES})
 target_include_directories(input PUBLIC ${include_dirs})
 target_link_libraries(input ${libs_to_link})
+add_dependencies(input assimp)

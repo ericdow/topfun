@@ -8,7 +8,8 @@ set(libs_to_link
   ${GLUT_LIBRARY} 
   ${GLEW_LIBRARY} 
   ${GLFW_LIBRARIES} 
-  ${SOIL_LIBRARY} 
+  ${SOIL_LIBRARY}
+  ${ASSIMP_LIBRARIES} 
 )
 
 set(include_dirs 
