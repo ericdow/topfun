@@ -21,6 +21,10 @@ uniform float cloud_start;
 uniform float cloud_end;
 uniform float max_cloud_height; // maximum cloud vertical thickness
 
+// Define some constants
+const float k_schlick = 1.0;
+const float num_schlick = (1 - k_schlick * k_schlick) / 4.0 / 3.14159265; 
+
 ////////////////////////////////////////////////////////////////////
 // TODO remove...
 float LinearizeDepth(float depth) {
@@ -53,8 +57,8 @@ float GetDensity(vec3 position) {
 }
 
 // Compute phase function, given normalized vectors
-CalcPhaseFunction(vec3 ray_dir, vec3 sun_dir) {
-
+float CalcPhaseFunction(vec3 ray_dir, vec3 sun_dir) {
+  float cos_theta = dot(ray_dir, sun_dir); 
 }
 
 // Compute start/stop positions for ray marching through atmosphere
