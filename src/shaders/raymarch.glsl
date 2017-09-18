@@ -30,10 +30,9 @@ float CalcRayPlaneIntersection(Ray ray, float y) {
   return (y - ray.origin.y) / ray.dir.y;
 }
 
-// Computes the depth coordinate of an arbitrary point in world-space coordinates
+// Computes depth coordinate of an arbitrary point in world-space coordinates
 // returned value is in [0, 1]
 float CalcDepth(vec3 v_world_space) {
   vec4 v_clip_space = projview * vec4(v_world_space, 1.0);
   return 0.5 * (1.0 + v_clip_space.z / v_clip_space.w);
-
 }

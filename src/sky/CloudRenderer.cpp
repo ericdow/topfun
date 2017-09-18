@@ -122,6 +122,10 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "weather"), 3);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "weather_scale"), 
       weather_scale_);
+  // Sun parameters
+  glm::vec3 sun_dir = sky.GetSunDirection();
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "sun_dir"), 
+      sun_dir[0], sun_dir[1], sun_dir[2]);
 }
 
 //****************************************************************************80
