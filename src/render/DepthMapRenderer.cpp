@@ -38,7 +38,6 @@ void DepthMapRenderer::Render(Terrain& terrain, const Sky& sky,
     const Shader& shader) {
   // Render the scene and store the depth buffer
   shader.Use();
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glUniformMatrix4fv(glGetUniformLocation(shader.GetProgram(),
         "projection_view"), 1, GL_FALSE, glm::value_ptr(proj_view));
@@ -56,7 +55,6 @@ void DepthMapRenderer::Render(Terrain& terrain, const Sky& sky,
 
   // Reset viewport
   glViewport(0, 0, screen_width, screen_height);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 } // End namespace TopFun

@@ -26,11 +26,11 @@ uniform vec3 sun_dir;
 
 // Define some constants
 const float one_over_four_pi = 1.0 / 4.0 / 3.14159265;
-const float g = 0.99;
+const float g = 0.9;
 const float k_schlick = 1.5 * g - 0.55 * g * g * g;
 const float num_schlick = (1 - k_schlick*k_schlick) * one_over_four_pi;
-const float sigma_extinction = 0.05; 
-const float sigma_scattering = 0.7 * sigma_extinction;
+const float sigma_extinction = 2.0; 
+const float sigma_scattering = 0.9 * sigma_extinction;
 
 ////////////////////////////////////////////////////////////////////
 // TODO remove...
@@ -82,7 +82,7 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
   float a = -extinction_coeff * dtop;
   vec3 scattering_top = vec3(1.0, 1.0, 1.0) * max(0.0, exp(a) - a*Ei(a));
   float dbot = position.y - cloud_start;
-  a = -extinction_coeff * dtop;
+  a = -extinction_coeff * dbot;
   vec3 scattering_bot = vec3(1.0, 1.0, 1.0) * max(0.0, exp(a) - a*Ei(a));
   return scattering_bot + scattering_top;
 }
@@ -91,10 +91,11 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
 vec4 RayMarch(Ray ray, vec2 start_stop) {
   float extinction = 1.0;
   vec3 scattering = vec3(0.0, 0.0, 0.0);
+  vec3 sun_color = vec3(1.0, 1.0, 1.0); // TODO
   
-  int n_steps = 10;
+  int n_steps = 100;
   float step_size = (start_stop.y - start_stop.x) / n_steps;
-  vec3 position = ray.origin;
+  vec3 position = ray.origin + start_stop.x * ray.dir;
   vec3 dposition = step_size * ray.dir;
   for (int i = 0; i < n_steps; ++i) {
     float density = GetDensity(position);
@@ -106,11 +107,10 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     if (extinction < 0.01)
       break;
     
-    vec3 sun_color = vec3(1.0, 1.0, 1.0); // TODO
     vec3 ambient_color = CalcAmbientColor(position, extinction);
     vec3 step_scattering = scattering_coeff * step_size * 
       (CalcSunPhaseFunction(ray.dir) * sun_color + 
-       one_over_four_pi * ambient_color);
+       ambient_color);
     scattering += extinction * step_scattering;
     
     position += dposition;
@@ -182,27 +182,26 @@ void main() {
   vec4 scatter_extinction = vec4(0.0, 0.0, 0.0, 1.0);
   if (start_stop.x >= 0.0f)
     scatter_extinction = RayMarch(ray, start_stop);
+
+  color = scatter_extinction;
   
   ////////////////////////////////////////////////////////////////////
-  float l_start_march = start_stop.x;
-  float l_stop_march = start_stop.y;
-  
   // TODO remove...
-  if (l_start_march >= 0.0f) {
-    // color = vec4(abs(ray.dir), 1.0);
-    vec3 c = ray.origin + l_start_march * ray.dir;
-    // color = texture(detail, c);
-    // vec4 w = texture(weather, c.xz * weather_scale);
-    // float tmp = GetHeightSignal(w.g, w.b, c.y + 3.0);
-    // color = vec4(vec3(tmp), 1.0);
-    color = scatter_extinction;
-    if (scatter_extinction.a > 0.99)
-      color = vec4(0.0, 0.0, 1.0, 1.0);
-  }
-  else {
-    float scene_depth = texture(depth_map, TexCoord).r;
-    color = vec4(vec3(LinearizeDepth(scene_depth) / camera_far), 1.0);
-  }
+  // if (start_stop.x >= 0.0f) {
+  //   // color = vec4(abs(ray.dir), 1.0);
+  //   // vec3 c = ray.origin + l_start_march * ray.dir;
+  //   // color = texture(detail, c);
+  //   // vec4 w = texture(weather, c.xz * weather_scale);
+  //   // float tmp = GetHeightSignal(w.g, w.b, c.y + 3.0);
+  //   // color = vec4(vec3(tmp), 1.0);
+  //   color = scatter_extinction;
+  //   if (scatter_extinction.a > 0.99)
+  //     color = vec4(0.0, 0.0, 1.0, 1.0);
+  // }
+  // else {
+  //   float scene_depth = texture(depth_map, TexCoord).r;
+  //   color = vec4(vec3(LinearizeDepth(scene_depth) / camera_far), 1.0);
+  // }
   ////////////////////////////////////////////////////////////////////
   
 }

@@ -13,12 +13,12 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   depth_map_shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
   shader_("shaders/clouds.vs", "shaders/clouds.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({100.0f, 150.0f}), l_stop_max_(100.0f), 
+  cloud_start_end_({100.0f, 150.0f}), l_stop_max_(1000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0]) / 4.0f),
   detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
   shape_({128, 32, 128}, {"perlin", "worley", "worley", "worley"}, 
-      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(1.0f / 20.0f),
+      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(1.0f / 100.0f),
   weather_scale_(1.0f / 500.0f) {
 
   // Check that the start and end heights of the clouds are valid
@@ -67,9 +67,13 @@ void CloudRenderer::Render(Terrain& terrain, const Sky& sky,
   // Perform ray-marching and render the clouds
   SetShaderData(sky, camera);
   glBindVertexArray(quadVAO_);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_SRC_ALPHA);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBindVertexArray(0);
-  // TODO
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_3D, 0);
 }
 
 //****************************************************************************80

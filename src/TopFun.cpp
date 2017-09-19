@@ -71,7 +71,6 @@ int main(int /* argc */, char** /* argv */) {
     // Check and call events
     glfwPollEvents();
 
-    /*
     // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
     // integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
@@ -88,15 +87,14 @@ int main(int /* argc */, char** /* argv */) {
     const float alpha = t_accumulator / dt_physics;
     aircraft.InterpolateState(previous_state, current_state, alpha);
     aircraft.SetState(current_state);
-    */
     
     // Update the camera position
     camera.Move(callback_world.GetKeyState(), dt_loop);
-    // glm::vec3 aircraft_front = aircraft.GetFrontDirection();
-    // glm::vec3 aircraft_up = aircraft.GetUpDirection();
-    // camera.SetPosition(aircraft.GetPosition() + 
-    //     2.0f * aircraft_up - 20.0f * aircraft_front);
-    // camera.SetOrientation(aircraft_front, aircraft_up);
+    glm::vec3 aircraft_front = aircraft.GetFrontDirection();
+    glm::vec3 aircraft_up = aircraft.GetUpDirection();
+    camera.SetPosition(aircraft.GetPosition() + 
+        2.0f * aircraft_up - 20.0f * aircraft_front);
+    camera.SetOrientation(aircraft_front, aircraft_up);
 
     // Draw the scene
     draw_wait_time += dt_loop;
@@ -111,9 +109,6 @@ int main(int /* argc */, char** /* argv */) {
       // Render the depth maps for drawing shadows
       shadow_renderer.Render(terrain, sky, aircraft, camera,
           -sky.GetSunDirection());
-
-      // Render the clouds
-      cloud_renderer.Render(terrain, sky, aircraft, camera);
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -121,14 +116,14 @@ int main(int /* argc */, char** /* argv */) {
       // Render the scene
       DrawScene(terrain, sky, aircraft, camera, &shadow_renderer);
 
-      // TODO remove...
-      cloud_renderer.Render(terrain, sky, aircraft, camera);
-
       // Display the depth map
       shadow_renderer.Display();
   
-      // Display the debug console last
+      // Display the debug console after all objects have been rendered
       debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
+
+      // Render the clouds last
+      cloud_renderer.Render(terrain, sky, aircraft, camera);
       
       // Swap the buffers
       glfwSwapBuffers(window);
