@@ -36,3 +36,9 @@ float CalcDepth(vec3 v_world_space) {
   vec4 v_clip_space = projview * vec4(v_world_space, 1.0);
   return 0.5 * (1.0 + v_clip_space.z / v_clip_space.w);
 }
+
+float LinearizeDepth(float depth) {
+  float z = depth * 2.0 - 1.0; // Back to NDC 
+  return (2.0 * camera_near * camera_far) / 
+    (camera_far + camera_near - z * (camera_far - camera_near));  
+}

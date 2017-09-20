@@ -23,6 +23,7 @@ uniform float max_cloud_height; // maximum cloud vertical thickness
 
 // Sun parameters
 uniform vec3 sun_dir;
+uniform vec3 sun_color;
 
 // Define some constants
 const float one_over_four_pi = 1.0 / 4.0 / 3.14159265;
@@ -31,15 +32,6 @@ const float k_schlick = 1.5 * g - 0.55 * g * g * g;
 const float num_schlick = (1 - k_schlick*k_schlick) * one_over_four_pi;
 const float sigma_extinction = 2.0; 
 const float sigma_scattering = 0.9 * sigma_extinction;
-
-////////////////////////////////////////////////////////////////////
-// TODO remove...
-float LinearizeDepth(float depth) {
-  float z = depth * 2.0 - 1.0; // Back to NDC 
-  return (2.0 * camera_near * camera_far) / 
-      (camera_far + camera_near - z * (camera_far - camera_near));	
-}
-////////////////////////////////////////////////////////////////////
 
 // height - fraction in [0, 1] of maximum cloud height at this location
 // altitude - fraction in [0, 1] of maximum cloud altitude
@@ -56,9 +48,9 @@ float GetHeightSignal(float height, float altitude, float y) {
 float GetDensity(vec3 position) {
   vec4 w = texture(weather, position.xz * weather_scale);
   float density = w.r;
-  // density *= GetHeightSignal(w.g, w.b, position.y);
+  density *= GetHeightSignal(w.g, w.b, position.y);
   vec4 shape_rgba = texture(shape, position * shape_scale);
-  density *= 0.5*shape_rgba.r*(shape_rgba.g + shape_rgba.b + shape_rgba.a);
+  density *= shape_rgba.r*(shape_rgba.g + shape_rgba.b + shape_rgba.a);
   vec4 density_rgba = texture(detail, position * detail_scale);
   density -= 0.1 * (density_rgba.r + density_rgba.g + density_rgba.b);
   // TODO height gradient...
@@ -91,7 +83,6 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
 vec4 RayMarch(Ray ray, vec2 start_stop) {
   float extinction = 1.0;
   vec3 scattering = vec3(0.0, 0.0, 0.0);
-  vec3 sun_color = vec3(1.0, 1.0, 1.0); // TODO
   
   int n_steps = 100;
   float step_size = (start_stop.y - start_stop.x) / n_steps;
@@ -138,12 +129,17 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
         l_stop = CalcRayPlaneIntersection(ray, cloud_start);
       }
       vec3 xyz_int = ray.origin + l_stop * ray.dir;
-      float d_int = CalcDepth(xyz_int);
-      if (d_int < scene_depth) {
+      float intersection_depth = CalcDepth(xyz_int);
+      if (intersection_depth < scene_depth) {
         l_stop_march = l_stop;
+      }
+      else {
+        l_stop_march = LinearizeDepth(scene_depth) / 
+          LinearizeDepth(intersection_depth) * l_stop;
       }
     }
     else {
+      // Ray starts above or below the cloud layer
       float l_start;
       if (ray.origin.y < cloud_start) {
         // Ray starts below cloud layer and points up
@@ -156,14 +152,18 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
         l_stop = CalcRayPlaneIntersection(ray, cloud_start);
       }
       vec3 xyz_int = ray.origin + l_start * ray.dir;
-      float d_int = CalcDepth(xyz_int);
-      if (d_int < scene_depth) {
+      float intersection_depth = CalcDepth(xyz_int);
+      if (intersection_depth < scene_depth) {
         l_start_march = l_start;
       }
       xyz_int = ray.origin + l_stop * ray.dir;
-      d_int = CalcDepth(xyz_int);
-      if (d_int < scene_depth) {
+      intersection_depth = CalcDepth(xyz_int);
+      if (intersection_depth < scene_depth) {
         l_stop_march = l_stop;
+      }
+      else {
+        l_stop_march = LinearizeDepth(scene_depth) / 
+          LinearizeDepth(intersection_depth) * l_stop;
       }
     }
   }
