@@ -30,8 +30,8 @@ const float one_over_four_pi = 1.0 / 4.0 / 3.14159265;
 const float g = 0.9;
 const float k_schlick = 1.5 * g - 0.55 * g * g * g;
 const float num_schlick = (1 - k_schlick*k_schlick) * one_over_four_pi;
-const float sigma_extinction = 2.0; 
-const float sigma_scattering = 0.9 * sigma_extinction;
+const float sigma_extinction = 1.0; // larger is thicker
+const float sigma_scattering = 0.9 * sigma_extinction; // larger is brighter
 
 // height - fraction in [0, 1] of maximum cloud height at this location
 // altitude - fraction in [0, 1] of maximum cloud altitude
@@ -39,14 +39,13 @@ const float sigma_scattering = 0.9 * sigma_extinction;
 float GetHeightSignal(float height, float altitude, float y) {
   float h = max_cloud_height * height;
   float one_over_h = 1.0f / h;
-  float da = y - (cloud_start + 
-    (cloud_end - cloud_start - max_cloud_height / 2.0) * altitude);
+  float da = y - (cloud_start + 0.5 * (max_cloud_height - h) + 
+    (cloud_end - cloud_start - max_cloud_height) * altitude);
   return max(0.0, da * (da - h) * one_over_h * one_over_h * -4.0f);
 }
 
 // Compute the cloud density at a particular xyz position
-float GetDensity(vec3 position) {
-  vec4 w = texture(weather, position.xz * weather_scale);
+float GetDensity(vec3 position, vec4 w) {
   float density = w.r;
   density *= GetHeightSignal(w.g, w.b, position.y);
   vec4 shape_rgba = texture(shape, position * shape_scale);
@@ -69,6 +68,7 @@ float Ei(float z) {
     z * (1.0 + z * (0.25 + z * (0.055555 + z * (0.010416 + z * 0.0016666))));
 }
 
+// Expensive ambient color function
 vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
   float dtop = cloud_end - position.y;
   float a = -extinction_coeff * dtop;
@@ -77,6 +77,15 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
   a = -extinction_coeff * dbot;
   vec3 scattering_bot = vec3(1.0, 1.0, 1.0) * max(0.0, exp(a) - a*Ei(a));
   return scattering_bot + scattering_top;
+}
+
+// Cheap ambient color function based on color gradient
+vec3 CalcAmbientColor(float height, float altitude, float y) {
+  float h = max_cloud_height * height;
+  float y0 = cloud_start + 0.5 * (max_cloud_height - h) + 
+    (cloud_end - cloud_start - max_cloud_height) * altitude;
+  float h_frac = clamp((y - y0) / h, 0.0, 1.0);
+  return mix(vec3(0.6, 0.6, 0.65), vec3(1.0, 1.0, 1.0), h_frac);
 }
 
 // Perform ray-marching to compute color and extinction
@@ -89,7 +98,8 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
   vec3 position = ray.origin + start_stop.x * ray.dir;
   vec3 dposition = step_size * ray.dir;
   for (int i = 0; i < n_steps; ++i) {
-    float density = GetDensity(position);
+    vec4 w = texture(weather, position.xz * weather_scale);
+    float density = GetDensity(position, w);
     float scattering_coeff = sigma_scattering * density;
     float extinction_coeff = sigma_extinction * density;
     extinction *= exp(-extinction_coeff * step_size);
@@ -98,7 +108,8 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     if (extinction < 0.01)
       break;
     
-    vec3 ambient_color = CalcAmbientColor(position, extinction);
+    // vec3 ambient_color = CalcAmbientColor(position, extinction);
+    vec3 ambient_color = CalcAmbientColor(w.g, w.b, position.y);
     vec3 step_scattering = scattering_coeff * step_size * 
       (CalcSunPhaseFunction(ray.dir) * sun_color + 
        ambient_color);

@@ -13,7 +13,7 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   depth_map_shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
   shader_("shaders/clouds.vs", "shaders/clouds.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({100.0f, 200.0f}), l_stop_max_(1000.0f), 
+  cloud_start_end_({150.0f, 200.0f}), l_stop_max_(1000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
   detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
