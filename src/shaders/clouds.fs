@@ -31,7 +31,7 @@ const float g = 0.9;
 const float k_schlick = 1.5 * g - 0.55 * g * g * g;
 const float num_schlick = (1 - k_schlick*k_schlick) * one_over_four_pi;
 const float sigma_extinction = 1.0; // larger is thicker
-const float sigma_scattering = 0.9 * sigma_extinction; // larger is brighter
+const float sigma_scattering = 0.9; // larger is brighter
 
 // height - fraction in [0, 1] of maximum cloud height at this location
 // altitude - fraction in [0, 1] of maximum cloud altitude
@@ -85,7 +85,7 @@ vec3 CalcAmbientColor(float height, float altitude, float y) {
   float y0 = cloud_start + 0.5 * (max_cloud_height - h) + 
     (cloud_end - cloud_start - max_cloud_height) * altitude;
   float h_frac = clamp((y - y0) / h, 0.0, 1.0);
-  return mix(vec3(0.6, 0.6, 0.65), vec3(1.0, 1.0, 1.0), h_frac);
+  return mix(vec3(0.5, 0.5, 0.55), vec3(1.0, 1.0, 1.0), h_frac);
 }
 
 // Perform ray-marching to compute color and extinction
@@ -101,8 +101,8 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     vec4 w = texture(weather, position.xz * weather_scale);
     float density = GetDensity(position, w);
     float scattering_coeff = sigma_scattering * density;
-    float extinction_coeff = sigma_extinction * density;
-    extinction *= exp(-extinction_coeff * step_size);
+    float extinction_coeff = max(0.0000001, sigma_extinction * density);
+    float step_extinction = exp(-extinction_coeff * step_size);
 
     // Check for early exit due to low transmittance
     if (extinction < 0.01)
@@ -110,10 +110,11 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     
     // vec3 ambient_color = CalcAmbientColor(position, extinction);
     vec3 ambient_color = CalcAmbientColor(w.g, w.b, position.y);
-    vec3 step_scattering = scattering_coeff * step_size * 
-      (CalcSunPhaseFunction(ray.dir) * sun_color + 
-       ambient_color);
-    scattering += extinction * step_scattering;
+    vec3 step_scattering = scattering_coeff *  
+      (CalcSunPhaseFunction(ray.dir) * sun_color + ambient_color);
+    scattering += extinction * 
+      (step_scattering - step_scattering * step_extinction) / extinction_coeff;
+    extinction *= step_extinction;
     
     position += dposition;
   }
