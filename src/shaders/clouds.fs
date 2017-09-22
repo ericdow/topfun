@@ -13,7 +13,7 @@ uniform sampler3D detail; // cloud detail texture
 uniform float detail_scale;
 uniform sampler3D shape; // cloud shape texture
 uniform float shape_scale;
-uniform sampler2D weather; // weather texture
+uniform sampler2D weather; // weather texture (coverage/height/altitude)
 uniform float weather_scale;
 
 // Cloud density parameters
@@ -31,28 +31,26 @@ const float g = 0.9;
 const float k_schlick = 1.5 * g - 0.55 * g * g * g;
 const float num_schlick = (1 - k_schlick*k_schlick) * one_over_four_pi;
 const float sigma_extinction = 1.0; // larger is thicker
-const float sigma_scattering = 0.9; // larger is brighter
+const float sigma_scattering = 0.95; // larger is brighter
 
-// height - fraction in [0, 1] of maximum cloud height at this location
-// altitude - fraction in [0, 1] of maximum cloud altitude
-// y - y location of this point
-float GetHeightSignal(float height, float altitude, float y) {
-  float h = max_cloud_height * height;
-  float one_over_h = 1.0f / h;
-  float da = y - (cloud_start + 0.5 * (max_cloud_height - h) + 
-    (cloud_end - cloud_start - max_cloud_height) * altitude);
-  return max(0.0, da * (da - h) * one_over_h * one_over_h * -4.0f);
+// Parabolic density multiplier
+float GetHeightAttenuation(float h_frac) {
+  return max(0.0, h_frac * (h_frac - 1.0) * -4.0f);
+}
+
+float GetHeightGradient(float h_frac) {
+  return mix(1.0, 0.0, h_frac);
 }
 
 // Compute the cloud density at a particular xyz position
-float GetDensity(vec3 position, vec4 w) {
+float GetDensity(vec3 position, vec4 w, float h_frac) {
   float density = w.r;
-  density *= GetHeightSignal(w.g, w.b, position.y);
+  density *= GetHeightAttenuation(h_frac);
   vec4 shape_rgba = texture(shape, position * shape_scale);
   density *= shape_rgba.r*(shape_rgba.g + shape_rgba.b + shape_rgba.a);
   vec4 density_rgba = texture(detail, position * detail_scale);
   density -= 0.1 * (density_rgba.r + density_rgba.g + density_rgba.b);
-  // TODO height gradient...
+  density *= GetHeightGradient(h_frac);
   return clamp(density, 0.0, 1.0);
 }
 
@@ -80,12 +78,16 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
 }
 
 // Cheap ambient color function based on color gradient
-vec3 CalcAmbientColor(float height, float altitude, float y) {
-  float h = max_cloud_height * height;
-  float y0 = cloud_start + 0.5 * (max_cloud_height - h) + 
-    (cloud_end - cloud_start - max_cloud_height) * altitude;
-  float h_frac = clamp((y - y0) / h, 0.0, 1.0);
+vec3 CalcAmbientColor(float h_frac) {
   return mix(vec3(0.5, 0.5, 0.55), vec3(1.0, 1.0, 1.0), h_frac);
+}
+
+// Compute the cloud start height based on the height and altitude values
+// h - cloud height at this location
+// altitude - fraction in [0, 1] of maximum cloud altitude
+float GetCloudStartHeight(float h, float altitude) {
+  return cloud_start + 0.5 * (max_cloud_height - h) + 
+    (cloud_end - cloud_start - max_cloud_height) * altitude;
 }
 
 // Perform ray-marching to compute color and extinction
@@ -99,7 +101,10 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
   vec3 dposition = step_size * ray.dir;
   for (int i = 0; i < n_steps; ++i) {
     vec4 w = texture(weather, position.xz * weather_scale);
-    float density = GetDensity(position, w);
+    float h = max_cloud_height * w.g;
+    float y0 = GetCloudStartHeight(h, w.b);
+    float h_frac = clamp((position.y - y0) / h, 0.0, 1.0);
+    float density = GetDensity(position, w, h_frac);
     float scattering_coeff = sigma_scattering * density;
     float extinction_coeff = max(0.0000001, sigma_extinction * density);
     float step_extinction = exp(-extinction_coeff * step_size);
@@ -109,7 +114,7 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
       break;
     
     // vec3 ambient_color = CalcAmbientColor(position, extinction);
-    vec3 ambient_color = CalcAmbientColor(w.g, w.b, position.y);
+    vec3 ambient_color = CalcAmbientColor(h_frac);
     vec3 step_scattering = scattering_coeff *  
       (CalcSunPhaseFunction(ray.dir) * sun_color + ambient_color);
     scattering += extinction * 
