@@ -13,12 +13,12 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   depth_map_shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
   shader_("shaders/clouds.vs", "shaders/clouds.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({150.0f, 200.0f}), l_stop_max_(1000.0f), 
+  cloud_start_end_({50.0f, 100.0f}), l_stop_max_(1000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
-  detail_({32,32,32}, {"worley","worley","worley"}, {{1,1,1},{2,2,2},{3,3,3}}),
+  detail_({32,32,32}, "detail", {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
-  shape_({128, 32, 128}, {"perlin", "worley", "worley", "worley"}, 
-      {{{5, 1.0, 0.5}},{4,4,4},{3,3,3},{2,2,2}}), shape_scale_(1.0f / 100.0f),
+  shape_({128, 32, 128}, "shape", 
+      {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 100.0f),
   weather_scale_(1.0f / 500.0f) {
 
   // Check that the start and end heights of the clouds are valid
@@ -139,9 +139,9 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
 void CloudRenderer::GenerateWeatherTexture(unsigned size) {
   // Generate the coverge and height data
   noise::module::Perlin perlin_generator;
-  perlin_generator.SetOctaveCount(5);
-  perlin_generator.SetFrequency(2.0);
-  perlin_generator.SetPersistence(0.4);
+  perlin_generator.SetOctaveCount(8);
+  perlin_generator.SetFrequency(6.0);
+  perlin_generator.SetPersistence(0.2);
   std::vector<unsigned char> pixels(size * size * 3);
   for (std::size_t i = 0; i < size; ++i) {
     for (std::size_t j = 0; j < size; ++j) {

@@ -11,37 +11,43 @@ namespace TopFun {
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 NoiseCube::NoiseCube(const std::array<unsigned,3>& size, 
-    const std::vector<std::string>& type, 
+    const std::string& type, 
     const std::vector<std::vector<NoiseParams>>& params) {
   // Check for consistent data sizes
-  unsigned num_components = type.size();
-  if ((num_components != 3 && num_components != 4)
-      || params.size() != type.size()) {
+  unsigned num_components = params.size();
+  if ((type.compare("shape") == 0 && num_components != 4) || 
+      (type.compare("detail") == 0 && num_components != 3)) {
     std::string message = "Invalid number of texture components\n";
     throw std::invalid_argument(message);
   }
 
   // Loop through components of the texture and generate noise
-  std::vector<unsigned char> pixels(size[0] * size[1] * size[2] * 4, 
-      (unsigned char)255);
-  for (unsigned c = 0; c < num_components; ++c) {
-    // Generate the data for this component
-    std::vector<float> data;
-    if (type[c].compare("worley") == 0) {
-      data = GenerateWorleyNoise(size, params[c]);
+  std::size_t num_pixels = size[0] * size[1] * size[2];
+  std::vector<unsigned char> pixels(num_pixels, (unsigned char)255);
+  if (type.compare("shape") == 0) {
+    std::vector<float> p = GeneratePerlinNoise(size, params[0]);
+    std::vector<float> w1 = GenerateWorleyNoise(size, params[1]);
+    std::vector<float> w2 = GenerateWorleyNoise(size, params[2]);
+    std::vector<float> w3 = GenerateWorleyNoise(size, params[3]);
+    for (std::size_t n = 0; n < num_pixels; ++n) {
+      float data = p[n] * (w1[n] + w2[n] + w3[n]);
+      unsigned char v = (unsigned char)std::round(data * 255);
+      pixels[n] = v;
     }
-    else if (type[c].compare("perlin") == 0) {
-      data = GeneratePerlinNoise(size, params[c]);
+  }
+  else if (type.compare("detail") == 0) {
+    std::vector<float> r = GenerateWorleyNoise(size, params[0]);
+    std::vector<float> g = GenerateWorleyNoise(size, params[1]);
+    std::vector<float> b = GenerateWorleyNoise(size, params[2]);
+    for (std::size_t n = 0; n < num_pixels; ++n) {
+      float data = r[n] + g[n] + b[n];
+      unsigned char v = (unsigned char)std::round(data * 255);
+      pixels[n] = v;
     }
-    else {
-      std::string message = "Invalid noise type\n";
-      throw std::invalid_argument(message);
-    }
-    // Convert float data to color data
-    for (std::size_t n = 0; n < data.size(); ++n) {
-      unsigned char v = (unsigned char)std::round(data[n] * 255);
-      pixels[4*n + c] = v;
-    }
+  }
+  else {
+    std::string message = "Invalid noise type\n";
+    throw std::invalid_argument(message);
   }
 
   // Load the texture
@@ -54,7 +60,7 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   // Bind the data
-  glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size[0], size[1], size[2], 0, GL_RGBA, 
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_RED, size[0], size[1], size[2], 0, GL_RED, 
       GL_UNSIGNED_BYTE, (GLvoid*)pixels.data());
   glBindTexture(GL_TEXTURE_3D, 0);
 }

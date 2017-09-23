@@ -28,11 +28,11 @@ class NoiseCube {
   //**************************************************************************80
   //! \brief NoiseCube - Constructor
   //! \param[in] size - x,y,z dimensions of the cube
-  //! \param[in] type - type of noise for each component ("perlin" or "worley")
+  //! \param[in] type - type of noise ("shape" or "detail")
   //! \param[in] params - vector of noise parameters for each component
   //**************************************************************************80
   NoiseCube(const std::array<unsigned,3>& size, 
-      const std::vector<std::string>& type, 
+      const std::string& type, 
       const std::vector<std::vector<NoiseParams>>& params);
   
   //**************************************************************************80

@@ -39,17 +39,16 @@ float GetHeightAttenuation(float h_frac) {
 }
 
 float GetHeightGradient(float h_frac) {
-  return mix(1.0, 0.0, h_frac);
+  float delta = 0.6;
+  return clamp((1.0 + delta) * h_frac - delta, 0.0, 1.0);
 }
 
 // Compute the cloud density at a particular xyz position
 float GetDensity(vec3 position, vec4 w, float h_frac) {
   float density = w.r;
   density *= GetHeightAttenuation(h_frac);
-  vec4 shape_rgba = texture(shape, position * shape_scale);
-  density *= shape_rgba.r*(shape_rgba.g + shape_rgba.b + shape_rgba.a);
-  vec4 density_rgba = texture(detail, position * detail_scale);
-  density -= 0.1 * (density_rgba.r + density_rgba.g + density_rgba.b);
+  density *= texture(shape, position * shape_scale).r;
+  density -= 0.1 * texture(detail, position * detail_scale).r;
   density *= GetHeightGradient(h_frac);
   return clamp(density, 0.0, 1.0);
 }
@@ -79,7 +78,7 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
 
 // Cheap ambient color function based on color gradient
 vec3 CalcAmbientColor(float h_frac) {
-  return mix(vec3(0.5, 0.5, 0.55), vec3(1.0, 1.0, 1.0), h_frac);
+  return mix(vec3(0.4, 0.4, 0.45), vec3(1.0, 1.0, 1.0), h_frac);
 }
 
 // Compute the cloud start height based on the height and altitude values
