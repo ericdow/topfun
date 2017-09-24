@@ -158,6 +158,7 @@ class TextRenderer {
     if (poly_mode[0] == GL_LINE) {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+    glDisable(GL_BLEND);
   }
 
  private:

@@ -17,7 +17,7 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
   detail_({32,32,32}, "detail", {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
-  shape_({128, 32, 128}, "shape", 
+  shape_({64, 32, 64}, "shape", 
       {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 100.0f),
   weather_scale_(1.0f / 500.0f) {
 
@@ -31,12 +31,13 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   GenerateWeatherTexture(1024);
 
   // Set up the quad for rendering the cloud texture
+  // Use small z-coord offset to prevent z-fighting with TextRenderer
   float quadVertices[] = {
     // positions        // texture Coords
-    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+    -1.0f,  1.0f, 0.000001f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.000001f, 0.0f, 0.0f,
+     1.0f,  1.0f, 0.000001f, 1.0f, 1.0f,
+     1.0f, -1.0f, 0.000001f, 1.0f, 0.0f,
   };
   glGenVertexArrays(1, &quadVAO_);
   glGenBuffers(1, &quadVBO_);
@@ -70,10 +71,11 @@ void CloudRenderer::Render(Terrain& terrain, const Sky& sky,
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_SRC_ALPHA);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindTexture(GL_TEXTURE_3D, 0);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
 }
 
 //****************************************************************************80

@@ -523,9 +523,11 @@ void Aircraft::SetupDrawData() {
 void Aircraft::DrawExhaust() const {
   exhaust_shader_.Use();
 
-  // Enable face-culling 
+  // Enable face-culling and blending 
   glEnable(GL_CULL_FACE);
   glFrontFace(GL_CW);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
   // Orient model
   glm::mat4 exhaust_model = glm::translate(glm::mat4(), position_);
@@ -594,9 +596,10 @@ void Aircraft::DrawExhaust() const {
   }
   glBindVertexArray(0);
 
-  // Disable face-culling
+  // Disable face-culling amd blending
   glDisable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
+  glDisable(GL_BLEND);
 }
 
 } // End namespace TopFun

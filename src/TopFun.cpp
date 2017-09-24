@@ -116,14 +116,14 @@ int main(int /* argc */, char** /* argv */) {
       // Render the scene
       DrawScene(terrain, sky, aircraft, camera, &shadow_renderer);
 
-      // Display the depth map
+      // Render the clouds after all other objects
+      cloud_renderer.Render(terrain, sky, aircraft, camera);
+
+      // Display the depth map for debugging
       shadow_renderer.Display();
   
-      // Display the debug console after all objects have been rendered
+      // Display the debug console last
       debug_overlay.Draw(camera, aircraft, dt_loop, dt_draw);
-
-      // Render the clouds last
-      cloud_renderer.Render(terrain, sky, aircraft, camera);
       
       // Swap the buffers
       glfwSwapBuffers(window);
