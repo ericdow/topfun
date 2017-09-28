@@ -10,19 +10,15 @@ DepthMapRenderer::DepthMapRenderer(GLuint map_width, GLuint map_height) :
   map_width_(map_width), map_height_(map_height) {
 
   // Create depth texture
-  glGenFramebuffers(1, &depth_mapFBO_);
   glGenTextures(1, &depth_map_);
   glBindTexture(GL_TEXTURE_2D, depth_map_);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width, 
       map_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
   
   // Attach depth texture as FBO's depth buffer
+  glGenFramebuffers(1, &depth_mapFBO_);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_mapFBO_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 
       depth_map_, 0);

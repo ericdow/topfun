@@ -22,8 +22,10 @@ class CloudRenderer {
 
   ~CloudRenderer();
 
-  void Render(Terrain& terrain, const Sky& sky, Aircraft& aircraft, 
+  void RenderToTexture(Terrain& terrain, const Sky& sky, Aircraft& aircraft, 
       const Camera& camera);
+
+  void BlendWithScene() const;
   
   //**************************************************************************80
   //! \brief GetCloudStartEnd - gets the start and end altitudes of the clouds
@@ -43,13 +45,20 @@ class CloudRenderer {
   GLuint map_width_;
   GLuint map_height_;
   Shader depth_map_shader_; // for generating depth map
-  Shader shader_; // for rendering the clouds
+  Shader raymarch_shader_; // for rendering the clouds
+  Shader blend_shader_; // for blending the clouds with the scene
   DepthMapRenderer depth_map_renderer_;
   GLuint quadVAO_; // for rendering cloud texture
   GLuint quadVBO_; // for rendering cloud texture
+  GLuint texture_curr_; // current cloud texture to be drawn to screen
+  GLuint texture_prev_; // previous cloud texture for temporal anti-aliasing
+  GLuint cloudFBO_;
+
+  // Cloud parameters
   std::array<float,2> cloud_start_end_; // start and end altitudes of clouds
   float l_stop_max_;
-  float max_cloud_height_;
+  float max_cloud_height_; // tallest possible cloud height
+  glm::mat4 proj_view_prev_; // needed for temporal anti-aliasing
 
   // Cloud texture data
   NoiseCube detail_;
@@ -62,7 +71,7 @@ class CloudRenderer {
   //**************************************************************************80
   //! \brief SetShaderData - send the data to be rendered to the shader
   //**************************************************************************80
-  void SetShaderData(const Sky& sky, const Camera& camera) const;
+  void SetShaderData(const Sky& sky, const Camera& camera);
   
   //**************************************************************************80
   //! \brief GenerateWeatherTexture - generate the data for the weather texture

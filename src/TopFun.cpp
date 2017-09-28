@@ -71,6 +71,7 @@ int main(int /* argc */, char** /* argv */) {
     // Check and call events
     glfwPollEvents();
 
+    /*
     // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
     // integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
@@ -87,14 +88,15 @@ int main(int /* argc */, char** /* argv */) {
     const float alpha = t_accumulator / dt_physics;
     aircraft.InterpolateState(previous_state, current_state, alpha);
     aircraft.SetState(current_state);
+    */
     
     // Update the camera position
     camera.Move(callback_world.GetKeyState(), dt_loop);
-    glm::vec3 aircraft_front = aircraft.GetFrontDirection();
-    glm::vec3 aircraft_up = aircraft.GetUpDirection();
-    camera.SetPosition(aircraft.GetPosition() + 
-        2.0f * aircraft_up - 20.0f * aircraft_front);
-    camera.SetOrientation(aircraft_front, aircraft_up);
+    // glm::vec3 aircraft_front = aircraft.GetFrontDirection();
+    // glm::vec3 aircraft_up = aircraft.GetUpDirection();
+    // camera.SetPosition(aircraft.GetPosition() + 
+    //     2.0f * aircraft_up - 20.0f * aircraft_front);
+    // camera.SetOrientation(aircraft_front, aircraft_up);
 
     // Draw the scene
     draw_wait_time += dt_loop;
@@ -109,6 +111,9 @@ int main(int /* argc */, char** /* argv */) {
       // Render the depth maps for drawing shadows
       shadow_renderer.Render(terrain, sky, aircraft, camera,
           -sky.GetSunDirection());
+
+      // Render the clouds to a texture
+      cloud_renderer.RenderToTexture(terrain, sky, aircraft, camera);
       
       // Clear the colorbuffer
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -116,8 +121,8 @@ int main(int /* argc */, char** /* argv */) {
       // Render the scene
       DrawScene(terrain, sky, aircraft, camera, &shadow_renderer);
 
-      // Render the clouds after all other objects
-      cloud_renderer.Render(terrain, sky, aircraft, camera);
+      // Blend the clouds with the scene
+      cloud_renderer.BlendWithScene();
 
       // Display the depth map for debugging
       shadow_renderer.Display();

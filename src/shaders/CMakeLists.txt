@@ -28,7 +28,8 @@ set(FILES_TO_SEND
   debug_quad.vs
   debug_quad.fs
   clouds.vs
-  clouds.fs
+  clouds_raymarch.fs
+  clouds_blend.fs
 ) 
 
 # this sends files over if they have changed

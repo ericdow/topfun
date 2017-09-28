@@ -11,9 +11,10 @@ namespace TopFun {
 CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   map_width_(map_width), map_height_(map_height), 
   depth_map_shader_("shaders/depthmap.vs", "shaders/depthmap.fs"),
-  shader_("shaders/clouds.vs", "shaders/clouds.fs"),
+  raymarch_shader_("shaders/clouds.vs", "shaders/clouds_raymarch.fs"),
+  blend_shader_("shaders/clouds.vs", "shaders/clouds_blend.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({50.0f, 100.0f}), l_stop_max_(1000.0f), 
+  cloud_start_end_({10.0f, 100.0f}), l_stop_max_(1000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
   detail_({32,32,32}, "detail", {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
@@ -31,13 +32,12 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   GenerateWeatherTexture(1024);
 
   // Set up the quad for rendering the cloud texture
-  // Use small z-coord offset to prevent z-fighting with TextRenderer
   float quadVertices[] = {
     // positions        // texture Coords
-    -1.0f,  1.0f, 0.000001f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0.000001f, 0.0f, 0.0f,
-     1.0f,  1.0f, 0.000001f, 1.0f, 1.0f,
-     1.0f, -1.0f, 0.000001f, 1.0f, 0.0f,
+    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
   };
   glGenVertexArrays(1, &quadVAO_);
   glGenBuffers(1, &quadVBO_);
@@ -50,6 +50,26 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 
       (void*)(3 * sizeof(float)));
+  
+  // Create cloud textures
+  std::vector<GLuint*> textures = {&texture_curr_, &texture_prev_};
+  for (GLuint* t : textures) {
+    glGenTextures(1, t);
+    glBindTexture(GL_TEXTURE_2D, *t);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, map_width_, map_height_, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  
+  // Attach current cloud texture as FBO's color buffer
+  glGenFramebuffers(1, &cloudFBO_);
+  glBindFramebuffer(GL_FRAMEBUFFER, cloudFBO_);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 
+      texture_curr_, 0);
+  // Clean up
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 //****************************************************************************80
@@ -58,19 +78,47 @@ CloudRenderer::~CloudRenderer() {
 }
 
 //****************************************************************************80
-void CloudRenderer::Render(Terrain& terrain, const Sky& sky, 
+void CloudRenderer::RenderToTexture(Terrain& terrain, const Sky& sky, 
     Aircraft& aircraft, const Camera& camera) {
   // Render the depth map
   glm::mat4 projection_view = camera.GetProjectionMatrix() * 
     camera.GetViewMatrix();
   depth_map_renderer_.Render(terrain, sky, aircraft, camera, projection_view,
       depth_map_shader_);
-  // Perform ray-marching and render the clouds
+  // Set up the viewport
+  glm::ivec4 viewport_orig = GLEnvironment::GetViewport();
+  glViewport(0, 0, map_width_, map_height_);
+  // Perform ray-marching and render the clouds to a texture
+  glBindFramebuffer(GL_FRAMEBUFFER, cloudFBO_);
+  glClear(GL_COLOR_BUFFER_BIT);
   SetShaderData(sky, camera);
+  glBindVertexArray(quadVAO_);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  // Clean up and restore viewport
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_3D, 0);
+  glViewport(0, 0, viewport_orig[2], viewport_orig[3]);
+  // Copy current cloud texture for next render
+  glCopyImageSubData(texture_curr_, GL_TEXTURE_2D, 0, 0, 0, 0, texture_prev_,
+      GL_TEXTURE_2D, 0, 0, 0, 0, map_width_, map_height_, 1);
+}
+  
+//****************************************************************************80
+void CloudRenderer::BlendWithScene() const {
+  // Send current cloud texture to shader
+  blend_shader_.Use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture_curr_);
+  glUniform1i(glGetUniformLocation(blend_shader_.GetProgram(), "clouds"), 0);
+  // Blend the cloud texture with the scene
   glBindVertexArray(quadVAO_);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_SRC_ALPHA);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  // Clean up
+  glBindTexture(GL_TEXTURE_2D, 0);
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindTexture(GL_TEXTURE_3D, 0);
@@ -81,59 +129,71 @@ void CloudRenderer::Render(Terrain& terrain, const Sky& sky,
 //****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
-void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) const {
-  shader_.Use();
+void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
+  raymarch_shader_.Use();
   // Camera related data
   glm::mat4 proj_view = camera.GetProjectionMatrix() * camera.GetViewMatrix();
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projview"),
-      1, GL_FALSE, glm::value_ptr(proj_view));
-  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "inv_projview"),
-      1, GL_FALSE, glm::value_ptr(glm::inverse(proj_view)));
+  glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "projview"), 1, GL_FALSE, glm::value_ptr(proj_view));
+  glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "inv_projview"), 1, GL_FALSE, glm::value_ptr(glm::inverse(proj_view)));
+  glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "projview_prev"), 1, GL_FALSE, glm::value_ptr(proj_view_prev_));
+  proj_view_prev_ = proj_view; 
   glm::ivec4 vp = GLEnvironment::GetViewport();
-  glUniform4i(glGetUniformLocation(shader_.GetProgram(), "viewport"), 
+  glUniform4i(glGetUniformLocation(raymarch_shader_.GetProgram(), "viewport"), 
       vp[0], vp[1], vp[2], vp[3]);
   std::array<float,2> near_far = camera.GetNearFar();
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "camera_near"), 
-      near_far[0]);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "camera_far"), 
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "camera_near"), near_far[0]);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "camera_far"), 
       near_far[1]);
   // Depth map of the full scene
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, depth_map_renderer_.GetDepthMap());
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "depth_map"), 0);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), "depth_map"),
+      0);
   // Cloud parameters
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "cloud_start"), 
-      cloud_start_end_[0]);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "cloud_end"), 
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "cloud_start"), cloud_start_end_[0]);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "cloud_end"), 
       cloud_start_end_[1]);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "l_stop_max"), 
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "l_stop_max"), 
       l_stop_max_);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "max_cloud_height"), 
-      max_cloud_height_);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "max_cloud_height"), max_cloud_height_);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "seed"), 
+      (float) rand() / RAND_MAX);
   // Cloud detail texture
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_3D, detail_.GetTexture());
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "detail"), 1);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "detail_scale"), 
-      detail_scale_);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), "detail"), 1);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "detail_scale"), detail_scale_);
   // Cloud shape texture
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_3D, shape_.GetTexture());
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "shape"), 2);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "shape_scale"), 
-      shape_scale_);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), "shape"), 2);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "shape_scale"), shape_scale_);
   // Cloud weather texture
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D, weather_);
-  glUniform1i(glGetUniformLocation(shader_.GetProgram(), "weather"), 3);
-  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "weather_scale"), 
-      weather_scale_);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), "weather"), 
+      3);
+  glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "weather_scale"), weather_scale_);
+  // Cloud texture from previous render
+  glActiveTexture(GL_TEXTURE4);
+  glBindTexture(GL_TEXTURE_2D, texture_prev_);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "texture_prev"), 4);
   // Sun parameters
   glm::vec3 sun_dir = sky.GetSunDirection();
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "sun_dir"), 
+  glUniform3f(glGetUniformLocation(raymarch_shader_.GetProgram(), "sun_dir"), 
       sun_dir[0], sun_dir[1], sun_dir[2]);
   glm::vec3 sun_color = sky.GetSunColor();
-  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "sun_color"), 
+  glUniform3f(glGetUniformLocation(raymarch_shader_.GetProgram(), "sun_color"), 
       sun_color[0], sun_color[1], sun_color[2]);
 }
 

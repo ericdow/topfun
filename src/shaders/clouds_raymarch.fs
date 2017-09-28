@@ -15,6 +15,7 @@ uniform sampler3D shape; // cloud shape texture
 uniform float shape_scale;
 uniform sampler2D weather; // weather texture (coverage/height/altitude)
 uniform float weather_scale;
+uniform sampler2D texture_prev; // cloud texture from previous render
 
 // Cloud density parameters
 uniform float cloud_start;
@@ -94,9 +95,10 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
   float extinction = 1.0;
   vec3 scattering = vec3(0.0, 0.0, 0.0);
   
-  int n_steps = 100;
+  int n_steps = 50;
   float step_size = (start_stop.y - start_stop.x) / n_steps;
-  vec3 position = ray.origin + start_stop.x * ray.dir;
+  float offset = rand(gl_FragCoord.xy) * step_size;
+  vec3 position = ray.origin + (start_stop.x + offset) * ray.dir;
   vec3 dposition = step_size * ray.dir;
   for (int i = 0; i < n_steps; ++i) {
     vec4 w = texture(weather, position.xz * weather_scale);
@@ -112,8 +114,8 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     if (extinction < 0.01)
       break;
     
-    // vec3 ambient_color = CalcAmbientColor(position, extinction);
     vec3 ambient_color = CalcAmbientColor(h_frac);
+    // TODO modify sun_color to account for shadows...
     vec3 step_scattering = scattering_coeff *  
       (CalcSunPhaseFunction(ray.dir) * sun_color + ambient_color);
     scattering += extinction * 
@@ -187,9 +189,26 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
   return vec2(l_start_march, l_stop_march);
 }
 
+// Blend the color obtained by raymarching with the previous frame
+vec4 TemporalBlend(vec4 color_in, vec4 eye_pos) {
+  eye_pos *= gl_FragCoord.w; // perspective divide
+  vec4 p_cs = projview_prev * eye_pos;
+  vec2 st = 0.5 * (p_cs.xy + 1.0);
+  if (st.x > 1.0 || st.x < 0.0 || st.y > 1.0 || st.y < 0.0) {
+    return color_in;
+  }
+  else {
+    vec4 color_prev = texture(texture_prev, st);
+    float alpha = 0.05;
+    return alpha * color_in + (1.0 - alpha) * color_prev;
+  }
+  // return vec4(vec3(0.5 * (p_cs.y + 1.0)), 0.0);
+}
+
 void main() {    
   // Compute ray passing through each fragment
-  Ray ray = GetFragRay();
+  vec4 eye_pos = GetEyeSpacePosition();
+  Ray ray = GetFragRay(eye_pos);
   
   // Check where this ray intersects the cloud layer
   vec2 start_stop = GetRayAtmosphereIntersection(ray);
@@ -199,25 +218,5 @@ void main() {
   if (start_stop.x >= 0.0f)
     scatter_extinction = RayMarch(ray, start_stop);
 
-  color = scatter_extinction;
-  
-  ////////////////////////////////////////////////////////////////////
-  // TODO remove...
-  // if (start_stop.x >= 0.0f) {
-  //   // color = vec4(abs(ray.dir), 1.0);
-  //   // vec3 c = ray.origin + l_start_march * ray.dir;
-  //   // color = texture(detail, c);
-  //   // vec4 w = texture(weather, c.xz * weather_scale);
-  //   // float tmp = GetHeightSignal(w.g, w.b, c.y + 3.0);
-  //   // color = vec4(vec3(tmp), 1.0);
-  //   color = scatter_extinction;
-  //   if (scatter_extinction.a > 0.99)
-  //     color = vec4(0.0, 0.0, 1.0, 1.0);
-  // }
-  // else {
-  //   float scene_depth = texture(depth_map, TexCoord).r;
-  //   color = vec4(vec3(LinearizeDepth(scene_depth) / camera_far), 1.0);
-  // }
-  ////////////////////////////////////////////////////////////////////
-  
+  color = TemporalBlend(scatter_extinction, eye_pos);
 }

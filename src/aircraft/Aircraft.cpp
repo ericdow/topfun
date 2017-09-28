@@ -166,8 +166,10 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
       elevator_position_ * elevator_position_max_, true);
   model_.SetModelMatrix(&right_elevator_model, elevator_mesh_indices_[1]);
 
-  // Enable face-culling (for cockpit drawing) 
+  // Enable face-culling and blending (for cockpit drawing) 
   glEnable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Draw the model
   model_.Draw(shader);
@@ -179,6 +181,9 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
   if (!shader) {
     DrawExhaust();
   }
+  
+  // Disable blending
+  glDisable(GL_BLEND);
 }
 
 //****************************************************************************80
@@ -523,11 +528,9 @@ void Aircraft::SetupDrawData() {
 void Aircraft::DrawExhaust() const {
   exhaust_shader_.Use();
 
-  // Enable face-culling and blending 
+  // Enable face-culling 
   glEnable(GL_CULL_FACE);
   glFrontFace(GL_CW);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
   // Orient model
   glm::mat4 exhaust_model = glm::translate(glm::mat4(), position_);
@@ -596,10 +599,9 @@ void Aircraft::DrawExhaust() const {
   }
   glBindVertexArray(0);
 
-  // Disable face-culling amd blending
+  // Disable face-culling
   glDisable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
-  glDisable(GL_BLEND);
 }
 
 } // End namespace TopFun

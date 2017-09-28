@@ -107,6 +107,7 @@ class TextRenderer {
       glm::vec3 color) {
     // Set OpenGL options
     glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST); // always draw in front
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GLint poly_mode[2];
     glGetIntegerv(GL_POLYGON_MODE, poly_mode);
@@ -159,6 +160,7 @@ class TextRenderer {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
   }
 
  private:
