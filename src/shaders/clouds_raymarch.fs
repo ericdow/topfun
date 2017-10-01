@@ -40,6 +40,10 @@ const float step_size_growth = 1.2;
 const float step_size0_over_l = 1.0 / (1.0 + step_size_growth + 
   pow(step_size_growth, 2) + pow(step_size_growth, 3));
 
+// Define some constants for ray-marching
+const float eps_density = 0.001;
+const float eps_extinction = 0.01;
+
 // Parabolic density multiplier
 float GetHeightAttenuation(float h_frac) {
   return max(0.0, h_frac * (h_frac - 1.0) * -4.0f);
@@ -61,9 +65,22 @@ float GetCloudStartHeight(float h, float altitude) {
 // Compute the cloud density at a particular xyz position
 float GetDensity(vec3 position, vec4 w, float h_frac) {
   float density = w.r;
+  if (density <= eps_density) // early exit
+    return 0.0;
   density *= GetHeightAttenuation(h_frac);
   density *= texture(shape, position * shape_scale).r;
   density -= 0.1 * texture(detail, position * detail_scale).r;
+  density *= GetHeightGradient(h_frac);
+  return clamp(density, 0.0, 1.0);
+}
+
+// Compute the cloud density only using the 'shape' texture
+float GetCoarseDensity(vec3 position, vec4 w, float h_frac) {
+  float density = w.r;
+  if (density <= eps_density) // early exit
+    return 0.0;
+  density *= GetHeightAttenuation(h_frac);
+  density *= texture(shape, position * shape_scale).r;
   density *= GetHeightGradient(h_frac);
   return clamp(density, 0.0, 1.0);
 }
@@ -122,7 +139,7 @@ float CalcSunExtinction(in vec3 position) {
 }
 
 // Perform ray-marching to compute color and extinction
-vec4 RayMarch(Ray ray, vec2 start_stop) {
+vec4 RayMarchSlow(Ray ray, vec2 start_stop) {
   // Ray-march to compute scattering and extinction
   int n_steps = 20;
   float step_size = (start_stop.y - start_stop.x) / n_steps;
@@ -159,6 +176,83 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     extinction *= step_extinction;
     
     position += dposition;
+  }
+  return vec4(scattering, extinction);
+}
+
+vec4 RayMarch(Ray ray, vec2 start_stop) {
+  // Ray-march to compute scattering and extinction
+  int n_steps = 64;
+  float l_total = start_stop.y - start_stop.x;
+  float step_size_fine = l_total / n_steps;
+  vec3 dposition_fine = step_size_fine * ray.dir;
+  float coarse_to_fine_ratio = 2.0;
+  float step_size_coarse = coarse_to_fine_ratio * step_size_fine;
+  vec3 dposition_coarse = step_size_coarse * ray.dir;
+  bool coarse_stepping = true; // false if taking fine steps
+  int num_low_density_steps = 0; // for switching back to coarse steps
+
+  // Perturb the initial ray position randomly
+  float offset = rand(gl_FragCoord.xy) * step_size_fine;
+  vec3 position = ray.origin + (start_stop.x + offset) * ray.dir;
+
+  float extinction = 1.0;
+  vec3 scattering = vec3(0.0, 0.0, 0.0);
+  float l = 0.0; // distance we've marched
+  while (l < l_total) {
+    vec4 w = texture(weather, position.xz * weather_scale);
+    float h = max_cloud_height * w.g;
+    float y0 = GetCloudStartHeight(h, w.b);
+    float h_frac = clamp((position.y - y0) / h, 0.0, 1.0);
+    
+    if (coarse_stepping) { // taking coarse steps
+      float coarse_density = GetCoarseDensity(position, w, h_frac);
+      if (coarse_density > eps_density) {
+        coarse_stepping = false;
+        if (l > 0.0) {
+          position -= dposition_coarse;
+          l -= step_size_coarse;
+        }
+      }
+      else {
+        position += dposition_coarse;
+        l += step_size_coarse;
+      } 
+    }
+    else { // taking fine steps
+      float density = GetDensity(position, w, h_frac);
+      if (density > eps_density) {
+        float scattering_coeff = sigma_scattering * density;
+        float extinction_coeff = max(0.0000001, sigma_extinction * density);
+        float step_extinction = exp(-extinction_coeff * step_size_fine);
+
+        // TODO Calculate the starting depth of the clouds
+        // gl_FragDepth = ...
+        
+        vec3 ambient_color = CalcAmbientColor(h_frac);
+        float sun_extinction = CalcSunExtinction(position);
+        vec3 step_scattering = scattering_coeff *  
+          (CalcSunPhaseFunction(ray.dir) * sun_color * sun_extinction 
+          + ambient_color);
+        scattering += extinction * 
+          (step_scattering - step_scattering * step_extinction) / extinction_coeff;
+        
+        // Update extinction and check for early exit due to low transmittance
+        extinction *= step_extinction;
+        if (extinction < eps_extinction)
+          break;
+      }
+      else {
+        num_low_density_steps++;
+        // Check if step size should be changed
+        if (num_low_density_steps >= 3) {
+          coarse_stepping = true;
+          num_low_density_steps = 0;
+        }
+      }
+      position += dposition_fine;
+      l += step_size_fine;
+    } 
   }
   return vec4(scattering, extinction);
 }
