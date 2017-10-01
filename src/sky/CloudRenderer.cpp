@@ -61,12 +61,24 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
-  
+  textures = {&depth_curr_, &depth_prev_};
+  for (GLuint* t : textures) {
+	  glGenTextures(1, t);
+    glBindTexture(GL_TEXTURE_2D, *t);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width_, map_height_, 
+        0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+  }
+
   // Attach current cloud texture as FBO's color buffer
   glGenFramebuffers(1, &cloudFBO_);
   glBindFramebuffer(GL_FRAMEBUFFER, cloudFBO_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 
       texture_curr_, 0);
+  // Attach current cloud depth as FBO's depth buffer
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 
+      depth_curr_, 0);
   // Clean up
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -90,7 +102,7 @@ void CloudRenderer::RenderToTexture(Terrain& terrain, const Sky& sky,
   glViewport(0, 0, map_width_, map_height_);
   // Perform ray-marching and render the clouds to a texture
   glBindFramebuffer(GL_FRAMEBUFFER, cloudFBO_);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   SetShaderData(sky, camera);
   glBindVertexArray(quadVAO_);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -102,6 +114,9 @@ void CloudRenderer::RenderToTexture(Terrain& terrain, const Sky& sky,
   glViewport(0, 0, viewport_orig[2], viewport_orig[3]);
   // Copy current cloud texture for next render
   glCopyImageSubData(texture_curr_, GL_TEXTURE_2D, 0, 0, 0, 0, texture_prev_,
+      GL_TEXTURE_2D, 0, 0, 0, 0, map_width_, map_height_, 1);
+  // Copy current cloud depth for next render
+  glCopyImageSubData(depth_curr_, GL_TEXTURE_2D, 0, 0, 0, 0, depth_prev_,
       GL_TEXTURE_2D, 0, 0, 0, 0, map_width_, map_height_, 1);
 }
   

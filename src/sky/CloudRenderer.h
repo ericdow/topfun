@@ -52,6 +52,8 @@ class CloudRenderer {
   GLuint quadVBO_; // for rendering cloud texture
   GLuint texture_curr_; // current cloud texture to be drawn to screen
   GLuint texture_prev_; // previous cloud texture for temporal anti-aliasing
+  GLuint depth_curr_; // current cloud depth for temporal anti-aliasing
+  GLuint depth_prev_; // previous cloud depth for temporal anti-aliasing
   GLuint cloudFBO_;
 
   // Cloud parameters

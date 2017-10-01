@@ -144,6 +144,9 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
     // Check for early exit due to low transmittance
     if (extinction < 0.01)
       break;
+
+    // TODO Calculate the starting depth of the clouds
+    // gl_FragDepth = ...
     
     vec3 ambient_color = CalcAmbientColor(h_frac);
     float sun_extinction = CalcSunExtinction(position);
@@ -152,6 +155,7 @@ vec4 RayMarch(Ray ray, vec2 start_stop) {
       + ambient_color);
     scattering += extinction * 
       (step_scattering - step_scattering * step_extinction) / extinction_coeff;
+    
     extinction *= step_extinction;
     
     position += dposition;
