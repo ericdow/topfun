@@ -12,21 +12,29 @@ struct Ray {
   vec3 dir; // direction (normalized)
 };
 
-// Compute the eye-space position of a fragment (not normalized by w)
+// Compute the clip-space position of a fragment
 // See https://www.khronos.org/opengl/wiki/Compute_eye_space_from_window_space
-vec4 GetEyeSpacePosition() {
-  vec4 tmp = vec4(
+// uniform vec2 proj_T2_T1E1; // stores (T2, T1/E1) from projection matrix
+// vec4 CalcClipSpacePosition(float depth) {
+//   vec3 ndc_pos = vec3(
+//   2.0 * ( (gl_FragCoord.x - viewport[0]) / viewport[2] - 0.5),
+//   2.0 * ( (gl_FragCoord.y - viewport[1]) / viewport[3] - 0.5),
+//   2.0 * depth - 2.0);
+//   vec4 clip_pos;
+//   clip_pos.w = proj_T2_T1E1.x / (ndc_pos.z - proj_T2_T1E1.y);
+//   clip_pos.xyz = ndc_pos * clip_pos.w;
+//   return clip_pos;
+// }
+
+// Computes the ray (in world-space) that passes through the current fragment
+// The direction is stored as a vector pointing from the near point to the far
+Ray GetFragRay() {
+  vec4 near = vec4(
   2.0 * ( (gl_FragCoord.x - viewport[0]) / viewport[2] - 0.5),
   2.0 * ( (gl_FragCoord.y - viewport[1]) / viewport[3] - 0.5),
   0.0,
   1.0);
-  return inv_projview * tmp;
-}
-
-// Computes the ray (in world-space) that passes through the current fragment
-// The direction is stored as a vector pointing from the near point to the far
-Ray GetFragRay(vec4 eye_pos) {
-  vec4 near = eye_pos;
+  near = inv_projview * near;
   vec4 far = near + inv_projview[2];
   near.xyz /= near.w;
   far.xyz /= far.w;

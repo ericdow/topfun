@@ -19,7 +19,7 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   detail_({32,32,32}, "detail", {{1,1,1},{2,2,2},{3,3,3}}),
   detail_scale_(1.0f / 20.0f),
   shape_({64, 32, 64}, "shape", 
-      {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 100.0f),
+      {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 200.0f),
   weather_scale_(1.0f / 500.0f) {
 
   // Check that the start and end heights of the clouds are valid
@@ -58,15 +58,15 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
     glBindTexture(GL_TEXTURE_2D, *t);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, map_width_, map_height_, 0, GL_RGBA,
         GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   }
   textures = {&depth_curr_, &depth_prev_};
   for (GLuint* t : textures) {
 	  glGenTextures(1, t);
     glBindTexture(GL_TEXTURE_2D, *t);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, map_width_, map_height_, 
         0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
   }
@@ -154,7 +154,7 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
         "inv_projview"), 1, GL_FALSE, glm::value_ptr(glm::inverse(proj_view)));
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "projview_prev"), 1, GL_FALSE, glm::value_ptr(proj_view_prev_));
-  proj_view_prev_ = proj_view; 
+  proj_view_prev_ = proj_view;
   glm::ivec4 vp = GLEnvironment::GetViewport();
   glUniform4i(glGetUniformLocation(raymarch_shader_.GetProgram(), "viewport"), 
       vp[0], vp[1], vp[2], vp[3]);
@@ -163,6 +163,11 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
         "camera_near"), near_far[0]);
   glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "camera_far"), 
       near_far[1]);
+  // glm::mat4 proj = camera.GetProjectionMatrix();
+  // glm::vec2 proj_T2_T1E1; // stores (T2, T1/E1) from projection matrix
+  // proj_T2_T1E1 = glm::vec2(proj[2][3], proj[2][2] / proj[3][2]);
+  // glUniform2f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+  //     "proj_T2_T1E1"), proj_T2_T1E1.x, proj_T2_T1E1.y);
   // Depth map of the full scene
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, depth_map_renderer_.GetDepthMap());
