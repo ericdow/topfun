@@ -103,6 +103,7 @@ void CloudRenderer::RenderToTexture(Terrain& terrain, const Sky& sky,
   // Perform ray-marching and render the clouds to a texture
   glBindFramebuffer(GL_FRAMEBUFFER, cloudFBO_);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glDepthFunc(GL_ALWAYS); // save depth buffer but don't test 
   SetShaderData(sky, camera);
   glBindVertexArray(quadVAO_);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -112,6 +113,7 @@ void CloudRenderer::RenderToTexture(Terrain& terrain, const Sky& sky,
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindTexture(GL_TEXTURE_3D, 0);
   glViewport(0, 0, viewport_orig[2], viewport_orig[3]);
+  glDepthFunc(GL_LESS); // restore default
   // Copy current cloud texture for next render
   glCopyImageSubData(texture_curr_, GL_TEXTURE_2D, 0, 0, 0, 0, texture_prev_,
       GL_TEXTURE_2D, 0, 0, 0, 0, map_width_, map_height_, 1);
@@ -208,6 +210,11 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
   glBindTexture(GL_TEXTURE_2D, texture_prev_);
   glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "texture_prev"), 4);
+  // Depth texture from previous render
+  glActiveTexture(GL_TEXTURE5);
+  glBindTexture(GL_TEXTURE_2D, depth_prev_);
+  glUniform1i(glGetUniformLocation(raymarch_shader_.GetProgram(), 
+        "depth_prev"), 5);
   // Sun parameters
   glm::vec3 sun_dir = sky.GetSunDirection();
   glUniform3f(glGetUniformLocation(raymarch_shader_.GetProgram(), "sun_dir"), 

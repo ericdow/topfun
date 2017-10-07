@@ -16,6 +16,7 @@ uniform float shape_scale;
 uniform sampler2D weather; // weather texture (coverage/height/altitude)
 uniform float weather_scale;
 uniform sampler2D texture_prev; // cloud texture from previous render
+uniform sampler2D depth_prev; // depth texture from previous render
 
 // Cloud density parameters
 uniform float cloud_start;
@@ -138,48 +139,6 @@ float CalcSunExtinction(in vec3 position) {
   return extinction;
 }
 
-// Perform ray-marching to compute color and extinction
-vec4 RayMarchSlow(Ray ray, vec2 start_stop) {
-  // Ray-march to compute scattering and extinction
-  int n_steps = 20;
-  float step_size = (start_stop.y - start_stop.x) / n_steps;
-  float offset = rand(gl_FragCoord.xy) * step_size;
-  vec3 position = ray.origin + (start_stop.x + offset) * ray.dir;
-  vec3 dposition = step_size * ray.dir;
-  float extinction = 1.0;
-  vec3 scattering = vec3(0.0, 0.0, 0.0);
-  for (int i = 0; i < n_steps; ++i) {
-    vec4 w = texture(weather, position.xz * weather_scale);
-    float h = max_cloud_height * w.g;
-    float y0 = GetCloudStartHeight(h, w.b);
-    float h_frac = clamp((position.y - y0) / h, 0.0, 1.0);
-    float density = GetDensity(position, w, h_frac);
-    float scattering_coeff = sigma_scattering * density;
-    float extinction_coeff = max(0.0000001, sigma_extinction * density);
-    float step_extinction = exp(-extinction_coeff * step_size);
-
-    // Check for early exit due to low transmittance
-    if (extinction < 0.01)
-      break;
-
-    // TODO Calculate the starting depth of the clouds
-    // gl_FragDepth = ...
-    
-    vec3 ambient_color = CalcAmbientColor(h_frac);
-    float sun_extinction = CalcSunExtinction(position);
-    vec3 step_scattering = scattering_coeff *  
-      (CalcSunPhaseFunction(ray.dir) * sun_color * sun_extinction 
-      + ambient_color);
-    scattering += extinction * 
-      (step_scattering - step_scattering * step_extinction) / extinction_coeff;
-    
-    extinction *= step_extinction;
-    
-    position += dposition;
-  }
-  return vec4(scattering, extinction);
-}
-
 // cloud_position - world-space position of first non-zero density
 vec4 RayMarch(Ray ray, vec2 start_stop, inout vec3 cloud_position) {
   // Ray-march to compute scattering and extinction
@@ -231,6 +190,7 @@ vec4 RayMarch(Ray ray, vec2 start_stop, inout vec3 cloud_position) {
         // Calculate the starting depth of the clouds
         if (!found_cloud) {
           cloud_position = position;
+          gl_FragDepth = CalcDepth(position);
           found_cloud = true;
         }
         
@@ -269,6 +229,7 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
   if (ray.origin.y < cloud_end && ray.dir.y > 0.0f ||
       ray.origin.y > cloud_start && ray.dir.y < 0.0f) {
     float scene_depth = texture(depth_map, TexCoord).r;
+    gl_FragDepth = scene_depth; // for temporal reprojection
     float l_stop;
     if (ray.origin.y > cloud_start && ray.origin.y < cloud_end) {
       // Ray starts inside cloud layer 
@@ -328,17 +289,21 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
 vec4 TemporalBlend(vec4 color_in, vec3 world_pos) {
   vec4 q_cs = projview_prev * vec4(world_pos, 1.0);
   vec2 q_uv = 0.5 * q_cs.xy / q_cs.w + 0.5;
-  if (q_uv.x > 1.0 || q_uv.x < 0.0 || q_uv.y > 1.0 || q_uv.y < 0.0) {
+  float dp = texture(depth_prev, q_uv).r;
+  if (q_uv.x > 1.0 || q_uv.x < 0.0 || q_uv.y > 1.0 || q_uv.y < 0.0 || 
+      abs(dp - gl_FragDepth) > 0.01) {
     return color_in;
   }
   else {
     vec4 color_prev = texture(texture_prev, q_uv);
     float alpha = 0.1;
+    // Blend the depth with previous frames
+    gl_FragDepth = alpha * gl_FragDepth + (1.0 - alpha) * dp;
     return alpha * color_in + (1.0 - alpha) * color_prev;
   }
 }
 
-void main() {    
+void main() {
   // Compute ray passing through each fragment
   Ray ray = GetFragRay();
   
@@ -352,7 +317,6 @@ void main() {
     scatter_extinction = RayMarch(ray, start_stop, cloud_position);
 
   color = scatter_extinction;
-  if (color.w < 1.0) {
+  if (color.w < 1.0) // only blend if there are clouds here
     color = TemporalBlend(scatter_extinction, cloud_position);
-  }
 }
