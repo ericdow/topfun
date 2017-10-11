@@ -6,8 +6,6 @@ in vec2 TexCoord;
 
 out vec4 color;
 
-uniform sampler2D depth_map; // depth map of scene
-
 // Cloud texture data
 uniform sampler3D detail; // cloud detail texture
 uniform float detail_scale;
@@ -15,6 +13,8 @@ uniform sampler3D shape; // cloud shape texture
 uniform float shape_scale;
 uniform sampler2D weather; // weather texture (coverage/height/altitude)
 uniform float weather_scale;
+
+// Data for temporal reprojection
 uniform sampler2D texture_prev; // cloud texture from previous render
 uniform sampler2D depth_prev; // depth texture from previous render
 
@@ -156,6 +156,9 @@ vec4 RayMarch(Ray ray, vec2 start_stop, inout vec3 cloud_position) {
   float offset = rand(gl_FragCoord.xy) * step_size_fine;
   vec3 position = ray.origin + (start_stop.x + offset) * ray.dir;
 
+  // Initialize the cloud depth
+  gl_FragDepth = 1.0;  
+
   float extinction = 1.0;
   vec3 scattering = vec3(0.0, 0.0, 0.0);
   float l = 0.0; // distance we've marched
@@ -228,28 +231,16 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
   float l_stop_march;
   if (ray.origin.y < cloud_end && ray.dir.y > 0.0f ||
       ray.origin.y > cloud_start && ray.dir.y < 0.0f) {
-    float scene_depth = texture(depth_map, TexCoord).r;
-    gl_FragDepth = scene_depth; // for temporal reprojection
-    float l_stop;
     if (ray.origin.y > cloud_start && ray.origin.y < cloud_end) {
       // Ray starts inside cloud layer 
       l_start_march = 0.0f;
       if (ray.dir.y > 0.0f) {
         // Ray is looking up
-        l_stop = CalcRayPlaneIntersection(ray, cloud_end); 
+        l_stop_march = CalcRayPlaneIntersection(ray, cloud_end); 
       }
       else {
         // Ray is looking down
-        l_stop = CalcRayPlaneIntersection(ray, cloud_start);
-      }
-      vec3 xyz_int = ray.origin + l_stop * ray.dir;
-      float intersection_depth = CalcDepth(xyz_int);
-      if (intersection_depth < scene_depth) {
-        l_stop_march = l_stop;
-      }
-      else {
-        l_stop_march = LinearizeDepth(scene_depth) / 
-          LinearizeDepth(intersection_depth) * l_stop;
+        l_stop_march = CalcRayPlaneIntersection(ray, cloud_start);
       }
     }
     else {
@@ -257,27 +248,13 @@ vec2 GetRayAtmosphereIntersection(Ray ray) {
       float l_start;
       if (ray.origin.y < cloud_start) {
         // Ray starts below cloud layer and points up
-        l_start = CalcRayPlaneIntersection(ray, cloud_start);
-        l_stop = CalcRayPlaneIntersection(ray, cloud_end);
+        l_start_march = CalcRayPlaneIntersection(ray, cloud_start);
+        l_stop_march = CalcRayPlaneIntersection(ray, cloud_end);
       }
       else {
         // Ray starts above cloud layer and points down
-        l_start = CalcRayPlaneIntersection(ray, cloud_end);
-        l_stop = CalcRayPlaneIntersection(ray, cloud_start);
-      }
-      vec3 xyz_int = ray.origin + l_start * ray.dir;
-      float intersection_depth = CalcDepth(xyz_int);
-      if (intersection_depth < scene_depth) {
-        l_start_march = l_start;
-      }
-      xyz_int = ray.origin + l_stop * ray.dir;
-      intersection_depth = CalcDepth(xyz_int);
-      if (intersection_depth < scene_depth) {
-        l_stop_march = l_stop;
-      }
-      else {
-        l_stop_march = LinearizeDepth(scene_depth) / 
-          LinearizeDepth(intersection_depth) * l_stop;
+        l_start_march = CalcRayPlaneIntersection(ray, cloud_end);
+        l_stop_march = CalcRayPlaneIntersection(ray, cloud_start);
       }
     }
   }
