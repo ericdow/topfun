@@ -70,7 +70,7 @@ float GetDensity(vec3 position, vec4 w, float h_frac) {
     return 0.0;
   density *= GetHeightAttenuation(h_frac);
   density *= texture(shape, position * shape_scale).r;
-  density -= 0.1 * texture(detail, position * detail_scale).r;
+  // density -= 0.1 * texture(detail, position * detail_scale).r;
   density *= GetHeightGradient(h_frac);
   return clamp(density, 0.0, 1.0);
 }
@@ -111,13 +111,15 @@ vec3 CalcAmbientColor(vec3 position, float extinction_coeff) {
 
 // Cheap ambient color function based on color gradient
 vec3 CalcAmbientColor(float h_frac) {
-  return mix(vec3(0.4, 0.4, 0.45), vec3(1.0, 1.0, 1.0), h_frac);
+  return mix(vec3(0.3, 0.3, 0.35), vec3(1.0, 1.0, 1.0), h_frac);
 }
 
 // Compute the sun color by accounting for extinction due to shadows
 float CalcSunExtinction(in vec3 position) {
   // Get Ray from position to sun, and find intersection with atmosphere end
-  Ray ray_to_sun = Ray(position, sun_dir);
+  // TODO this is wrong...
+  // Ray ray_to_sun = Ray(position, sun_dir);
+  Ray ray_to_sun = Ray(position, vec3(0.0, 1.0, 0.0));
   float l_ray_to_sun = CalcRayPlaneIntersection(ray_to_sun, cloud_end);
   l_ray_to_sun *= 0.99; // shorten a bit to stay completely inside atmosphere
   // March towards sun and compute extinction
@@ -129,7 +131,7 @@ float CalcSunExtinction(in vec3 position) {
     float h = max_cloud_height * w.g;
     float y0 = GetCloudStartHeight(h, w.b);
     float h_frac = clamp((position.y - y0) / h, 0.0, 1.0);
-    float density = GetDensity(position, w, h_frac);
+    float density = GetCoarseDensity(position, w, h_frac);
     float scattering_coeff = sigma_scattering * density;
     float extinction_coeff = max(0.0000001, sigma_extinction * density);
     float step_extinction = exp(-extinction_coeff * step_size);

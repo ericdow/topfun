@@ -32,6 +32,10 @@ class CallBackWorld {
   inline bool IsFPSLocked() const {
     return fps_locked_;
   }
+  
+  inline bool IsFreeLook() const {
+    return free_look_;
+  }
 
  private:
   bool first_mouse_;
@@ -40,6 +44,7 @@ class CallBackWorld {
   bool fps_locked_;
   bool w_double_pressed_;
   float last_w_press_time_;
+  bool free_look_; // camera is not tied to aircraft
   
   Camera& camera_;
   DebugOverlay& debug_overlay_;

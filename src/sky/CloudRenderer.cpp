@@ -14,13 +14,13 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   raymarch_shader_("shaders/clouds.vs", "shaders/clouds_raymarch.fs"),
   blend_shader_("shaders/clouds.vs", "shaders/clouds_blend.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({10.0f, 100.0f}), l_stop_max_(1000.0f), 
+  cloud_start_end_({2000.0f, 2400.0f}), l_stop_max_(1000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
   detail_({32,32,32}, "detail", {{1,1,1},{2,2,2},{3,3,3}}),
-  detail_scale_(1.0f / 20.0f),
+  detail_scale_(1.0f / 35.0f),
   shape_({64, 32, 64}, "shape", 
-      {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 200.0f),
-  weather_scale_(1.0f / 500.0f) {
+      {{{5, 4.0, 0.3}},{5,5,5},{4,4,4},{3,3,3}}), shape_scale_(1.0f / 400.0f),
+  weather_scale_(1.0f / 2500.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
@@ -175,11 +175,6 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
         "camera_near"), near_far[0]);
   glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), "camera_far"), 
       near_far[1]);
-  // glm::mat4 proj = camera.GetProjectionMatrix();
-  // glm::vec2 proj_T2_T1E1; // stores (T2, T1/E1) from projection matrix
-  // proj_T2_T1E1 = glm::vec2(proj[2][3], proj[2][2] / proj[3][2]);
-  // glUniform2f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
-  //     "proj_T2_T1E1"), proj_T2_T1E1.x, proj_T2_T1E1.y);
   // Cloud parameters
   glUniform1f(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "cloud_start"), cloud_start_end_[0]);
@@ -235,7 +230,7 @@ void CloudRenderer::GenerateWeatherTexture(unsigned size) {
   noise::module::Perlin perlin_generator;
   perlin_generator.SetOctaveCount(8);
   perlin_generator.SetFrequency(6.0);
-  perlin_generator.SetPersistence(0.2);
+  perlin_generator.SetPersistence(0.4);
   std::vector<unsigned char> pixels(size * size * 3);
   for (std::size_t i = 0; i < size; ++i) {
     for (std::size_t j = 0; j < size; ++j) {

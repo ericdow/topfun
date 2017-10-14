@@ -10,7 +10,7 @@ CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
     std::array<GLuint,2> const& screen_size) : 
   first_mouse_(true), last_mouse_pos_({(double)screen_size[0]/2, 
   (double)screen_size[1]/2}), key_state_(1024,false), fps_locked_(true), 
-  w_double_pressed_(false), last_w_press_time_(-100.0f),
+  w_double_pressed_(false), last_w_press_time_(-100.0f), free_look_(false),
   camera_(camera), debug_overlay_(debug_overlay), 
   shadow_renderer_(shadow_renderer) {}
 
@@ -42,6 +42,11 @@ void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action,
   // Toggle depth map overlay on F4
   if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
     shadow_renderer_.ToggleVisible();
+  }
+  
+  // Toggle free look mode on F5
+  if (key == GLFW_KEY_F5 && action == GLFW_PRESS) {
+    free_look_ = !free_look_;
   }
   
   // Check for double press on W

@@ -33,7 +33,7 @@ CallBackWorld callback_world(camera, debug_overlay, shadow_renderer,
     screen_size);
 
 // Set up the aircraft
-Aircraft aircraft(glm::vec3(terrain_size/2, 5.0f, terrain_size/2), 
+Aircraft aircraft(glm::vec3(terrain_size/2, 3000.0f, terrain_size/2), 
     glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 
 GLfloat last_draw_time = 0.0f;
@@ -73,9 +73,6 @@ int main(int /* argc */, char** /* argv */) {
 
     // Update the aircraft state
     aircraft.UpdateControls(callback_world.GetKeyState());
-    // integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
-    //     dt_loop);    
-    // aircraft.SetState(current_state);
     while (t_accumulator >= dt_physics) {
       previous_state = current_state;
       integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
@@ -84,17 +81,22 @@ int main(int /* argc */, char** /* argv */) {
       t_physics += dt_physics;
       t_accumulator -= dt_physics;
     }
-    const float alpha = t_accumulator / dt_physics;
-    aircraft.InterpolateState(previous_state, current_state, alpha);
+    // TODO fix interpolation...
+    // const float alpha = t_accumulator / dt_physics;
+    // aircraft.InterpolateState(previous_state, current_state, alpha);
     aircraft.SetState(current_state);
     
     // Update the camera position
-    camera.Move(callback_world.GetKeyState(), dt_loop);
-    glm::vec3 aircraft_front = aircraft.GetFrontDirection();
-    glm::vec3 aircraft_up = aircraft.GetUpDirection();
-    camera.SetPosition(aircraft.GetPosition() + 
-        2.0f * aircraft_up - 20.0f * aircraft_front);
-    camera.SetOrientation(aircraft_front, aircraft_up);
+    if (callback_world.IsFreeLook()) {
+      camera.Move(callback_world.GetKeyState(), dt_loop);
+    }
+    else {
+      glm::vec3 aircraft_front = aircraft.GetFrontDirection();
+      glm::vec3 aircraft_up = aircraft.GetUpDirection();
+      camera.SetPosition(aircraft.GetPosition() + 
+          2.0f * aircraft_up - 20.0f * aircraft_front);
+      camera.SetOrientation(aircraft_front, aircraft_up);
+    }
 
     // Draw the scene
     draw_wait_time += dt_loop;
