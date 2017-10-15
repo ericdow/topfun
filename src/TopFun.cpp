@@ -33,7 +33,7 @@ CallBackWorld callback_world(camera, debug_overlay, shadow_renderer,
     screen_size);
 
 // Set up the aircraft
-Aircraft aircraft(glm::vec3(terrain_size/2, 3000.0f, terrain_size/2), 
+Aircraft aircraft(glm::vec3(terrain_size/2, 2000.0f, terrain_size/2), 
     glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 
 GLfloat last_draw_time = 0.0f;

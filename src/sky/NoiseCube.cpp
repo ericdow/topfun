@@ -30,7 +30,7 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
     std::vector<float> w2 = GenerateWorleyNoise(size, params[2]);
     std::vector<float> w3 = GenerateWorleyNoise(size, params[3]);
     for (std::size_t n = 0; n < num_pixels; ++n) {
-      float data = p[n] * (w1[n] + w2[n] + w3[n]);
+      float data = p[n] * (w1[n] + w2[n] + w3[n]) / 3.0;
       unsigned char v = (unsigned char)std::round(data * 255);
       pixels[n] = v;
     }
@@ -40,7 +40,7 @@ NoiseCube::NoiseCube(const std::array<unsigned,3>& size,
     std::vector<float> g = GenerateWorleyNoise(size, params[1]);
     std::vector<float> b = GenerateWorleyNoise(size, params[2]);
     for (std::size_t n = 0; n < num_pixels; ++n) {
-      float data = r[n] + g[n] + b[n];
+      float data = (r[n] + g[n] + b[n]) / 3.0;
       unsigned char v = (unsigned char)std::round(data * 255);
       pixels[n] = v;
     }

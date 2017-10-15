@@ -70,7 +70,7 @@ float GetDensity(vec3 position, vec4 w, float h_frac) {
     return 0.0;
   density *= GetHeightAttenuation(h_frac);
   density *= texture(shape, position * shape_scale).r;
-  // density -= 0.1 * texture(detail, position * detail_scale).r;
+  density -= 0.1 * texture(detail, position * detail_scale).r;
   density *= GetHeightGradient(h_frac);
   return clamp(density, 0.0, 1.0);
 }
