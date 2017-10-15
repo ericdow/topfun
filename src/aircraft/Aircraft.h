@@ -124,11 +124,15 @@ class Aircraft {
   //**************************************************************************80
   //! \brief InterpolateState - interpolate state between timesteps
   //**************************************************************************80
-  inline void InterpolateState(const std::vector<float>& previous_state, 
-      std::vector<float>& current_state, float alpha) {
+  inline std::vector<float> InterpolateState(
+      const std::vector<float>& previous_state, 
+      const std::vector<float>& current_state, float alpha) const {
+    std::vector<float> state_out(13);
+    // Interpolate the position
     for (int i = 0; i < 3; ++i) 
-      current_state[i]  = alpha * current_state[i] 
+      state_out[i] = alpha * current_state[i] 
         + (1.0f - alpha) * previous_state[i];
+    // Slerp the orientation
     glm::quat co, po;
     co.w = current_state[3];
     co.x = current_state[4];
@@ -139,13 +143,15 @@ class Aircraft {
     po.y = previous_state[5];
     po.z = previous_state[6];
     glm::quat tmp = glm::slerp(co, po, alpha);
-    current_state[3] = tmp.w;
-    current_state[4] = tmp.x;
-    current_state[5] = tmp.y;
-    current_state[6] = tmp.z;
+    state_out[3] = tmp.w;
+    state_out[4] = tmp.x;
+    state_out[5] = tmp.y;
+    state_out[6] = tmp.z;
+    // Interpolate the momentum
     for (int i = 7; i < 13; ++i) 
-      current_state[i]  = alpha * current_state[i] 
+      state_out[i] = alpha * current_state[i] 
         + (1.0f - alpha) * previous_state[i];
+    return state_out;
   }
   
   //**************************************************************************80

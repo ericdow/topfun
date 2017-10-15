@@ -72,6 +72,7 @@ int main(int /* argc */, char** /* argv */) {
     glfwPollEvents();
 
     // Update the aircraft state
+    aircraft.SetState(current_state); // restore after rendering
     aircraft.UpdateControls(callback_world.GetKeyState());
     while (t_accumulator >= dt_physics) {
       previous_state = current_state;
@@ -81,10 +82,11 @@ int main(int /* argc */, char** /* argv */) {
       t_physics += dt_physics;
       t_accumulator -= dt_physics;
     }
-    // TODO fix interpolation...
-    // const float alpha = t_accumulator / dt_physics;
-    // aircraft.InterpolateState(previous_state, current_state, alpha);
-    aircraft.SetState(current_state);
+    // Interpolate the state vector for rendering
+    const float alpha = t_accumulator / dt_physics;
+    std::vector<float> render_state = aircraft.InterpolateState(previous_state,
+        current_state, alpha);
+    aircraft.SetState(render_state);
     
     // Update the camera position
     if (callback_world.IsFreeLook()) {
