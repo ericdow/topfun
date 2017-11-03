@@ -117,9 +117,7 @@ vec3 CalcAmbientColor(float h_frac) {
 // Compute the sun color by accounting for extinction due to shadows
 float CalcSunExtinction(in vec3 position) {
   // Get Ray from position to sun, and find intersection with atmosphere end
-  // TODO this is wrong...
-  // Ray ray_to_sun = Ray(position, sun_dir);
-  Ray ray_to_sun = Ray(position, vec3(0.0, 1.0, 0.0));
+  Ray ray_to_sun = Ray(position, -sun_dir);
   float l_ray_to_sun = CalcRayPlaneIntersection(ray_to_sun, cloud_end);
   l_ray_to_sun *= 0.99; // shorten a bit to stay completely inside atmosphere
   // March towards sun and compute extinction
