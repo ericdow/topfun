@@ -43,7 +43,8 @@ GLfloat loop_lock_time = 1.0/120.0;
 int main(int /* argc */, char** /* argv */) {
   
   // Set up remaining game objects (in main due to static members)
-  Terrain terrain(terrain_size, 20);
+  // TODO Terrain terrain(terrain_size, 19, {start_pos[0], start_pos[2]});
+  Terrain terrain(1000.0f, 3, {start_pos[0], start_pos[2]});
   Sky sky;
   CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
 

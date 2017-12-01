@@ -19,7 +19,7 @@ class TerrainTile {
 
  public:
   //**************************************************************************80
-  //! \brief TerrainTile - Constructor for empty terrain object
+  //! \brief TerrainTile - Constructor
   //**************************************************************************80
   TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0);
   

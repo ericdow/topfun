@@ -25,14 +25,21 @@ class Terrain {
   //! \brief Terrain - Constructor for empty terrain object
   //! \param[in] l - length of terrain in the x/z directions
   //! \param[in] ntile - number of terrain tiles in the x/z directions
+  //! \param[in] xz_center0 - starting location of center of rendered terrain
   //**************************************************************************80
-  Terrain(GLfloat lx, GLuint ntile);
+  Terrain(GLfloat l, int ntile, const std::array<float,2>& xz_center0);
   
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
   //**************************************************************************80
   ~Terrain() = default;
   
+  //**************************************************************************80
+  //! \brief SetXZCenter - Update the location of the center of rendered terrain
+  //! \param[in] xz_center - new location of center of rendered terrain
+  //**************************************************************************80
+  void SetXZCenter(const std::array<float,2>& xz_center); 
+
   //**************************************************************************80
   //! \brief GetHeight - Get the terrain height at a some (x,y) location
   //**************************************************************************80
@@ -46,8 +53,12 @@ class Terrain {
 
  private:
   Shader shader_;
+  int ntile_;
+  GLfloat ltile_;
+  std::array<float,2> xz_center0_; // center of terrain
+  std::array<int,4> tile_bounding_box_; // bounding box i,j indices
   static noise::module::Perlin perlin_generator_;
-  std::unordered_map<size_t,TerrainTile> tiles_;
+  std::unordered_map<int,TerrainTile> tiles_;
   std::vector<GLuint> textures_;
   
   //**************************************************************************80
@@ -61,6 +72,11 @@ class Terrain {
   void SetShaderData(Camera const& camera, const Sky& sky,
       const ShadowCascadeRenderer& shadow_renderer);
   
+  //**************************************************************************80
+  //! \brief UpdateTileConnectivity - update tile neighbor pointers
+  //**************************************************************************80
+  void UpdateTileConnectivity();
+
 };
 } // End namespace TopFun
 

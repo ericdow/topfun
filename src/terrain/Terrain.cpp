@@ -14,8 +14,16 @@ noise::module::Perlin Terrain::perlin_generator_;
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Terrain::Terrain(GLfloat l, GLuint ntile) : 
-  shader_("shaders/terrain.vs", "shaders/terrain.fs") {
+Terrain::Terrain(GLfloat l, int ntile, 
+    const std::array<float,2>& xz_center0) :
+  shader_("shaders/terrain.vs", "shaders/terrain.fs"), ntile_(ntile),
+  ltile_(l / ntile), xz_center0_(xz_center0) {
+  // Use odd number of tiles to make math easier
+  if (ntile_ % 2 == 0) {
+    std::string message = "Number of tiles in each direction should be odd\n";
+    throw std::invalid_argument(message);
+  }
+
   // Set the noise parameters
   perlin_generator_.SetOctaveCount(5);
   perlin_generator_.SetFrequency(0.04);
@@ -25,31 +33,28 @@ Terrain::Terrain(GLfloat l, GLuint ntile) :
   LoadTextures();
     
   // Set up the tiles
-  GLfloat l_tile = l / ntile;
-  TerrainTile::SetTileLength(l_tile);
-  for (GLuint i = 0; i < ntile; ++i) {
-    for (GLuint j = 0; j < ntile; ++j) {
+  TerrainTile::SetTileLength(ltile_);
+  int half_ntile = (ntile_ - 1) / 2;
+  for (int i = -half_ntile; i <= half_ntile; ++i) {
+    for (int j = -half_ntile; j <= half_ntile; ++j) {
       tiles_.emplace(std::piecewise_construct,
-                     std::forward_as_tuple(ntile*j + i),
-                     std::forward_as_tuple(shader_, l_tile*i, l_tile*j));
+                     std::forward_as_tuple(ntile_*j + i),
+                     std::forward_as_tuple(shader_, 
+                       xz_center0_[0] - l/2 + ltile_*(i + 0.5), 
+                       xz_center0_[1] - l/2 + ltile_*(j + 0.5)));
     }
   }
-  for (GLuint i = 0; i < ntile; ++i) {
-    for (GLuint j = 0; j < ntile; ++j) {
-      GLuint ix = ntile*j + i;
-      if (i > 0) {
-        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*j + i - 1), 3);
-      }
-      if (i < ntile - 1) {
-        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*j + i + 1), 1);
-      }
-      if (j > 0) {
-        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*(j-1) + i), 2);
-      }
-      if (j < ntile - 1) {
-        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile*(j+1) + i), 0);
-      }
-    }
+  tile_bounding_box_ = {-half_ntile, -half_ntile, half_ntile, half_ntile};
+  UpdateTileConnectivity();
+}
+
+//****************************************************************************80
+void Terrain::SetXZCenter(const std::array<float,2>& xz_center) {
+  bool changed = false;
+  
+  
+  if (changed) {
+    UpdateTileConnectivity();
   }
 }
 
@@ -206,6 +211,27 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
   glm::vec3 frustum_terminus = camera.GetFrustumTerminus();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "frustumTerminus"), 
       frustum_terminus.x, frustum_terminus.y, frustum_terminus.z);
+}
+
+//****************************************************************************80
+void Terrain::UpdateTileConnectivity() {
+  for (int i = tile_bounding_box_[0]; i <= tile_bounding_box_[2]; ++i) {
+    for (int j = tile_bounding_box_[1]; j <= tile_bounding_box_[3]; ++j) {
+      int ix = ntile_*j + i;
+      if (i > tile_bounding_box_[0]) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile_*j + i - 1), 3);
+      }
+      if (i < tile_bounding_box_[2]) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile_*j + i + 1), 1);
+      }
+      if (j > tile_bounding_box_[1]) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile_*(j-1) + i), 2);
+      }
+      if (j < tile_bounding_box_[3]) {
+        tiles_.at(ix).SetNeighborPointer(&tiles_.at(ntile_*(j+1) + i), 0);
+      }
+    }
+  }
 }
 
 } // End namespace TopFun
