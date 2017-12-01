@@ -13,7 +13,7 @@ Sky::Sky() : shader_("shaders/skybox.vs", "shaders/skybox.fs"),
   sun_dir_(glm::normalize(glm::vec3(0.3078f, -0.3256f, 0.8940f))), 
   sun_color_(glm::vec3(1.0f, 1.0f, 1.0f)),
   fog_color_(glm::vec3(249.0/256.0, 250.0/256.0, 247.0/256.0)),
-  fog_start_end_({1000.0f, 2500.0f}), fog_eq_(0) {
+  fog_start_end_({3000.0f, 4000.0f}), fog_eq_(0) {
   
   GLfloat vertices[] = {
   // Positions          
@@ -137,6 +137,8 @@ void Sky::LoadCubemap(std::vector<const GLchar*> const& faces) {
 
 //****************************************************************************80
 void Sky::SetShaderData(Camera const& camera) const {
+  glUniform3f(glGetUniformLocation(shader_.GetProgram(), "fog_color"), 
+      fog_color_.x, fog_color_.y, fog_color_.z);
   // Remove any translation component of the view matrix	
   glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));	
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
