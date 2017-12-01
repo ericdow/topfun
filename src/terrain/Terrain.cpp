@@ -40,8 +40,8 @@ Terrain::Terrain(GLfloat l, int ntile,
       tiles_.emplace(std::piecewise_construct,
                      std::forward_as_tuple(ntile_*j + i),
                      std::forward_as_tuple(shader_, 
-                       xz_center0_[0] - l/2 + ltile_*(i + 0.5), 
-                       xz_center0_[1] - l/2 + ltile_*(j + 0.5)));
+                       xz_center0_[0] + ltile_*(i - 0.5), 
+                       xz_center0_[1] + ltile_*(j - 0.5)));
     }
   }
   tile_bounding_box_ = {-half_ntile, -half_ntile, half_ntile, half_ntile};
@@ -51,8 +51,42 @@ Terrain::Terrain(GLfloat l, int ntile,
 //****************************************************************************80
 void Terrain::SetXZCenter(const std::array<float,2>& xz_center) {
   bool changed = false;
+  // Determine where the new center tile is located
+  std::array<int,2> ij_center, ij_center_old;
+  ij_center[0] = (int)std::ceil(xz_center[0] - xz_center0_[0]) / ltile_;
+  ij_center[1] = (int)std::ceil(xz_center[1] - xz_center0_[1]) / ltile_;
+  ij_center_old[0] = (tile_bounding_box_[2] + tile_bounding_box_[0]) / 2;
+  ij_center_old[1] = (tile_bounding_box_[3] + tile_bounding_box_[1]) / 2;
   
+  // Remove the tiles that are no longer visible
+  int half_ntile = (ntile_ - 1) / 2;
+  for (int i = tile_bounding_box_[0]; i <= tile_bounding_box_[2]; ++i) {
+    for (int j = tile_bounding_box_[1]; j <= tile_bounding_box_[3]; ++j) {
+      if (i < ij_center[0] - half_ntile || i > ij_center[0] + half_ntile || 
+          j < ij_center[1] - half_ntile || j > ij_center[1] + half_ntile) {
+        changed = true;
+        tiles_.erase(ntile_*j + i);
+      }
+    }
+  }
   
+  // Update the bounding box 
+  tile_bounding_box_ = {ij_center[0] - half_ntile, ij_center[1] - half_ntile, 
+    ij_center[0] + half_ntile, ij_center[1] + half_ntile};
+
+  // Create new tiles and update the connectivity
+  for (int i = tile_bounding_box_[0]; i <= tile_bounding_box_[2]; ++i) {
+    for (int j = tile_bounding_box_[1]; j <= tile_bounding_box_[3]; ++j) {
+      int ix = ntile_*j + i;
+      if (tiles_.find(ix) == tiles_.end()) {
+        tiles_.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(ix),
+                       std::forward_as_tuple(shader_, 
+                         xz_center0_[0] + ltile_*(i - 0.5), 
+                         xz_center0_[1] + ltile_*(j - 0.5)));
+      }
+    }
+  } 
   if (changed) {
     UpdateTileConnectivity();
   }

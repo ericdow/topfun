@@ -56,7 +56,7 @@ class Terrain {
   int ntile_;
   GLfloat ltile_;
   std::array<float,2> xz_center0_; // center of terrain
-  std::array<int,4> tile_bounding_box_; // bounding box i,j indices
+  std::array<int,4> tile_bounding_box_; // bounding box in tile coordinates
   static noise::module::Perlin perlin_generator_;
   std::unordered_map<int,TerrainTile> tiles_;
   std::vector<GLuint> textures_;

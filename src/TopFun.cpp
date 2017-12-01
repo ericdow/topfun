@@ -33,7 +33,7 @@ CallBackWorld callback_world(camera, debug_overlay, shadow_renderer,
     screen_size);
 
 // Set up the aircraft
-Aircraft aircraft(glm::vec3(terrain_size/2, 2000.0f, terrain_size/2), 
+Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
     glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 
 GLfloat last_draw_time = 0.0f;
@@ -43,8 +43,7 @@ GLfloat loop_lock_time = 1.0/120.0;
 int main(int /* argc */, char** /* argv */) {
   
   // Set up remaining game objects (in main due to static members)
-  // TODO Terrain terrain(terrain_size, 19, {start_pos[0], start_pos[2]});
-  Terrain terrain(1000.0f, 3, {start_pos[0], start_pos[2]});
+  Terrain terrain(terrain_size, 19, {start_pos[0], start_pos[2]});
   Sky sky;
   CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
 
@@ -100,6 +99,10 @@ int main(int /* argc */, char** /* argv */) {
           2.0f * aircraft_up - 20.0f * aircraft_front);
       camera.SetOrientation(aircraft_front, aircraft_up);
     }
+
+    // Update terrain tiles
+    glm::vec3 camera_pos = camera.GetPosition();
+    terrain.SetXZCenter({camera_pos[0], camera_pos[2]});
 
     // Draw the scene
     draw_wait_time += dt_loop;
