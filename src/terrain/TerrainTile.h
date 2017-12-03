@@ -54,7 +54,9 @@ class TerrainTile {
   //**************************************************************************80
   inline void UpdateLoD(const glm::vec3& camera_pos) {
     GLfloat r_max = 10*l_tile_;
-    GLfloat d_camera = glm::length(camera_pos - centroid_);
+    GLfloat d_camera = std::sqrt(
+        (camera_pos[0] - centroid_[0]) * (camera_pos[0] - centroid_[0]) +
+        (camera_pos[2] - centroid_[2]) * (camera_pos[2] - centroid_[2]));
     GLuint lod = GLuint(d_camera / r_max * num_lod_);
     lods_.tuple.get<0>() = std::min(lod, GLuint(num_lod_ - 1));
   }

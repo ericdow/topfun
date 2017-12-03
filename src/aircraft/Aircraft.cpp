@@ -82,14 +82,14 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   Cn_beta_ = 0.25f; 
   Cn_P_ = 0.022f; 
   Cn_R_ = -0.35f; 
-  CL_de_ = 0.36f; 
+  CL_de_ = 0.12f; 
   CD_de_ = 0.08f; 
   CY_dr_ = 0.12f; 
-  Cm_de_ = -0.5f; 
-  Cl_da_ = 0.08f; 
+  Cm_de_ = -0.12f; 
+  Cl_da_ = 0.02f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 
-  Cn_dr_ = 0.12f; 
+  Cn_dr_ = 0.04f; 
   
   // Set the initial values for control inputs
   rudder_position_   = 0.0f;
@@ -189,10 +189,10 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Check for joystick to determine input mode
-  if (glfwJoystickPresent(GLFW_JOYSTICK_2) == GL_TRUE) {
+  if (glfwJoystickPresent(GLFW_JOYSTICK_1) == GL_TRUE) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
-    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_2, &num_axes);
+    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &num_axes);
     aileron_position_  = axes[0] * aileron_position_max_;
     elevator_position_ = -axes[1] * elevator_position_max_;
     throttle_position_ = 0.5f * (1.0f - axes[2]);

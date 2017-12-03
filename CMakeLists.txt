@@ -28,6 +28,9 @@ find_package(SOIL REQUIRED)
 # make sure FreeType is found
 find_package(Freetype REQUIRED)
 
+# try to find google perftools 
+find_package(Gperftools)
+
 # build and install libnoise
 ExternalProject_Add(
 libnoise

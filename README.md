@@ -25,3 +25,9 @@ Make sure to add -fPIC to C/C++ flags in CMake when compiling assimp
 * Cascaded shaddow maps
 * Volumetric clouds
 * Joystick support
+
+# Profiling
+
+CPUPROFILE=prof.out ./TopFun
+
+google-pprof --web ./TopFun prof.out
