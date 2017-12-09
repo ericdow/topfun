@@ -14,11 +14,12 @@
 #include "aircraft/Aircraft.h"
 #include "render/SceneRenderer.h"
 #include "render/ShadowCascadeRenderer.h"
+#include "audio/AudioManager.h"
 
 using namespace TopFun;
 
 // Set up the GL/GLFW environment
-const std::array<GLuint,2> screen_size = {1400, 800};
+const std::array<GLuint,2> screen_size = {{1400, 800}};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
@@ -43,7 +44,7 @@ GLfloat loop_lock_time = 1.0/120.0;
 int main(int /* argc */, char** /* argv */) {
   
   // Set up remaining game objects (in main due to static members)
-  Terrain terrain(terrain_size, 19, {start_pos[0], start_pos[2]});
+  Terrain terrain(terrain_size, 19, {{start_pos[0], start_pos[2]}});
   Sky sky;
   CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
 
@@ -99,10 +100,11 @@ int main(int /* argc */, char** /* argv */) {
           2.0f * aircraft_up - 20.0f * aircraft_front);
       camera.SetOrientation(aircraft_front, aircraft_up);
     }
+    AudioManager::Instance().SetListenerPosition(camera.GetPosition());
 
     // Update terrain tiles
     glm::vec3 camera_pos = camera.GetPosition();
-    terrain.SetXZCenter({camera_pos[0], camera_pos[2]});
+    terrain.SetXZCenter({{camera_pos[0], camera_pos[2]}});
 
     // Draw the scene
     draw_wait_time += dt_loop;

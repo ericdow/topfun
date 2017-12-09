@@ -1,6 +1,6 @@
 add_executable(TopFun TopFun.cpp) 
 target_include_directories(TopFun PUBLIC terrain utils input)
-target_link_libraries(TopFun terrain sky utils aircraft render)
+target_link_libraries(TopFun terrain sky utils aircraft render audio)
 # link agains google profiler if found
 if (Gperftools) 
   target_link_libraries(TopFun tcmalloc_and_profiler)
@@ -14,3 +14,4 @@ add_subdirectory(geometry)
 add_subdirectory(aircraft)
 add_subdirectory(input)
 add_subdirectory(render)
+add_subdirectory(audio)

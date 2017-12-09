@@ -1,5 +1,5 @@
-#ifndef SKYBOX_H
-#define SKYBOX_H
+#ifndef SKY_H
+#define SKY_H
 
 #include <vector>
 #include <array>
@@ -26,7 +26,7 @@ class Sky {
   ~Sky();
 
   //**************************************************************************80
-  //! \brief Draw - draws the terrain
+  //! \brief Draw - draws the sky
   //**************************************************************************80
   void Draw(Camera const& camera) const;
   

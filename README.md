@@ -13,6 +13,10 @@ A (very) simple flight simulator written in C++
 * libxi-dev
 * libsoil-dev
 * libfreetype6-dev
+* libopenal1
+* libopenal-dev
+* libalut0
+* libalut-dev
 
 libnoise and assimp are built alongside TopFun
 

@@ -28,6 +28,10 @@ find_package(SOIL REQUIRED)
 # make sure FreeType is found
 find_package(Freetype REQUIRED)
 
+# make sure that OpenAL stuff is found
+find_package(OpenAL REQUIRED)
+find_package(ALUT REQUIRED)
+
 # try to find google perftools 
 find_package(Gperftools)
 
