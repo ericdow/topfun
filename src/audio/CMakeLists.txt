@@ -1,6 +1,7 @@
 # build the audio library
 set(SOURCES
   AudioManager.cpp
+  AudioSource.cpp
 )
 
 set(libs_to_link 

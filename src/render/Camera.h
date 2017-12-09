@@ -50,6 +50,15 @@ class Camera {
     right_ = glm::normalize(glm::cross(front_, up_));
   }
   
+  inline std::array<GLfloat,6> GetOrientation() {
+    std::array<GLfloat,6> o;
+    for (int d = 0; d < 3; ++d) {
+      o[d] = front_[d];
+      o[d+3] = up_[d];
+    }
+    return o;
+  }
+  
   // Returns the current angle of the camera
   inline const glm::vec3 GetEulerAngles() const {
     return glm::eulerAngles(orientation_) * 180.0f / (float) M_PI;

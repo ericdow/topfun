@@ -125,6 +125,21 @@ Aircraft::Aircraft(const glm::vec3& position, const glm::quat& orientation) :
   delta_flame_ = {0.637885f, -6.217596f, -0.593625f};
   r_flame_ = 0.55f;
   SetupDrawData();
+
+  // Set up the audio data
+  engine_idle_.SetBuffer("engine_idle");
+  engine_idle_.SetLooping(true);
+  engine_idle_.SetGain(0.0f);
+  engine_idle_.SetRollOff(0.2f);
+  engine_idle_.SetReferenceDistance(20.0f);
+  engine_idle_.Play();
+  
+  afterburner_.SetBuffer("afterburner");
+  afterburner_.SetLooping(true);
+  afterburner_.SetGain(0.0f);
+  afterburner_.SetRollOff(0.2f);
+  afterburner_.SetReferenceDistance(20.0f);
+  afterburner_.Play();
 }
 
 //****************************************************************************80
@@ -239,6 +254,8 @@ void Aircraft::UpdateControls(std::vector<bool> const& keys) {
       throttle_position_ = std::max(0.0f, throttle_position_);
     }
   }
+  // Update audio levels, etc.
+  UpdateEngineSounds();
 }
 
 //****************************************************************************80
@@ -602,6 +619,13 @@ void Aircraft::DrawExhaust() const {
   // Disable face-culling
   glDisable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
+}
+
+//****************************************************************************80
+void Aircraft::UpdateEngineSounds() {
+  engine_idle_.SetGain(0.2*(1.0 - throttle_position_));
+  engine_idle_.SetPitch(std::min(1.2, 0.75 + 0.5*throttle_position_));
+  afterburner_.SetGain(std::max(0.0, -0.5 + 2.0*throttle_position_));
 }
 
 } // End namespace TopFun

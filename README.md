@@ -28,6 +28,7 @@ Make sure to add -fPIC to C/C++ flags in CMake when compiling assimp
 * Adaptive LoD terrain
 * Cascaded shaddow maps
 * Volumetric clouds
+* 3D sounds
 * Joystick support
 
 # Profiling

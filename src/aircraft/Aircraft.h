@@ -12,6 +12,7 @@
 #include "shaders/Shader.h"
 #include "model/Model.h"
 #include "render/Camera.h"
+#include "audio/AudioSource.h"
 
 namespace TopFun {
 
@@ -119,6 +120,11 @@ class Aircraft {
     for (int i = 0; i < 3; ++i) 
       ang_momentum_[i] = state[i+10];
     orientation_ = normalize(orientation_);
+    // Update the audio source positions/velocities
+    engine_idle_.SetPosition(position_);
+    afterburner_.SetPosition(position_);
+    engine_idle_.SetVelocity(GetVelocity());
+    afterburner_.SetVelocity(GetVelocity());
   }
   
   //**************************************************************************80
@@ -168,6 +174,8 @@ class Aircraft {
   Shader canopy_shader_;
   Shader exhaust_shader_;
   Model model_;
+  AudioSource engine_idle_;
+  AudioSource afterburner_;
 
   // Primary state variables (all in world frame)
   glm::vec3 position_;
@@ -577,6 +585,11 @@ class Aircraft {
   //! \brief DrawExhaust - draw the engine exhaust
   //**************************************************************************80
   void DrawExhaust() const;
+  
+  //**************************************************************************80
+  //! \brief UpdateEngineSounds - update the engine sounds based on throttle
+  //**************************************************************************80
+  void UpdateEngineSounds();
 
 };
 } // End namespace TopFun

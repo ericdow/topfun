@@ -33,15 +33,21 @@ ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1],
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 
-// Set up the aircraft
-Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
-    glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-
 GLfloat last_draw_time = 0.0f;
 GLfloat dt_loop = 0.0f;
 // Force loop to sleep until this amount of time has passed
 GLfloat loop_lock_time = 1.0/120.0;
 int main(int /* argc */, char** /* argv */) {
+  // Setup the audio manager and load audio files
+  AudioManager::SetUp();
+  AudioManager::Instance().AddBuffer("../../../assets/audio/engine_idle.wav", 
+      "engine_idle");
+  AudioManager::Instance().AddBuffer("../../../assets/audio/afterburner.wav", 
+      "afterburner");
+
+  // Set up the aircraft
+  Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
+      glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
   
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 19, {{start_pos[0], start_pos[2]}});
@@ -92,6 +98,7 @@ int main(int /* argc */, char** /* argv */) {
     // Update the camera position
     if (callback_world.IsFreeLook()) {
       camera.Move(callback_world.GetKeyState(), dt_loop);
+      AudioManager::Instance().SetListenerVelocity(glm::vec3(0.0, 0.0, 0.0));
     }
     else {
       glm::vec3 aircraft_front = aircraft.GetFrontDirection();
@@ -99,8 +106,10 @@ int main(int /* argc */, char** /* argv */) {
       camera.SetPosition(aircraft.GetPosition() + 
           2.0f * aircraft_up - 20.0f * aircraft_front);
       camera.SetOrientation(aircraft_front, aircraft_up);
+      AudioManager::Instance().SetListenerVelocity(aircraft.GetVelocity());
     }
     AudioManager::Instance().SetListenerPosition(camera.GetPosition());
+    AudioManager::Instance().SetListenerOrientation(camera.GetOrientation());
 
     // Update terrain tiles
     glm::vec3 camera_pos = camera.GetPosition();
@@ -152,5 +161,6 @@ int main(int /* argc */, char** /* argv */) {
   } // End game loop
 
   GLEnvironment::TearDown();
+  AudioManager::TearDown();
   return 0;
 }
