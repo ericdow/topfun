@@ -10,7 +10,7 @@ Camera::Camera(std::array<GLuint,2> const& screen_size,
   orientation_(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
   front_(glm::vec3(0.0f, 0.0f, -1.0f)), up_(up), movement_speed_(3.0f), 
   rotate_speed_(2.0f), mouse_sensitivity_(0.25f), zoom_(45.0f), 
-  near_(1.0f), far_(5000.0f) {
+  near_(1.0f), far_(25000.0f) {
   right_ = glm::cross(front_, up_);
 }
 

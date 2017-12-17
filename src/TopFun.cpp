@@ -29,7 +29,7 @@ glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1], 
-    {0.01, 0.03, 0.1, 0.2, 0.8}, {0.002, 0.005, 0.007, 0.010, 0.010});
+    {0.002, 0.006, 0.2, 0.5, 0.8}, {0.002, 0.005, 0.007, 0.010, 0.010});
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 
@@ -46,7 +46,7 @@ int main(int /* argc */, char** /* argv */) {
       "afterburner");
 
   // Set up the aircraft
-  Aircraft aircraft(glm::vec3(terrain_size/2, 20.0f, terrain_size/2), 
+  Aircraft aircraft(start_pos,
       glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
   
   // Set up remaining game objects (in main due to static members)
