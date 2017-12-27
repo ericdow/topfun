@@ -24,12 +24,12 @@ GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
 GLfloat terrain_size = 10000.0f;
-glm::vec3 start_pos(terrain_size/2, 20.0f, terrain_size/2);
+glm::vec3 start_pos(terrain_size/2, 5.0f, terrain_size/2);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1], 
-    {0.002, 0.006, 0.2, 0.5, 0.8}, {0.002, 0.005, 0.007, 0.010, 0.010});
+    {0.002, 0.006, 0.02, 0.1, 0.4}, {0.002, 0.005, 0.007, 0.010, 0.010});
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 
@@ -58,7 +58,7 @@ int main(int /* argc */, char** /* argv */) {
   GLEnvironment::SetCallback(window, callback_world);
 
   // Set up ODE integrator
-  boost::numeric::odeint::runge_kutta4<std::vector<float>> integrator;
+  boost::numeric::odeint::runge_kutta4<std::vector<double>> integrator;
   
   // Game loop
   GLfloat last_loop_time = glfwGetTime();
@@ -66,8 +66,8 @@ int main(int /* argc */, char** /* argv */) {
   float t_physics = 0.0f;
   const float dt_physics = 0.005f; // don't make this too big or small
   float t_accumulator = 0.0f;
-  std::vector<float> current_state = aircraft.GetState();
-  std::vector<float> previous_state = current_state;
+  std::vector<double> current_state = aircraft.GetState();
+  std::vector<double> previous_state = current_state;
   while(!glfwWindowShouldClose(window)) {
     // Compute loop time
     const GLfloat current_loop_time = glfwGetTime();
@@ -91,7 +91,7 @@ int main(int /* argc */, char** /* argv */) {
     }
     // Interpolate the state vector for rendering
     const float alpha = t_accumulator / dt_physics;
-    std::vector<float> render_state = aircraft.InterpolateState(previous_state,
+    std::vector<double> render_state = aircraft.InterpolateState(previous_state,
         current_state, alpha);
     aircraft.SetState(render_state);
     
@@ -104,7 +104,7 @@ int main(int /* argc */, char** /* argv */) {
       glm::vec3 aircraft_front = aircraft.GetFrontDirection();
       glm::vec3 aircraft_up = aircraft.GetUpDirection();
       camera.SetPosition(aircraft.GetPosition() + 
-          2.0f * aircraft_up - 20.0f * aircraft_front);
+          2.0 * (glm::dvec3)aircraft_up - 20.0 * (glm::dvec3)aircraft_front);
       camera.SetOrientation(aircraft_front, aircraft_up);
       AudioManager::Instance().SetListenerVelocity(aircraft.GetVelocity());
     }

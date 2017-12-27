@@ -73,6 +73,14 @@ class Terrain {
       const ShadowCascadeRenderer& shadow_renderer);
   
   //**************************************************************************80
+  //! \brief GetModelMatrix - get the model matrix for the terrain
+  //! \param[in] camera - reference to the camera
+  //**************************************************************************80
+  inline glm::mat4 GetModelMatrix(const Camera& camera) const {
+    return glm::translate(glm::mat4(), (glm::vec3)-camera.GetPosition());
+  }
+
+  //**************************************************************************80
   //! \brief UpdateTileConnectivity - update tile neighbor pointers
   //**************************************************************************80
   void UpdateTileConnectivity();

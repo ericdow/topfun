@@ -25,7 +25,7 @@ class Aircraft {
   //**************************************************************************80
   //! \brief Aircraft - Constructor
   //**************************************************************************80
-  Aircraft(const glm::vec3& position, const glm::quat& orientation);
+  Aircraft(const glm::dvec3& position, const glm::quat& orientation);
   
   //**************************************************************************80
   //! \brief ~Aircraft - Destructor
@@ -47,7 +47,7 @@ class Aircraft {
   //! \brief GetPosition - get the position vector
   //! returns - aircraft position vector
   //**************************************************************************80
-  inline glm::vec3 GetPosition() const { return position_; }
+  inline glm::dvec3 GetPosition() const { return position_; }
   
   //**************************************************************************80
   //! \brief GetVelocity - get the velocity vector
@@ -89,18 +89,18 @@ class Aircraft {
   //! \brief GetState - get the position/orientation/momentum state vector
   //! returns - aircraft state vector
   //**************************************************************************80
-  inline std::vector<float> GetState() {
-    std::vector<float> state(13);
+  inline std::vector<double> GetState() {
+    std::vector<double> state(13);
     for (int i = 0; i < 3; ++i) 
       state[i] = position_[i];
-    state[3] = orientation_.w;
-    state[4] = orientation_.x;
-    state[5] = orientation_.y;
-    state[6] = orientation_.z;
+    state[3] = (double)orientation_.w;
+    state[4] = (double)orientation_.x;
+    state[5] = (double)orientation_.y;
+    state[6] = (double)orientation_.z;
     for (int i = 0; i < 3; ++i) 
-      state[i+7] = lin_momentum_[i];
+      state[i+7] = (double)lin_momentum_[i];
     for (int i = 0; i < 3; ++i) 
-      state[i+10] = ang_momentum_[i];
+      state[i+10] = (double)ang_momentum_[i];
     return state;
   }
 
@@ -108,21 +108,21 @@ class Aircraft {
   //! \brief SetState - set the position/orientation/momentum state vector
   //! param[in] state - aircraft state vector
   //**************************************************************************80
-  inline void SetState(const std::vector<float>& state) {
+  inline void SetState(const std::vector<double>& state) {
     for (int i = 0; i < 3; ++i) 
       position_[i] = state[i];
-    orientation_.w = state[3];
-    orientation_.x = state[4];
-    orientation_.y = state[5];
-    orientation_.z = state[6];
+    orientation_.w = (float)state[3];
+    orientation_.x = (float)state[4];
+    orientation_.y = (float)state[5];
+    orientation_.z = (float)state[6];
     for (int i = 0; i < 3; ++i) 
-      lin_momentum_[i] = state[i+7];
+      lin_momentum_[i] = (float)state[i+7];
     for (int i = 0; i < 3; ++i) 
-      ang_momentum_[i] = state[i+10];
+      ang_momentum_[i] = (float)state[i+10];
     orientation_ = normalize(orientation_);
     // Update the audio source positions/velocities
-    engine_idle_.SetPosition(position_);
-    afterburner_.SetPosition(position_);
+    engine_idle_.SetPosition((glm::vec3)position_);
+    afterburner_.SetPosition((glm::vec3)position_);
     engine_idle_.SetVelocity(GetVelocity());
     afterburner_.SetVelocity(GetVelocity());
   }
@@ -130,10 +130,10 @@ class Aircraft {
   //**************************************************************************80
   //! \brief InterpolateState - interpolate state between timesteps
   //**************************************************************************80
-  inline std::vector<float> InterpolateState(
-      const std::vector<float>& previous_state, 
-      const std::vector<float>& current_state, float alpha) const {
-    std::vector<float> state_out(13);
+  inline std::vector<double> InterpolateState(
+      const std::vector<double>& previous_state, 
+      const std::vector<double>& current_state, float alpha) const {
+    std::vector<double> state_out(13);
     // Interpolate the position
     for (int i = 0; i < 3; ++i) 
       state_out[i] = alpha * current_state[i] 
@@ -166,7 +166,7 @@ class Aircraft {
   //! \param[out] deriv - the derivative of the state vector
   //! \param[in] t - the current time
   //**************************************************************************80
-  void operator()(const std::vector<float>& state, std::vector<float>& deriv, 
+  void operator()(const std::vector<double>& state, std::vector<double>& deriv, 
       float t);
 
  private:
@@ -178,7 +178,7 @@ class Aircraft {
   AudioSource afterburner_;
 
   // Primary state variables (all in world frame)
-  glm::vec3 position_;
+  glm::dvec3 position_; // world space absolution position
   glm::quat orientation_; // composition of all applied rotations 
   glm::vec3 lin_momentum_; 
   glm::vec3 ang_momentum_;
@@ -530,10 +530,12 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief GetAircraftModelMatrix - get the model matrix for the aircraft
+  //! \param[in] camera - reference to camera
   //**************************************************************************80
-  inline glm::mat4 GetAircraftModelMatrix() const {
+  inline glm::mat4 GetAircraftModelMatrix(const Camera& camera) const {
     // Translate model to current position
-    glm::mat4 aircraft_model = glm::translate(glm::mat4(), position_);
+    glm::mat4 aircraft_model = glm::translate(glm::mat4(), 
+        (glm::vec3)(position_ - camera.GetPosition()));
     aircraft_model = glm::translate(aircraft_model, delta_center_of_mass_);
     // Rotate model to current orientation
     aircraft_model *= glm::toMat4(orientation_);
@@ -548,13 +550,15 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief GetControlSurfaceModelMatrix - get model matrix for control surface
+  //! \param[in] camera - reference to camera
   //! \param[in] displacement - vector from model origin to rotation axis 
   //! \param[in] axis - axis to rotate around 
   //! \param[in] deflection_angle - angle to rotate control surface (radians)
   //! \param[in] right - true if right control surface
   //**************************************************************************80
-  inline glm::mat4 GetControlSurfaceModelMatrix(glm::vec3 displacement,
-      glm::vec3 axis, float deflection_angle, bool right=false) const {
+  inline glm::mat4 GetControlSurfaceModelMatrix(const Camera& camera,
+      glm::vec3 displacement, glm::vec3 axis, float deflection_angle, 
+      bool right=false) const {
     if (right) {
       displacement.x = -displacement.x;
       axis.x = -axis.x;
@@ -566,7 +570,7 @@ class Aircraft {
     // Translate model back to original position
     model = glm::translate(model, -displacement);
     // Apply the model matrix of the airframe
-    model = GetAircraftModelMatrix() * model;
+    model = GetAircraftModelMatrix(camera) * model;
     return model;
   }
 
@@ -583,8 +587,9 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief DrawExhaust - draw the engine exhaust
+  //! \param[in] camera - reference to camera
   //**************************************************************************80
-  void DrawExhaust() const;
+  void DrawExhaust(const Camera& camera) const;
   
   //**************************************************************************80
   //! \brief UpdateEngineSounds - update the engine sounds based on throttle

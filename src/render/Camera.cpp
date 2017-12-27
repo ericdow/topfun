@@ -5,7 +5,7 @@ namespace TopFun {
 // PUBLIC FUNCTIONS
 //****************************************************************************80
 Camera::Camera(std::array<GLuint,2> const& screen_size,
-    glm::vec3 position, glm::vec3 up) : 
+    glm::dvec3 position, glm::vec3 up) : 
   screen_size_(screen_size), position_(position),
   orientation_(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
   front_(glm::vec3(0.0f, 0.0f, -1.0f)), up_(up), movement_speed_(3.0f), 
@@ -86,7 +86,7 @@ void Camera::ProcessMouseScroll(GLfloat yoffset) {
 std::array<glm::vec3,8> Camera::GetFrustumVertices() const {
   glm::mat4 inv_view_proj = 
     glm::inverse(GetProjectionMatrix() * GetViewMatrix());
-  std::array<glm::vec3,8> vertices = {
+  std::array<glm::vec3,8> vertices = {{
     glm::vec3(-1.0f,-1.0f,-1.0f),
     glm::vec3( 1.0f,-1.0f,-1.0f),
     glm::vec3( 1.0f, 1.0f,-1.0f),
@@ -94,7 +94,7 @@ std::array<glm::vec3,8> Camera::GetFrustumVertices() const {
     glm::vec3(-1.0f,-1.0f, 1.0f),
     glm::vec3( 1.0f,-1.0f, 1.0f),
     glm::vec3( 1.0f, 1.0f, 1.0f),
-    glm::vec3(-1.0f, 1.0f, 1.0f)};
+    glm::vec3(-1.0f, 1.0f, 1.0f)}};
   for (auto& v : vertices) {
     glm::vec4 tmp = inv_view_proj * glm::vec4(v, 1.0f);
     v = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;

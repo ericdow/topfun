@@ -12,13 +12,14 @@ out vec2 TexCoord;
 out vec4 FragPosEyeSpace;
 out vec4 FragPosLightSpace[MAX_NUM_CASCADES];
 
+uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-  FragPosEyeSpace = view * vec4(position, 1.0f);
+  FragPosEyeSpace = view * model * vec4(position, 1.0f);
   gl_Position = projection * FragPosEyeSpace;
-  FragPos = position;
+  FragPos = vec3(model * vec4(position, 1.0f));
   Normal = normal;  
 	TexCoord = texCoord;
   for (int i = 0; i < num_cascades; ++i) {

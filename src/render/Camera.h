@@ -32,15 +32,15 @@ class Camera {
  public:
   // Constructor with vectors
   Camera(std::array<GLuint,2> const& screen_size,
-      glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
+      glm::dvec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
       glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f)); 
 
   // Returns the current position of the camera
-  inline glm::vec3 GetPosition() const {
+  inline glm::dvec3 GetPosition() const {
     return position_;
   }
   
-  inline void SetPosition(const glm::vec3& position) {
+  inline void SetPosition(const glm::dvec3& position) {
     position_ = position;
   }
   
@@ -66,7 +66,7 @@ class Camera {
 
   // Returns the view matrix
   inline glm::mat4 GetViewMatrix() const {
-    return glm::lookAt(position_, position_ + front_, up_);
+    return glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), front_, up_);
   }
   
   // Returns the projection matrix
@@ -80,7 +80,7 @@ class Camera {
 
   inline const glm::vec3& GetFront() const { return front_; }
 
-  inline const std::array<float,2> GetNearFar() const { return {near_, far_}; }
+  inline const std::array<float,2> GetNearFar() const {return {{near_, far_}};}
 
   glm::vec3 GetFrustumOrigin() const;
   
@@ -111,7 +111,7 @@ class Camera {
  private:
   // Camera Attributes
   std::array<GLuint,2> screen_size_;
-  glm::vec3 position_;
+  glm::dvec3 position_; // world space absolute position
   glm::quat orientation_;
   glm::vec3 front_;
   glm::vec3 up_;

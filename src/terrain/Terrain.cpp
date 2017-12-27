@@ -101,7 +101,7 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
   }
   else {
     shader->Use();
-    glm::mat4 model;
+    glm::mat4 model = GetModelMatrix(camera);
     glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "model"), 1, 
         GL_FALSE, glm::value_ptr(model));
   }
@@ -162,7 +162,10 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
     const ShadowCascadeRenderer& shadow_renderer) {
   // Activate shader
   shader_.Use();
-  // Set view/projection uniforms  
+  // Set model/view/projection uniforms  
+  glm::mat4 model = GetModelMatrix(camera);
+  glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "model"), 1, 
+      GL_FALSE, glm::value_ptr(model));
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "view"), 1, 
       GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
   glUniformMatrix4fv(glGetUniformLocation(shader_.GetProgram(), "projection"),
@@ -199,9 +202,8 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
       sky.GetFogEquation());
   
   // Set the camera position uniform
-  glm::vec3 camera_pos = camera.GetPosition();
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), "viewPos"), 
-      camera_pos.x, camera_pos.y, camera_pos.z);
+      0.0f, 0.0f, 0.0f);
     
   // Bind the texture data
   glActiveTexture(GL_TEXTURE0);
