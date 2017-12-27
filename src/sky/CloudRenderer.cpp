@@ -159,7 +159,8 @@ void CloudRenderer::BlendWithScene() const {
 void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
   raymarch_shader_.Use();
   // Camera related data
-  glm::mat4 proj_view = camera.GetProjectionMatrix() * camera.GetViewMatrix();
+  glm::mat4 proj_view = camera.GetProjectionMatrix() * 
+    camera.GetViewMatrixWorld();
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "projview"), 1, GL_FALSE, glm::value_ptr(proj_view));
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 

@@ -69,6 +69,11 @@ class Camera {
     return glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), front_, up_);
   }
   
+  // Returns the view matrix in world coordinates
+  inline glm::mat4 GetViewMatrixWorld() const {
+    return glm::lookAt((glm::vec3)position_, (glm::vec3)position_+front_, up_);
+  }
+  
   // Returns the projection matrix
   inline glm::mat4 GetProjectionMatrix() const {
     return glm::perspective(glm::radians(zoom_),
