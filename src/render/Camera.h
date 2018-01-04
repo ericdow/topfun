@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <array>
+#include <math.h>
 
 // GL Includes
 #include <GL/glew.h>
@@ -13,6 +14,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <GLFW/glfw3.h>
+#include <glm/gtx/string_cast.hpp>
 
 namespace TopFun {
 
@@ -69,9 +71,34 @@ class Camera {
     return glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), front_, up_);
   }
   
+  // Returns the inverse of the view matrix
+  inline glm::mat4 GetInverseViewMatrix() const {
+    glm::mat4 view = GetViewMatrix();
+    glm::mat4 rinv;
+    // Transpose the rotation part
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        rinv[i][j] = view[j][i];
+    return rinv;
+  }
+  
   // Returns the view matrix in world coordinates
   inline glm::mat4 GetViewMatrixWorld() const {
     return glm::lookAt((glm::vec3)position_, (glm::vec3)position_+front_, up_);
+  }
+  
+  // Returns the inverse of the view matrix in world coordinates
+  inline glm::mat4 GetInverseViewMatrixWorld() const {
+    glm::mat4 view = GetViewMatrixWorld();
+    glm::mat4 tinv, rinv;
+    // Negate the translation part
+    for (int j = 0; j < 3; ++j)
+      tinv[3][j] = -view[3][j];
+    // Transpose the rotation part
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        rinv[i][j] = view[j][i];
+    return rinv * tinv;
   }
   
   // Returns the projection matrix
@@ -79,6 +106,20 @@ class Camera {
     return glm::perspective(glm::radians(zoom_),
         (GLfloat)screen_size_[0] / 
         (GLfloat)screen_size_[1], near_, far_);
+  }
+
+  // Returns the inverse of the projection matrix
+  inline glm::mat4 GetInverseProjectionMatrix() const {
+    float ymax = near_ * tanf(glm::radians(zoom_ / 2.0f));
+    float xmax = ymax * (GLfloat)screen_size_[0] / (GLfloat)screen_size_[1];
+    float den = 2.0f * near_ * far_;
+    glm::mat4 pinv(0.0f);
+    pinv[0][0] = xmax / near_;
+    pinv[1][1] = ymax / near_;
+    pinv[2][3] = (near_ - far_) / den;
+    pinv[3][2] = -1.0f;
+    pinv[3][3] = (near_ + far_) / den;
+    return pinv;
   }
 
   inline GLfloat GetZoom() const { return zoom_; }

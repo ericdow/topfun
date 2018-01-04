@@ -78,7 +78,7 @@ TerrainTile::~TerrainTile() {
 }
 
 //****************************************************************************80
-void TerrainTile::Draw(Camera const& camera) {
+void TerrainTile::Draw() {
   // Determine if any vertices of the AABB for this tile are in camera frustrum
   // TODO
  

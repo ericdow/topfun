@@ -163,8 +163,10 @@ void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
     camera.GetViewMatrixWorld();
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "projview"), 1, GL_FALSE, glm::value_ptr(proj_view));
+  glm::mat4 inv_proj_view = camera.GetInverseViewMatrixWorld() * 
+    camera.GetInverseProjectionMatrix();
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
-        "inv_projview"), 1, GL_FALSE, glm::value_ptr(glm::inverse(proj_view)));
+        "inv_projview"), 1, GL_FALSE, glm::value_ptr(inv_proj_view));
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "projview_prev"), 1, GL_FALSE, glm::value_ptr(proj_view_prev_));
   proj_view_prev_ = proj_view;

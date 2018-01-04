@@ -31,7 +31,7 @@ class TerrainTile {
   //**************************************************************************80
   //! \brief Draw - Draws the terrain tile
   //**************************************************************************80
-  void Draw(Camera const& camera);
+  void Draw();
   
   //**************************************************************************80
   //! \brief SetNeighborPointer - sets pointers to a neighbor tile

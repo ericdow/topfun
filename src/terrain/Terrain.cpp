@@ -113,7 +113,7 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 
   // Loop over tiles and draw
   for (auto& t : tiles_) {
-    t.second.Draw(camera);
+    t.second.Draw();
   }
 }
 

@@ -90,7 +90,7 @@ void ShadowCascadeRenderer::Display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	  debug_shader_.Use();
     glActiveTexture(GL_TEXTURE0);
-    // TODO
+    // TODO currently only showing the first map...
     glBindTexture(GL_TEXTURE_2D, depth_map_renderers_[0].GetDepthMap());
     glUniform1i(glGetUniformLocation(debug_shader_.GetProgram(), "depthMap"), 
         0);
@@ -117,7 +117,13 @@ void ShadowCascadeRenderer::UpdateLightSpaceMatrices(const Camera& camera,
     float subfrustum_far = subfrusta_extents_[f];
     glm::mat4 light_space = glm::lookAt(light_dir, glm::vec3(0.0f, 0.0f, 0.0f), 
         glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 inv_light_space = glm::inverse(light_space);
+    glm::mat4 tinv, rinv;
+    for (int j = 0; j < 3; ++j)
+      tinv[3][j] = -light_space[3][j];
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        rinv[i][j] = light_space[j][i];
+    glm::mat4 inv_light_space = rinv * tinv;
     std::array<glm::vec3,8> frustum_vertices = camera.GetFrustumVertices();
     // Set near plane
     for (int i = 0; i < 4; ++i) {
