@@ -45,6 +45,9 @@ const float step_size0_over_l = 1.0 / (1.0 + step_size_growth +
 const float eps_density = 0.001;
 const float eps_extinction = 0.01;
 
+// Define some constants for gradual transparency
+const float d_start_trans = 0.7;
+
 // Parabolic density multiplier
 float GetHeightAttenuation(float h_frac) {
   return max(0.0, h_frac * (h_frac - 1.0) * -4.0f);
@@ -222,6 +225,17 @@ vec4 RayMarch(Ray ray, vec2 start_stop, inout vec3 cloud_position) {
       l += step_size_fine;
     } 
   }
+
+  // Fade clouds into distance
+  if (found_cloud) {
+    float d = length(cloud_position.xz - ray.origin.xz) / camera_far;
+    if (d > d_start_trans) {
+      float tmp = 1.0f / (1.0f - d_start_trans) * (d - d_start_trans); 
+      extinction += tmp;
+      scattering *= 1.0f - tmp;
+    }
+  }
+
   return vec4(scattering, extinction);
 }
 
