@@ -87,12 +87,13 @@ class Mesh {
     }
   }
 
-  // Forms an AABB of mesh
+  // Forms an AABB of mesh, uses maximum dimension size for all dimensions
   std::array<std::array<float,2>,3> FormAABB() const {
     std::array<std::array<float,2>,3> AABB;
-    AABB[0] = {vertices_[0].Position.x, vertices_[0].Position.x};
-    AABB[1] = {vertices_[0].Position.y, vertices_[0].Position.y};
-    AABB[2] = {vertices_[0].Position.z, vertices_[0].Position.z};
+    AABB[0] = {{vertices_[0].Position.x, vertices_[0].Position.x}};
+    AABB[1] = {{vertices_[0].Position.y, vertices_[0].Position.y}};
+    AABB[2] = {{vertices_[0].Position.z, vertices_[0].Position.z}};
+    // Determine bounds in each dimension
     for (size_t i = 1; i < vertices_.size(); ++i) {
       AABB[0][0] = std::min(vertices_[i].Position.x, AABB[0][0]);
       AABB[0][1] = std::max(vertices_[i].Position.x, AABB[0][1]);
@@ -100,6 +101,16 @@ class Mesh {
       AABB[1][1] = std::max(vertices_[i].Position.y, AABB[1][1]);
       AABB[2][0] = std::min(vertices_[i].Position.z, AABB[2][0]);
       AABB[2][1] = std::max(vertices_[i].Position.z, AABB[2][1]);
+    }
+    // Use maximum bounds over all dimensions
+    float bmin = AABB[0][0];
+    float bmax = AABB[0][1];
+    for (int d = 1; d < 3; ++d) {
+      bmin = std::min(AABB[d][0], bmin);
+      bmax = std::max(AABB[d][1], bmax);
+    }
+    for (int d = 0; d < 3; ++d) {
+      AABB[d] = {{bmin, bmax}};
     }
     return AABB;
   }

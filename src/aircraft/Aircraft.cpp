@@ -5,12 +5,15 @@
 #include "aircraft/Aircraft.h"
 #include "sky/Sky.h"
 #include "render/ShadowCascadeRenderer.h"
+#include "terrain/Terrain.h"
 
 namespace TopFun {
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation) :
+Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
+    const Camera& camera, const Terrain& terrain) :
+    camera_(camera), terrain_(terrain),
     fuselage_shader_("shaders/aircraft.vs", "shaders/aircraft.fs"),
     canopy_shader_("shaders/aircraft.vs", "shaders/canopy.fs"),
     exhaust_shader_("shaders/exhaust.vs", "shaders/exhaust.fs"),
@@ -53,12 +56,12 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation) :
   dx_cg_x_ax_ = 0.05f;
   r_tail_ = glm::vec3(-4.8f, 0.0f, 0.0f);
   max_thrust_ = 311000.0f;
-  rudder_axis_ = {glm::vec3(-1.57663f, -6.48513f, -0.12633f),
-    glm::vec3(-0.410372f, 0.414351f, 0.812345f)};
-  aileron_axis_ = {glm::vec3(-4.53069f, -4.33568f, -0.668355f),
-    glm::vec3(-0.958864f, 0.277462f, -0.0599722f)};
-  elevator_axis_ = {glm::vec3(-2.00298f, -6.8562f, -0.625643f),
-    glm::vec3(-0.994531f, -0.104437f, 0.0f)};
+  rudder_axis_ = {{glm::vec3(-1.57663f, -6.48513f, -0.12633f),
+    glm::vec3(-0.410372f, 0.414351f, 0.812345f)}};
+  aileron_axis_ = {{glm::vec3(-4.53069f, -4.33568f, -0.668355f),
+    glm::vec3(-0.958864f, 0.277462f, -0.0599722f)}};
+  elevator_axis_ = {{glm::vec3(-2.00298f, -6.8562f, -0.625643f),
+    glm::vec3(-0.994531f, -0.104437f, 0.0f)}};
 
   // Define the aerodynamic performance coefficients
   CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, // (-pi/2, 0] 
@@ -148,39 +151,39 @@ Aircraft::~Aircraft() {
 }
 
 //****************************************************************************80
-void Aircraft::Draw(Camera const& camera, const Sky& sky, 
+void Aircraft::Draw(const Sky& sky, 
     const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader) {
   if (!shader) {
     // Send data to the shaders
-    SetShaderData(camera, sky, *pshadow_renderer);
+    SetShaderData(sky, *pshadow_renderer);
   }
 
   // Send the model orientation info
-  glm::mat4 aircraft_model = GetAircraftModelMatrix(camera);
+  glm::mat4 aircraft_model = GetAircraftModelMatrix();
   for (int i : airframe_mesh_indices_) {
     model_.SetModelMatrix(&aircraft_model, i);
   }
-  glm::mat4 left_rudder_model = GetControlSurfaceModelMatrix(camera, 
+  glm::mat4 left_rudder_model = GetControlSurfaceModelMatrix( 
       rudder_axis_[0], rudder_axis_[1], 
       rudder_position_ * rudder_position_max_);
   model_.SetModelMatrix(&left_rudder_model, rudder_mesh_indices_[0]);
-  glm::mat4 right_rudder_model = GetControlSurfaceModelMatrix(camera, 
+  glm::mat4 right_rudder_model = GetControlSurfaceModelMatrix( 
       rudder_axis_[0], 
       rudder_axis_[1], rudder_position_ * rudder_position_max_, true);
   model_.SetModelMatrix(&right_rudder_model, rudder_mesh_indices_[1]);
-  glm::mat4 left_aileron_model = GetControlSurfaceModelMatrix(camera, 
+  glm::mat4 left_aileron_model = GetControlSurfaceModelMatrix(
       aileron_axis_[0], aileron_axis_[1], 
       -aileron_position_ * aileron_position_max_);
   model_.SetModelMatrix(&left_aileron_model, aileron_mesh_indices_[0]);
-  glm::mat4 right_aileron_model = GetControlSurfaceModelMatrix(camera, 
+  glm::mat4 right_aileron_model = GetControlSurfaceModelMatrix(
       aileron_axis_[0], aileron_axis_[1], 
       -aileron_position_ * aileron_position_max_, true);
   model_.SetModelMatrix(&right_aileron_model, aileron_mesh_indices_[1]);
-  glm::mat4 left_elevator_model = GetControlSurfaceModelMatrix(camera,
+  glm::mat4 left_elevator_model = GetControlSurfaceModelMatrix(
       elevator_axis_[0], elevator_axis_[1], 
       -elevator_position_ * elevator_position_max_);
   model_.SetModelMatrix(&left_elevator_model, elevator_mesh_indices_[0]);
-  glm::mat4 right_elevator_model = GetControlSurfaceModelMatrix(camera,
+  glm::mat4 right_elevator_model = GetControlSurfaceModelMatrix(
       elevator_axis_[0], elevator_axis_[1], 
       elevator_position_ * elevator_position_max_, true);
   model_.SetModelMatrix(&right_elevator_model, elevator_mesh_indices_[1]);
@@ -198,7 +201,7 @@ void Aircraft::Draw(Camera const& camera, const Sky& sky,
 
   // Draw the exhaust last
   if (!shader) {
-    DrawExhaust(camera);
+    DrawExhaust();
   }
   
   // Disable blending
@@ -288,6 +291,9 @@ void Aircraft::operator()(const std::vector<double>& state,
   torques = AircraftToWorld(torques, orientation);
   forces += CalcGravityForce();
 
+  // Resolve collisions with the terrain
+  CollideWithTerrain();
+
   // Update acceleration (for computing angle rates)
   acceleration_ = WorldToAircraft(forces / mass_, orientation);
 
@@ -304,6 +310,27 @@ void Aircraft::operator()(const std::vector<double>& state,
     deriv[i+7] = forces[i];
   for (int i = 0; i < 3; ++i) 
     deriv[i+10] = torques[i];
+}
+
+//****************************************************************************80
+void Aircraft::CollideWithTerrain() {
+  // Broad phase: determine if terrain AABB and aircraft AABB intersect
+  bool broad_collide = false; // true if broad phase detects collision
+  auto const& aabb_aircraft = model_.GetAABB();
+  float y_min_aircraft = position_[1] + aabb_aircraft[1][0];
+  for (int i = 0; i < 2 && !broad_collide; ++i) {
+    for (int j = 0; j < 2 && !broad_collide; ++j) {
+      float xbb = position_[0] + aabb_aircraft[0][i];
+      float zbb = position_[2] + aabb_aircraft[2][j];
+      float y_max_terrain = terrain_.GetBoundingHeight(xbb, zbb);
+      if (y_min_aircraft < y_max_terrain) {
+        broad_collide = true;
+        std::cout << "COLLISION " << y_min_aircraft << " " 
+         << y_max_terrain << std::endl;
+      }
+    }
+  }
+
 }
 
 //****************************************************************************80
@@ -346,7 +373,7 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
 }
 
 //****************************************************************************80
-void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
+void Aircraft::SetShaderData(const Sky& sky,
     const ShadowCascadeRenderer& shadow_renderer) const {
   // Set material uniforms
   fuselage_shader_.Use();
@@ -370,9 +397,9 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
     s->Use();
     // Set view/projection uniforms
     glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "view"), 1, 
-        GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+        GL_FALSE, glm::value_ptr(camera_.GetViewMatrix()));
     glUniformMatrix4fv(glGetUniformLocation(s->GetProgram(), "projection"), 1, 
-        GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
+        GL_FALSE, glm::value_ptr(camera_.GetProjectionMatrix()));
 
     // Set fog uniforms
     glUniform3f(glGetUniformLocation(s->GetProgram(), "fog.Color"),
@@ -415,7 +442,7 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
         "flame_color"), flame_color.x, flame_color.y, flame_color.z);
   
   glm::mat4 flame_model = glm::translate(glm::mat4(), 
-      (glm::vec3)(position_ - camera.GetPosition()));
+      (glm::vec3)(position_ - camera_.GetPosition()));
   flame_model = glm::translate(flame_model, delta_center_of_mass_);
   flame_model *= glm::toMat4(orientation_);
   flame_model *= glm::toMat4(glm::angleAxis(glm::radians(90.0f), 
@@ -468,13 +495,13 @@ void Aircraft::SetShaderData(const Camera& camera, const Sky& sky,
       glUniform1f(glGetUniformLocation(s->GetProgram(), tmp.c_str()), 
           shadow_renderer.GetShadowBias(i));
     }
-    glm::vec3 camera_front = camera.GetFront();
+    glm::vec3 camera_front = camera_.GetFront();
     glUniform3f(glGetUniformLocation(s->GetProgram(), "cameraFront"), 
         camera_front.x, camera_front.y, camera_front.z);
-    glm::vec3 frustum_origin = camera.GetFrustumOrigin();
+    glm::vec3 frustum_origin = camera_.GetFrustumOrigin();
     glUniform3f(glGetUniformLocation(s->GetProgram(), "frustumOrigin"), 
         frustum_origin.x, frustum_origin.y, frustum_origin.z);
-    glm::vec3 frustum_terminus = camera.GetFrustumTerminus();
+    glm::vec3 frustum_terminus = camera_.GetFrustumTerminus();
     glUniform3f(glGetUniformLocation(s->GetProgram(), "frustumTerminus"), 
         frustum_terminus.x, frustum_terminus.y, frustum_terminus.z);
   }
@@ -546,7 +573,7 @@ void Aircraft::SetupDrawData() {
 }
 
 //****************************************************************************80
-void Aircraft::DrawExhaust(const Camera& camera) const {
+void Aircraft::DrawExhaust() const {
   exhaust_shader_.Use();
 
   // Enable face-culling 
@@ -555,7 +582,7 @@ void Aircraft::DrawExhaust(const Camera& camera) const {
   
   // Orient model
   glm::mat4 exhaust_model = glm::translate(glm::mat4(), 
-      (glm::vec3)(position_ - camera.GetPosition()));
+      (glm::vec3)(position_ - camera_.GetPosition()));
   exhaust_model = glm::translate(exhaust_model, delta_center_of_mass_);
   exhaust_model *= glm::toMat4(orientation_);
   exhaust_model *= glm::toMat4(glm::angleAxis(glm::radians(90.0f), 

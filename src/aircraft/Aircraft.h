@@ -18,14 +18,18 @@ namespace TopFun {
 
 class ShadowCascadeRenderer;
 class Sky;
+class Terrain;
 
 class Aircraft {
  
  public:
   //**************************************************************************80
   //! \brief Aircraft - Constructor
+  //! \param[in] terrain - the terrain object containing heightmap data
+  //! \param[in] camera - reference to camera
   //**************************************************************************80
-  Aircraft(const glm::dvec3& position, const glm::quat& orientation);
+  Aircraft(const glm::dvec3& position, const glm::quat& orientation,
+      const Camera& camera, const Terrain& terrain);
   
   //**************************************************************************80
   //! \brief ~Aircraft - Destructor
@@ -35,8 +39,8 @@ class Aircraft {
   //**************************************************************************80
   //! \brief Draw - draws the aircraft
   //**************************************************************************80
-  void Draw(const Camera& camera, const Sky& sky, 
-      const ShadowCascadeRenderer* pshadow_renderer, const Shader* shader=NULL);
+  void Draw(const Sky& sky, const ShadowCascadeRenderer* pshadow_renderer, 
+      const Shader* shader=NULL);
   
   //**************************************************************************80
   //! \brief UpdateControls - process keyboard input to update ailerons, etc. 
@@ -169,7 +173,15 @@ class Aircraft {
   void operator()(const std::vector<double>& state, std::vector<double>& deriv, 
       float t);
 
+  //**************************************************************************80
+  //! \brief COllideWithTerrain - detect collisions with terrain and resolve
+  //! forces/moments due to collision
+  //**************************************************************************80
+  void CollideWithTerrain();
+
  private:
+  const Camera& camera_;
+  const Terrain& terrain_;
   Shader fuselage_shader_;
   Shader canopy_shader_;
   Shader exhaust_shader_;
@@ -530,12 +542,11 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief GetAircraftModelMatrix - get the model matrix for the aircraft
-  //! \param[in] camera - reference to camera
   //**************************************************************************80
-  inline glm::mat4 GetAircraftModelMatrix(const Camera& camera) const {
+  inline glm::mat4 GetAircraftModelMatrix() const {
     // Translate model to current position
     glm::mat4 aircraft_model = glm::translate(glm::mat4(), 
-        (glm::vec3)(position_ - camera.GetPosition()));
+        (glm::vec3)(position_ - camera_.GetPosition()));
     aircraft_model = glm::translate(aircraft_model, delta_center_of_mass_);
     // Rotate model to current orientation
     aircraft_model *= glm::toMat4(orientation_);
@@ -550,14 +561,13 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief GetControlSurfaceModelMatrix - get model matrix for control surface
-  //! \param[in] camera - reference to camera
   //! \param[in] displacement - vector from model origin to rotation axis 
   //! \param[in] axis - axis to rotate around 
   //! \param[in] deflection_angle - angle to rotate control surface (radians)
   //! \param[in] right - true if right control surface
   //**************************************************************************80
-  inline glm::mat4 GetControlSurfaceModelMatrix(const Camera& camera,
-      glm::vec3 displacement, glm::vec3 axis, float deflection_angle, 
+  inline glm::mat4 GetControlSurfaceModelMatrix(glm::vec3 displacement, 
+      glm::vec3 axis, float deflection_angle, 
       bool right=false) const {
     if (right) {
       displacement.x = -displacement.x;
@@ -570,14 +580,14 @@ class Aircraft {
     // Translate model back to original position
     model = glm::translate(model, -displacement);
     // Apply the model matrix of the airframe
-    model = GetAircraftModelMatrix(camera) * model;
+    model = GetAircraftModelMatrix() * model;
     return model;
   }
 
   //**************************************************************************80
   //! \brief SetShaderData - sends the uniforms required by the shader
   //**************************************************************************80
-  void SetShaderData(Camera const& camera, const Sky& sky,
+  void SetShaderData(const Sky& sky,
       const ShadowCascadeRenderer& shadow_renderer) const;
   
   //**************************************************************************80
@@ -587,9 +597,8 @@ class Aircraft {
   
   //**************************************************************************80
   //! \brief DrawExhaust - draw the engine exhaust
-  //! \param[in] camera - reference to camera
   //**************************************************************************80
-  void DrawExhaust(const Camera& camera) const;
+  void DrawExhaust() const;
   
   //**************************************************************************80
   //! \brief UpdateEngineSounds - update the engine sounds based on throttle

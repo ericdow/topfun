@@ -44,15 +44,14 @@ int main(int /* argc */, char** /* argv */) {
       "engine_idle");
   AudioManager::Instance().AddBuffer("../../../assets/audio/afterburner.wav", 
       "afterburner");
-
-  // Set up the aircraft
-  Aircraft aircraft(start_pos,
-      glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
   
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 19, {{start_pos[0], start_pos[2]}});
   Sky sky;
   CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
+  Aircraft aircraft(start_pos,
+      glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+      camera, terrain);
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);

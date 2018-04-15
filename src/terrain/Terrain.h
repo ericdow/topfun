@@ -27,7 +27,7 @@ class Terrain {
   //! \param[in] ntile - number of terrain tiles in the x/z directions
   //! \param[in] xz_center0 - starting location of center of rendered terrain
   //**************************************************************************80
-  Terrain(GLfloat l, int ntile, const std::array<float,2>& xz_center0);
+  Terrain(float l, int ntile, const std::array<float,2>& xz_center0);
   
   //**************************************************************************80
   //! \brief ~Terrain - Destructor
@@ -41,9 +41,15 @@ class Terrain {
   void SetXZCenter(const std::array<float,2>& xz_center); 
 
   //**************************************************************************80
-  //! \brief GetHeight - Get the terrain height at a some (x,y) location
+  //! \brief GetHeight - Get the terrain height at a some (x,z) location
   //**************************************************************************80
-  static GLfloat GetHeight(GLfloat x, GLfloat z);
+  static float GetHeight(float x, float z);
+
+  //**************************************************************************80
+  //! \brief GetBoundingHeight - Get the maximum height in the tile containing
+  //! some (x,z) location
+  //**************************************************************************80
+  float GetBoundingHeight(float x, float z) const;
 
   //**************************************************************************80
   //! \brief Draw - draws the terrain
@@ -54,7 +60,7 @@ class Terrain {
  private:
   Shader shader_;
   int ntile_;
-  GLfloat ltile_;
+  float ltile_;
   std::array<float,2> xz_center0_; // center of terrain
   std::array<int,4> tile_bounding_box_; // bounding box in tile coordinates
   static noise::module::Perlin perlin_generator_;

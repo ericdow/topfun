@@ -40,7 +40,7 @@ class Model {
     }
     // Initialize model matrices to point to NULL
     pmodel_matrices_ = std::vector<const glm::mat4*>(meshes_.size(), NULL);
-    FormAABB();
+    FormBoundingVolumes();
   }
 
   // Draws all the meshes in this model
@@ -78,6 +78,10 @@ class Model {
   inline GLuint GetNumTextures() const { return num_textures_; }
   
   inline GLuint GetNumMeshes() { return meshes_.size(); }
+  
+  inline const std::array<std::array<float,2>,3>& GetAABB() const {
+    return AABB_;
+  }
   
  private:
   std::vector<Mesh> meshes_;
@@ -218,8 +222,8 @@ class Model {
     return textures;
   }
 
-  // Forms an AABB of a model from its constituent meshes
-  void FormAABB() {
+  // Forms bounding volumes of a model from its constituent meshes
+  void FormBoundingVolumes() {
     AABB_ = meshes_[0].FormAABB();
     for (size_t i = 1; i < meshes_.size(); ++i) {
       std::array<std::array<float,2>,3> AABB = meshes_[i].FormAABB();

@@ -14,8 +14,7 @@ noise::module::Perlin Terrain::perlin_generator_;
 //****************************************************************************80
 // PUBLIC FUNCTIONS
 //****************************************************************************80
-Terrain::Terrain(GLfloat l, int ntile, 
-    const std::array<float,2>& xz_center0) :
+Terrain::Terrain(float l, int ntile, const std::array<float,2>& xz_center0) :
   shader_("shaders/terrain.vs", "shaders/terrain.fs"), ntile_(ntile),
   ltile_(l / ntile), xz_center0_(xz_center0) {
   // Use odd number of tiles to make math easier
@@ -44,7 +43,7 @@ Terrain::Terrain(GLfloat l, int ntile,
                        xz_center0_[1] + ltile_*(j - 0.5)));
     }
   }
-  tile_bounding_box_ = {-half_ntile, -half_ntile, half_ntile, half_ntile};
+  tile_bounding_box_ = {{-half_ntile, -half_ntile, half_ntile, half_ntile}};
   UpdateTileConnectivity();
 }
 
@@ -71,8 +70,8 @@ void Terrain::SetXZCenter(const std::array<float,2>& xz_center) {
   }
   
   // Update the bounding box 
-  tile_bounding_box_ = {ij_center[0] - half_ntile, ij_center[1] - half_ntile, 
-    ij_center[0] + half_ntile, ij_center[1] + half_ntile};
+  tile_bounding_box_ = {{ij_center[0] - half_ntile, ij_center[1] - half_ntile, 
+    ij_center[0] + half_ntile, ij_center[1] + half_ntile}};
 
   // Create new tiles and update the connectivity
   for (int i = tile_bounding_box_[0]; i <= tile_bounding_box_[2]; ++i) {
@@ -118,8 +117,17 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 }
 
 //****************************************************************************80
-GLfloat Terrain::GetHeight(GLfloat x, GLfloat z) {
+float Terrain::GetHeight(float x, float z) {
   return 4.0f * perlin_generator_.GetValue(x/10, z/10, 0.5);
+}
+
+//****************************************************************************80
+float Terrain::GetBoundingHeight(float x, float z) const {
+  // Determine which tile we're in
+  int i = (int)((x - xz_center0_[0] + 0.5*ltile_) / ltile_);
+  int j = (int)((z - xz_center0_[1] + 0.5*ltile_) / ltile_);
+  int ix = ntile_*j + i;
+  return tiles_.at(ix).GetBoundingHeight();
 }
 
 //****************************************************************************80

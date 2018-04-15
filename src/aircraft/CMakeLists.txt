@@ -3,7 +3,8 @@ set(SOURCES
   Aircraft.cpp
 )
 
-set(libs_to_link 
+set(libs_to_link
+  terrain 
   ${OPENGL_LIBRARIES} 
   ${GLUT_LIBRARY} 
   ${GLEW_LIBRARY} 

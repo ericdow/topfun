@@ -72,6 +72,11 @@ class TerrainTile {
   //**************************************************************************80
   static void SetTileLength(GLfloat l_tile);
 
+  //**************************************************************************80
+  //! \brief GetBoundingHeight - get the maximum height in this tile
+  //**************************************************************************80
+  inline float GetBoundingHeight() const { return ymax_; }
+
  private:
   GLuint VAO_, EBO_;
   static GLfloat l_tile_; // length of the tile edge

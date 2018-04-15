@@ -20,7 +20,7 @@ inline void DrawScene(Terrain& terrain, const Sky& sky,
     sky.Draw(camera);
   }
   // Always draw the aircraft last for canopy
-  aircraft.Draw(camera, sky, pshadow_renderer, shader);
+  aircraft.Draw(sky, pshadow_renderer, shader);
 }
 
 } // End namespace TopFun
