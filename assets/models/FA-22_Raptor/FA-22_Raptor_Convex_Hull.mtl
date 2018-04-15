@@ -1,0 +1,14 @@
+# Blender MTL File: 'f22_convex_hull.blend'
+# Material Count: 1
+
+newmtl plane
+Ns 7.843137
+Ka 0.117647 0.117647 0.117647
+Kd 1.000000 1.000000 1.000000
+Ks 0.752941 0.752941 0.752941
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Bump FA-22_Raptor_N.png
+map_Kd FA-22_Raptor_P01.png

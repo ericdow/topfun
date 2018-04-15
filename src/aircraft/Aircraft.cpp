@@ -18,6 +18,8 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
     canopy_shader_("shaders/aircraft.vs", "shaders/canopy.fs"),
     exhaust_shader_("shaders/exhaust.vs", "shaders/exhaust.fs"),
     model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
+    collision_model_(
+        "../../../assets/models/FA-22_Raptor/FA-22_Raptor_Convex_Hull.obj"),
     position_(position), orientation_(orientation), 
     lin_momentum_(AircraftToWorld(glm::vec3(27000.0f * 150.0f, 0.0f, 0.0f), 
           orientation)), 

@@ -47,11 +47,11 @@ int main(int /* argc */, char** /* argv */) {
   
   // Set up remaining game objects (in main due to static members)
   Terrain terrain(terrain_size, 19, {{start_pos[0], start_pos[2]}});
-  Sky sky;
-  CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
   Aircraft aircraft(start_pos,
       glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
       camera, terrain);
+  Sky sky;
+  CloudRenderer cloud_renderer(screen_size[0], screen_size[1]);
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);

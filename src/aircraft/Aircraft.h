@@ -186,6 +186,7 @@ class Aircraft {
   Shader canopy_shader_;
   Shader exhaust_shader_;
   Model model_;
+  Model collision_model_;
   AudioSource engine_idle_;
   AudioSource afterburner_;
 
