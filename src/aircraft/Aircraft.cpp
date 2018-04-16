@@ -24,7 +24,8 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
     lin_momentum_(AircraftToWorld(glm::vec3(27000.0f * 150.0f, 0.0f, 0.0f), 
           orientation)), 
     ang_momentum_(0.0f, 0.0f, 0.0f),
-    acceleration_(0.0f, 0.0f, 0.0f) {
+    acceleration_(0.0f, 0.0f, 0.0f), 
+    crashed_(false) {
   // Draw the canopy last since it's transparent
   std::vector<unsigned int> draw_order(model_.GetNumMeshes());
   std::iota(draw_order.begin(), draw_order.end(), 0);
@@ -327,10 +328,25 @@ void Aircraft::CollideWithTerrain() {
       float y_max_terrain = terrain_.GetBoundingHeight(xbb, zbb);
       if (y_min_aircraft < y_max_terrain) {
         broad_collide = true;
-        std::cout << "COLLISION " << y_min_aircraft << " " 
-         << y_max_terrain << std::endl;
       }
     }
+  }
+  if (!broad_collide) return;
+
+  // Narrow phase: check if any vertices of collision model are below terrain
+  auto const& cm_verts = collision_model_.GetVertices(0);
+  position_ += camera_.GetPosition();
+  glm::mat4 aircraft_model = GetAircraftModelMatrix();
+  position_ -= camera_.GetPosition();
+  for (std::size_t i = 0; i < cm_verts.size(); ++i) {
+    // Bring collision mesh vertex to world position
+    auto cm_vert_w = aircraft_model * glm::vec4(cm_verts[i].Position, 1.0);
+    // Get the terrain height at this location
+    float y_terrain = terrain_.GetHeight(cm_vert_w[0], cm_vert_w[2]);
+    if (y_terrain > cm_vert_w[1]) {
+      std::cout << "COLLISION " << y_terrain << " " << cm_vert_w[1] << std::endl;
+      crashed_ = true; // TODO
+    } 
   }
 
 }

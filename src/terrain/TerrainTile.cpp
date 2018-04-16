@@ -111,7 +111,7 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
     for (int j = 0; j < nv+2; ++j) {
       GLuint ix = (nv+2)*j + i;
       vertices[ix].position[0] = x0 + dx*(i-1);
-      vertices[ix].position[1] = 3.0*Terrain::GetHeight(x0 + dx*(i-1), 
+      vertices[ix].position[1] = Terrain::GetHeight(x0 + dx*(i-1), 
           z0 + dx*(j-1));
       vertices[ix].position[2] = z0 + dx*(j-1);
       // Zero out the normals

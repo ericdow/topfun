@@ -82,6 +82,10 @@ class Model {
   inline const std::array<std::array<float,2>,3>& GetAABB() const {
     return AABB_;
   }
+
+  inline const std::vector<Vertex>& GetVertices(int i) const {
+    return meshes_[i].GetVertices();
+  }
   
  private:
   std::vector<Mesh> meshes_;

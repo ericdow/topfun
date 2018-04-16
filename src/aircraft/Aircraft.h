@@ -198,6 +198,7 @@ class Aircraft {
 
   // Secondary state variables (all in world frame)
   glm::vec3 acceleration_; 
+  bool crashed_;
 
   // Control inputs
   float rudder_position_;

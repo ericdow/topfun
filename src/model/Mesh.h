@@ -117,6 +117,10 @@ class Mesh {
 
   inline GLuint GetNumTextures() const { return textures_.size(); }
 
+  inline const std::vector<Vertex>& GetVertices() const { 
+    return vertices_;
+  }
+
  private:
   std::vector<Vertex> vertices_;
   std::vector<GLuint> indices_;
