@@ -25,6 +25,7 @@ Make sure to add -fPIC to C/C++ flags in CMake when compiling assimp
 # Features
 
 * Detailed aerodynamic model
+* Collision detection
 * Adaptive LoD terrain
 * Cascaded shaddow maps
 * Volumetric clouds

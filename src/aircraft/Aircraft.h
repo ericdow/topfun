@@ -97,6 +97,15 @@ class Aircraft {
   inline glm::vec3 GetUpDirection() const { 
     return AircraftToWorld(glm::vec3(0.0f, 0.0f, -1.0f), orientation_); 
   }
+  
+  //**************************************************************************80
+  //! \brief GetDeltaCenterOfMass - get the vector from the model center to
+  //! the center of mass
+  //! returns - vector from model center to CM
+  //**************************************************************************80
+  inline glm::dvec3 GetDeltaCenterOfMass() const { 
+    return delta_center_of_mass_; 
+  }
 
   //**************************************************************************80
   //! \brief GetState - get the position/orientation/momentum state vector

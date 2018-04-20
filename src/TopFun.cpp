@@ -104,6 +104,7 @@ int main(int /* argc */, char** /* argv */) {
       glm::vec3 aircraft_front = aircraft.GetFrontDirection();
       glm::vec3 aircraft_up = aircraft.GetUpDirection();
       camera.SetPosition(aircraft.GetPosition() + 
+          aircraft.GetDeltaCenterOfMass() +
           2.0 * (glm::dvec3)aircraft_up - 20.0 * (glm::dvec3)aircraft_front);
       camera.SetOrientation(aircraft_front, aircraft_up);
       AudioManager::Instance().SetListenerVelocity(aircraft.GetVelocity());

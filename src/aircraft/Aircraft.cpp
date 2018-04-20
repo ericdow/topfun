@@ -47,14 +47,14 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   
   // Set the physical dimensions of the aircraft
   mass_ = 27000.0f;
-  // TODO is this correct??? 
-  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, 0.0f);
+  // y+/-: for/aft, z+/-: up-down
+  delta_center_of_mass_ = glm::dvec3(0.0f, 0.0f, -1.0f);
   inertia_[0][0] = 22000.0f;       // I_xx
   inertia_[1][1] = 162000.0f;      // I_yy
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  e_collision_ = 0.02;
+  e_collision_ = 0.5;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -93,7 +93,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   CL_de_ = 0.12f; 
   CD_de_ = 0.08f; 
   CY_dr_ = 0.12f; 
-  Cm_de_ = -0.12f; 
+  Cm_de_ = -0.4f; 
   Cl_da_ = 0.02f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 
@@ -348,19 +348,17 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   float max_penetration = -1.0f;
   for (std::size_t i = 0; i < cm_verts.size(); ++i) {
     // Bring collision mesh vertex to world position
-    auto cm_vert_w = aircraft_model * glm::vec4(cm_verts[i].Position, 1.0);
+    auto cm_vert_w = glm::dvec3(aircraft_model * 
+        glm::vec4(cm_verts[i].Position, 1.0));
     // Get the terrain height at this location
     float y_terrain = terrain_.GetHeight(cm_vert_w[0], cm_vert_w[2]);
     float penetration = y_terrain - cm_vert_w[1];
     if (penetration > 0.0f) {
       // Check that the vertex is moving toward the terrain
       auto n_contact_tmp = terrain_.GetNormal(cm_vert_w[0], cm_vert_w[2]);
-      auto r_contact_tmp = cm_verts[i].Position - delta_center_of_mass_; 
+      auto r_contact_tmp = glm::vec3(cm_vert_w - position_);
       auto vel_contact_tmp = GetVelocity() + 
         glm::cross(inv_inertia_w * ang_momentum_, r_contact_tmp);
-      // TODO don't think velocity check is needed...
-      // if ((glm::dot(n_contact_tmp, vel_contact_tmp) < 0.0f) &&
-      //     (penetration > max_penetration)) {
       if (penetration > max_penetration) {
         max_penetration = penetration;
         n_contact = n_contact_tmp;
