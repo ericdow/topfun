@@ -131,6 +131,15 @@ float Terrain::GetBoundingHeight(float x, float z) const {
 }
 
 //****************************************************************************80
+glm::vec3 Terrain::GetNormal(float x, float z) {
+  float eps = 1.0e-5f;
+  return glm::normalize(glm::vec3(
+        (Terrain::GetHeight(x+eps,z) - Terrain::GetHeight(x,z))/eps,
+        1.0f,
+        (Terrain::GetHeight(x,z+eps) - Terrain::GetHeight(x,z))/eps));
+}
+
+//****************************************************************************80
 // PRIVATE FUNCTIONS
 //****************************************************************************80
 void Terrain::LoadTextures() {

@@ -46,13 +46,15 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
     14, 15, 18, 19, 20, 21};
   
   // Set the physical dimensions of the aircraft
-  mass_ = 27000.0f; 
-  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, -0.25f);
+  mass_ = 27000.0f;
+  // TODO is this correct??? 
+  delta_center_of_mass_ = glm::vec3(0.0f, 0.0f, 0.0f);
   inertia_[0][0] = 22000.0f;       // I_xx
   inertia_[1][1] = 162000.0f;      // I_yy
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
+  e_collision_ = 0.02;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -280,8 +282,7 @@ void Aircraft::operator()(const std::vector<double>& state,
   orientation.z = state[6];
   glm::vec3 lin_momentum(state[7], state[8], state[9]);
   glm::vec3 ang_momentum(state[10], state[11], state[12]);
-  glm::vec3 omega = 
-    glm::inverse(AircraftToWorld(inertia_, orientation)) * ang_momentum;
+  glm::vec3 omega = GetAngularVelocity(orientation, ang_momentum); 
 
   // Update the forces and torques in the aircraft frame
   glm::vec3 forces, torques;
@@ -293,9 +294,6 @@ void Aircraft::operator()(const std::vector<double>& state,
   forces = AircraftToWorld(forces, orientation);
   torques = AircraftToWorld(torques, orientation);
   forces += CalcGravityForce();
-
-  // Resolve collisions with the terrain
-  CollideWithTerrain();
 
   // Update acceleration (for computing angle rates)
   acceleration_ = WorldToAircraft(forces / mass_, orientation);
@@ -316,7 +314,11 @@ void Aircraft::operator()(const std::vector<double>& state,
 }
 
 //****************************************************************************80
-void Aircraft::CollideWithTerrain() {
+void Aircraft::CollideWithTerrain(std::vector<double>& state) {
+  // TODO make this more efficient...
+  auto tmp_state = GetState();
+  SetState(state);
+
   // Broad phase: determine if terrain AABB and aircraft AABB intersect
   bool broad_collide = false; // true if broad phase detects collision
   auto const& aabb_aircraft = model_.GetAABB();
@@ -338,17 +340,51 @@ void Aircraft::CollideWithTerrain() {
   position_ += camera_.GetPosition();
   glm::mat4 aircraft_model = GetAircraftModelMatrix();
   position_ -= camera_.GetPosition();
+  glm::vec3 n_contact; // normal at collision point
+  glm::vec3 vel_contact; // total velocity at contact point
+  glm::vec3 r_contact; // vector from CM to contact point
+  glm::mat3 inv_inertia_w = glm::inverse(AircraftToWorld(inertia_, 
+        orientation_));
+  float max_penetration = -1.0f;
   for (std::size_t i = 0; i < cm_verts.size(); ++i) {
     // Bring collision mesh vertex to world position
     auto cm_vert_w = aircraft_model * glm::vec4(cm_verts[i].Position, 1.0);
     // Get the terrain height at this location
     float y_terrain = terrain_.GetHeight(cm_vert_w[0], cm_vert_w[2]);
-    if (y_terrain > cm_vert_w[1]) {
-      std::cout << "COLLISION " << y_terrain << " " << cm_vert_w[1] << std::endl;
-      crashed_ = true; // TODO
+    float penetration = y_terrain - cm_vert_w[1];
+    if (penetration > 0.0f) {
+      // Check that the vertex is moving toward the terrain
+      auto n_contact_tmp = terrain_.GetNormal(cm_vert_w[0], cm_vert_w[2]);
+      auto r_contact_tmp = cm_verts[i].Position - delta_center_of_mass_; 
+      auto vel_contact_tmp = GetVelocity() + 
+        glm::cross(inv_inertia_w * ang_momentum_, r_contact_tmp);
+      // TODO don't think velocity check is needed...
+      // if ((glm::dot(n_contact_tmp, vel_contact_tmp) < 0.0f) &&
+      //     (penetration > max_penetration)) {
+      if (penetration > max_penetration) {
+        max_penetration = penetration;
+        n_contact = n_contact_tmp;
+        vel_contact = vel_contact_tmp;
+        r_contact = r_contact_tmp;
+      }
     } 
   }
 
+  // Calculate response if collision is detected
+  if (max_penetration > 0.0f) {
+    // Displace by penetration amount
+    position_[1] += 2.0 * max_penetration;
+    auto r_cross_n = glm::cross(r_contact, n_contact);
+    float j_r = -(1.0f + e_collision_)*glm::dot(vel_contact, n_contact) / 
+      (1.0f / mass_ + 
+       glm::dot(glm::cross(inv_inertia_w*r_cross_n, r_contact), n_contact));
+    lin_momentum_ += j_r * n_contact;
+    ang_momentum_ += j_r * r_cross_n;
+  }
+
+  // TODO make this more efficient...
+  state = GetState();
+  SetState(tmp_state);  
 }
 
 //****************************************************************************80

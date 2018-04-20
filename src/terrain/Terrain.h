@@ -52,6 +52,11 @@ class Terrain {
   float GetBoundingHeight(float x, float z) const;
 
   //**************************************************************************80
+  //! \brief GetNormal - Get the surface normal at some (x,z) location
+  //**************************************************************************80
+  static glm::vec3 GetNormal(float x, float z);
+
+  //**************************************************************************80
   //! \brief Draw - draws the terrain
   //**************************************************************************80
   void Draw(const Camera& camera, const Sky& sky, 

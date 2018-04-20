@@ -60,6 +60,15 @@ class Aircraft {
   inline glm::vec3 GetVelocity() const { return lin_momentum_ / mass_; }
   
   //**************************************************************************80
+  //! \brief GetAngularVelocity - get the angular velocity vector
+  //! returns - aircraft angular velocity vector in world coordinates
+  //**************************************************************************80
+  inline glm::vec3 GetAngularVelocity(const glm::quat& orientation,
+      const glm::vec3& ang_momentum) const {
+    return glm::inverse(AircraftToWorld(inertia_, orientation)) * ang_momentum;
+  }
+  
+  //**************************************************************************80
   //! \brief GetAlpha - get the angle of attach
   //! returns - aircraft angle of attack (radians)
   //**************************************************************************80
@@ -124,6 +133,7 @@ class Aircraft {
     for (int i = 0; i < 3; ++i) 
       ang_momentum_[i] = (float)state[i+10];
     orientation_ = normalize(orientation_);
+
     // Update the audio source positions/velocities
     engine_idle_.SetPosition((glm::vec3)position_);
     afterburner_.SetPosition((glm::vec3)position_);
@@ -177,7 +187,7 @@ class Aircraft {
   //! \brief COllideWithTerrain - detect collisions with terrain and resolve
   //! forces/moments due to collision
   //**************************************************************************80
-  void CollideWithTerrain();
+  void CollideWithTerrain(std::vector<double>& state);
 
  private:
   const Camera& camera_;
@@ -242,6 +252,7 @@ class Aircraft {
   float mass_;
   glm::vec3 delta_center_of_mass_; // from model origin
   glm::mat3 inertia_; // rotational inertia tensor
+  float e_collision_; // coefficient of restitution
   float wetted_area_;
   float chord_;
   float span_;

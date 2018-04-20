@@ -24,7 +24,7 @@ GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
 GLfloat terrain_size = 10000.0f;
-glm::vec3 start_pos(terrain_size/2, 5.0f, terrain_size/2);
+glm::vec3 start_pos(terrain_size/2, 50.0f, terrain_size/2);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
@@ -84,6 +84,7 @@ int main(int /* argc */, char** /* argv */) {
       previous_state = current_state;
       integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
           dt_physics);
+      aircraft.CollideWithTerrain(current_state);
       aircraft.SetState(current_state);
       t_physics += dt_physics;
       t_accumulator -= dt_physics;
