@@ -96,11 +96,12 @@ int main(int /* argc */, char** /* argv */) {
     aircraft.SetState(render_state);
     
     // Update the camera position
-    if (callback_world.IsFreeLook()) {
+    auto look_type = callback_world.GetLookType();
+    if (look_type == LookType::free) {
       camera.Move(callback_world.GetKeyState(), dt_loop);
       AudioManager::Instance().SetListenerVelocity(glm::vec3(0.0, 0.0, 0.0));
     }
-    else {
+    else if (look_type == LookType::follow) {
       glm::vec3 aircraft_front = aircraft.GetFrontDirection();
       glm::vec3 aircraft_up = aircraft.GetUpDirection();
       camera.SetPosition(aircraft.GetPosition() + 
@@ -114,6 +115,13 @@ int main(int /* argc */, char** /* argv */) {
       }
       camera.SetOrientation(aircraft_front, aircraft_up);
       AudioManager::Instance().SetListenerVelocity(aircraft.GetVelocity());
+    }
+    else if (look_type == LookType::track) {
+      glm::vec3 up(0.0f, 1.0f, 0.0f);
+      glm::vec3 front = aircraft.GetPosition() + aircraft.GetDeltaCenterOfMass()
+        - camera.GetPosition();
+      camera.SetOrientation(front, up);
+      AudioManager::Instance().SetListenerVelocity(glm::vec3(0.0, 0.0, 0.0));
     }
     AudioManager::Instance().SetListenerPosition(camera.GetPosition());
     AudioManager::Instance().SetListenerOrientation(camera.GetOrientation());

@@ -96,7 +96,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   CL_de_ = 0.12f; 
   CD_de_ = 0.08f; 
   CY_dr_ = 0.12f; 
-  Cm_de_ = -0.4f; 
+  Cm_de_ = -0.2f; 
   Cl_da_ = 0.02f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 

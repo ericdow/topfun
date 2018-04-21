@@ -10,8 +10,8 @@ CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
     std::array<GLuint,2> const& screen_size) : 
   first_mouse_(true), last_mouse_pos_({{(double)screen_size[0]/2, 
   (double)screen_size[1]/2}}), key_state_(1024,false), fps_locked_(true), 
-  w_double_pressed_(false), last_w_press_time_(-100.0f), free_look_(false),
-  camera_(camera), debug_overlay_(debug_overlay), 
+  w_double_pressed_(false), last_w_press_time_(-100.0f), 
+  look_type_(LookType::follow), camera_(camera), debug_overlay_(debug_overlay), 
   shadow_renderer_(shadow_renderer) {}
 
 //****************************************************************************80
@@ -46,7 +46,12 @@ void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action,
   
   // Toggle free look mode on F5
   if (key == GLFW_KEY_F5 && action == GLFW_PRESS) {
-    free_look_ = !free_look_;
+    if (look_type_ == LookType::follow)
+      look_type_ = LookType::track;
+    else if (look_type_ == LookType::track)
+      look_type_ = LookType::free;
+    else
+      look_type_ = LookType::follow;      
   }
   
   // Check for double press on W

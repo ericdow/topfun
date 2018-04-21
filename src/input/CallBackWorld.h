@@ -11,6 +11,12 @@
 
 namespace TopFun {
 
+enum class LookType {
+  follow,
+  track,
+  free,
+};
+
 class ShadowCascadeRenderer;
 
 class CallBackWorld {
@@ -33,8 +39,8 @@ class CallBackWorld {
     return fps_locked_;
   }
   
-  inline bool IsFreeLook() const {
-    return free_look_;
+  inline LookType GetLookType() const {
+    return look_type_;
   }
 
  private:
@@ -44,7 +50,7 @@ class CallBackWorld {
   bool fps_locked_;
   bool w_double_pressed_;
   float last_w_press_time_;
-  bool free_look_; // camera is not tied to aircraft
+  LookType look_type_;
   
   Camera& camera_;
   DebugOverlay& debug_overlay_;
