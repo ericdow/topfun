@@ -23,8 +23,8 @@ const std::array<GLuint,2> screen_size = {{1400, 800}};
 GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
-GLfloat terrain_size = 10000.0f;
-glm::vec3 start_pos(terrain_size/2, 50.0f, terrain_size/2);
+GLfloat terrain_size = 50000.0f;
+glm::vec3 start_pos(0.0, 50.0f, 0.0);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
@@ -106,6 +106,12 @@ int main(int /* argc */, char** /* argv */) {
       camera.SetPosition(aircraft.GetPosition() + 
           aircraft.GetDeltaCenterOfMass() +
           2.0 * (glm::dvec3)aircraft_up - 20.0 * (glm::dvec3)aircraft_front);
+      auto cam_pos = camera.GetPosition();
+      float y_terrain = terrain.GetHeight(cam_pos[0], cam_pos[2]);
+      if (cam_pos[1] < y_terrain + 1.0) {
+        cam_pos[1] = y_terrain + 1.0;
+        camera.SetPosition(cam_pos);
+      }
       camera.SetOrientation(aircraft_front, aircraft_up);
       AudioManager::Instance().SetListenerVelocity(aircraft.GetVelocity());
     }

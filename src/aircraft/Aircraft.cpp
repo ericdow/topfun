@@ -47,6 +47,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   
   // Set the physical dimensions of the aircraft
   mass_ = 27000.0f;
+  inv_mass_ = 1.0f / mass_;
   // y+/-: for/aft, z+/-: up-down
   delta_center_of_mass_ = glm::dvec3(0.0f, 0.0f, -1.0f);
   inertia_[0][0] = 22000.0f;       // I_xx
@@ -54,7 +55,9 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  e_collision_ = 0.5;
+  e_collision_ = 0.5f;
+  mu_static_ = 0.35f;
+  mu_dynamic_ = 0.7f;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -107,7 +110,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
 
   // Set the angle of attack so the plane is in level flight
   float dCL_dalpha0 = (CL_[1] - CL_[0]) / (2 * M_PI / (CL_.size() - 1));
-  float vt = glm::l2Norm(lin_momentum_) / mass_;
+  float vt = glm::l2Norm(lin_momentum_) * inv_mass_;
   float q = 0.5f * 1.225f * vt * vt;
   float alpha0 = (mass_ * 9.81f / q / wetted_area_ - CL_[0]) / dCL_dalpha0;
   orientation_ = glm::angleAxis(alpha0,
@@ -216,10 +219,11 @@ void Aircraft::Draw(const Sky& sky,
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Check for joystick to determine input mode
-  if (glfwJoystickPresent(GLFW_JOYSTICK_2) == GL_TRUE) {
+  auto joystick_id = GLFW_JOYSTICK_1;
+  if (glfwJoystickPresent(joystick_id) == GL_TRUE) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
-    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_2, &num_axes);
+    const float* axes = glfwGetJoystickAxes(joystick_id, &num_axes);
     aileron_position_  = axes[0] * aileron_position_max_;
     elevator_position_ = -axes[1] * elevator_position_max_;
     throttle_position_ = 0.5f * (1.0f - axes[2]);
@@ -285,22 +289,21 @@ void Aircraft::operator()(const std::vector<double>& state,
   glm::vec3 omega = GetAngularVelocity(orientation, ang_momentum); 
 
   // Update the forces and torques in the aircraft frame
-  glm::vec3 forces, torques;
   CalcAeroForcesAndTorques(position, orientation, lin_momentum, 
-      WorldToAircraft(omega, orientation), forces, torques);
-  forces += CalcEngineForce();
+      WorldToAircraft(omega, orientation), forces_, torques_);
+  forces_ += CalcEngineForce();
 
   // Rotate forces and torques to world frame and add gravity
-  forces = AircraftToWorld(forces, orientation);
-  torques = AircraftToWorld(torques, orientation);
-  forces += CalcGravityForce();
+  forces_ = AircraftToWorld(forces_, orientation);
+  torques_ = AircraftToWorld(torques_, orientation);
+  forces_ += CalcGravityForce();
 
   // Update acceleration (for computing angle rates)
-  acceleration_ = WorldToAircraft(forces / mass_, orientation);
+  acceleration_ = WorldToAircraft(forces_ * inv_mass_, orientation);
 
   // Compute the derivative of the state vector
   for (int i = 0; i < 3; ++i) 
-    deriv[i] = lin_momentum[i] / mass_;
+    deriv[i] = lin_momentum[i] * inv_mass_;
   glm::quat omega_quat(0.0f, omega);
   glm::quat spin = 0.5f * omega_quat * orientation;
   deriv[3] = spin.w;
@@ -308,9 +311,9 @@ void Aircraft::operator()(const std::vector<double>& state,
   deriv[5] = spin.y;
   deriv[6] = spin.z;
   for (int i = 0; i < 3; ++i) 
-    deriv[i+7] = forces[i];
+    deriv[i+7] = forces_[i];
   for (int i = 0; i < 3; ++i) 
-    deriv[i+10] = torques[i];
+    deriv[i+10] = torques_[i];
 }
 
 //****************************************************************************80
@@ -322,12 +325,12 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   // Broad phase: determine if terrain AABB and aircraft AABB intersect
   bool broad_collide = false; // true if broad phase detects collision
   auto const& aabb_aircraft = model_.GetAABB();
-  float y_min_aircraft = position_[1] + aabb_aircraft[1][0];
+  auto y_min_aircraft = position_[1] + aabb_aircraft[1][0];
   for (int i = 0; i < 2 && !broad_collide; ++i) {
     for (int j = 0; j < 2 && !broad_collide; ++j) {
-      float xbb = position_[0] + aabb_aircraft[0][i];
-      float zbb = position_[2] + aabb_aircraft[2][j];
-      float y_max_terrain = terrain_.GetBoundingHeight(xbb, zbb);
+      auto xbb = position_[0] + aabb_aircraft[0][i];
+      auto zbb = position_[2] + aabb_aircraft[2][j];
+      auto y_max_terrain = terrain_.GetBoundingHeight(xbb, zbb);
       if (y_min_aircraft < y_max_terrain) {
         broad_collide = true;
       }
@@ -341,7 +344,7 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   glm::mat4 aircraft_model = GetAircraftModelMatrix();
   position_ -= camera_.GetPosition();
   glm::vec3 n_contact; // normal at collision point
-  glm::vec3 vel_contact; // total velocity at contact point
+  glm::vec3 v_contact; // total velocity at contact point
   glm::vec3 r_contact; // vector from CM to contact point
   glm::mat3 inv_inertia_w = glm::inverse(AircraftToWorld(inertia_, 
         orientation_));
@@ -351,18 +354,18 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
     auto cm_vert_w = glm::dvec3(aircraft_model * 
         glm::vec4(cm_verts[i].Position, 1.0));
     // Get the terrain height at this location
-    float y_terrain = terrain_.GetHeight(cm_vert_w[0], cm_vert_w[2]);
-    float penetration = y_terrain - cm_vert_w[1];
+    auto y_terrain = terrain_.GetHeight(cm_vert_w[0], cm_vert_w[2]);
+    auto penetration = y_terrain - cm_vert_w[1];
     if (penetration > 0.0f) {
       // Check that the vertex is moving toward the terrain
       auto n_contact_tmp = terrain_.GetNormal(cm_vert_w[0], cm_vert_w[2]);
       auto r_contact_tmp = glm::vec3(cm_vert_w - position_);
-      auto vel_contact_tmp = GetVelocity() + 
+      auto v_contact_tmp = GetVelocity() + 
         glm::cross(inv_inertia_w * ang_momentum_, r_contact_tmp);
       if (penetration > max_penetration) {
         max_penetration = penetration;
         n_contact = n_contact_tmp;
-        vel_contact = vel_contact_tmp;
+        v_contact = v_contact_tmp;
         r_contact = r_contact_tmp;
       }
     } 
@@ -371,13 +374,44 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   // Calculate response if collision is detected
   if (max_penetration > 0.0f) {
     // Displace by penetration amount
-    position_[1] += 2.0 * max_penetration;
+    position_[1] += 0.8 * std::max(max_penetration - 0.1, 0.0);
+    
+    // Compute reaction impulse
     auto r_cross_n = glm::cross(r_contact, n_contact);
-    float j_r = -(1.0f + e_collision_)*glm::dot(vel_contact, n_contact) / 
-      (1.0f / mass_ + 
+    auto v_dot_n = glm::dot(v_contact, n_contact);
+    auto j_r = -(1.0f + e_collision_) * v_dot_n / (inv_mass_ + 
        glm::dot(glm::cross(inv_inertia_w*r_cross_n, r_contact), n_contact));
-    lin_momentum_ += j_r * n_contact;
-    ang_momentum_ += j_r * r_cross_n;
+
+    // Compute friction impulse
+    auto j_s = mu_static_ * j_r;
+    auto j_d = mu_dynamic_ * j_r;
+    glm::vec3 t_contact;
+    if (std::abs(v_dot_n) > 1.0e-5) {
+      t_contact = glm::normalize(v_contact - v_dot_n * n_contact);
+    }
+    else {
+      auto f_dot_n = glm::dot(forces_, n_contact); 
+      if (std::abs(f_dot_n) > 1.0e-5) {
+        t_contact = glm::normalize(forces_ - f_dot_n * n_contact);
+      }
+      else {
+        t_contact = glm::vec3(0.0f);
+      }
+    }
+    auto v_dot_t = glm::dot(v_contact, t_contact);
+    float j_f;
+    auto m_v_dot_t = mass_ * v_dot_t;
+    if (std::abs(v_dot_t) < 1.0 && m_v_dot_t < j_s) {
+      j_f = -m_v_dot_t; // static friction case
+    }
+    else {
+      j_f = -j_d; // dynamic friction case
+    }
+    auto r_cross_t = glm::cross(r_contact, t_contact);
+
+    // Apply the impulses
+    lin_momentum_ += j_r * n_contact + j_f * t_contact;
+    ang_momentum_ += j_r * r_cross_n + j_f * r_cross_t;
   }
 
   // TODO make this more efficient...
@@ -392,7 +426,7 @@ void Aircraft::CalcAeroForcesAndTorques(const glm::vec3& position,
     const glm::quat& orientation, const glm::vec3& lin_momentum, 
     const glm::vec3& omega, glm::vec3& forces, 
     glm::vec3& torques) const {
-  glm::vec3 va = WorldToAircraft(lin_momentum / mass_, orientation);
+  glm::vec3 va = WorldToAircraft(lin_momentum * inv_mass_, orientation);
   float vt = glm::l2Norm(va);
   if (vt > std::numeric_limits<float>::epsilon()) {
     glm::vec3 aa = WorldToAircraft(acceleration_, orientation);

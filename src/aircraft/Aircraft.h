@@ -57,7 +57,7 @@ class Aircraft {
   //! \brief GetVelocity - get the velocity vector
   //! returns - aircraft velocity vector
   //**************************************************************************80
-  inline glm::vec3 GetVelocity() const { return lin_momentum_ / mass_; }
+  inline glm::vec3 GetVelocity() const { return lin_momentum_ * inv_mass_; }
   
   //**************************************************************************80
   //! \brief GetAngularVelocity - get the angular velocity vector
@@ -73,7 +73,7 @@ class Aircraft {
   //! returns - aircraft angle of attack (radians)
   //**************************************************************************80
   inline float GetAlpha() const { 
-    return CalcAlpha(WorldToAircraft(lin_momentum_, orientation_) / mass_); 
+    return CalcAlpha(WorldToAircraft(lin_momentum_, orientation_) * inv_mass_); 
   }
   
   //**************************************************************************80
@@ -216,6 +216,8 @@ class Aircraft {
   glm::vec3 ang_momentum_;
 
   // Secondary state variables (all in world frame)
+  glm::vec3 forces_;
+  glm::vec3 torques_;
   glm::vec3 acceleration_; 
   bool crashed_;
 
@@ -259,9 +261,12 @@ class Aircraft {
 
   // Mass/Inertia/Dimensions/etc.
   float mass_;
+  float inv_mass_;
   glm::vec3 delta_center_of_mass_; // from model origin
   glm::mat3 inertia_; // rotational inertia tensor
   float e_collision_; // coefficient of restitution
+  float mu_static_; // coefficient of static friction
+  float mu_dynamic_; // coefficient of dynamic friction
   float wetted_area_;
   float chord_;
   float span_;

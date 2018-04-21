@@ -8,8 +8,8 @@ namespace TopFun {
 CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
     ShadowCascadeRenderer& shadow_renderer,
     std::array<GLuint,2> const& screen_size) : 
-  first_mouse_(true), last_mouse_pos_({(double)screen_size[0]/2, 
-  (double)screen_size[1]/2}), key_state_(1024,false), fps_locked_(true), 
+  first_mouse_(true), last_mouse_pos_({{(double)screen_size[0]/2, 
+  (double)screen_size[1]/2}}), key_state_(1024,false), fps_locked_(true), 
   w_double_pressed_(false), last_w_press_time_(-100.0f), free_look_(false),
   camera_(camera), debug_overlay_(debug_overlay), 
   shadow_renderer_(shadow_renderer) {}
@@ -79,7 +79,7 @@ void CallBackWorld::ProcessKeyPress(int key, int /* scancode */, int action,
 //****************************************************************************80
 void CallBackWorld::ProcessMouseMovement(double xpos, double ypos) {
   if(first_mouse_) {
-    last_mouse_pos_ = {xpos, ypos};
+    last_mouse_pos_ = {{xpos, ypos}};
     first_mouse_ = false;
   }
 
@@ -87,7 +87,7 @@ void CallBackWorld::ProcessMouseMovement(double xpos, double ypos) {
   GLfloat yoffset = last_mouse_pos_[1] - ypos; 
 
   // Update the position state machine  
-  last_mouse_pos_ = {xpos, ypos};
+  last_mouse_pos_ = {{xpos, ypos}};
   
   camera_.ProcessMouseMovement(xoffset, yoffset);
 }

@@ -24,7 +24,7 @@ Terrain::Terrain(float l, int ntile, const std::array<float,2>& xz_center0) :
   }
 
   // Set the noise parameters
-  perlin_generator_.SetOctaveCount(5);
+  perlin_generator_.SetOctaveCount(3);
   perlin_generator_.SetFrequency(0.04);
   perlin_generator_.SetPersistence(0.5);
   
@@ -118,7 +118,10 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 
 //****************************************************************************80
 float Terrain::GetHeight(float x, float z) {
-  return 5.0f * perlin_generator_.GetValue(x/10, z/10, 0.5);
+  const float heigh_scale = 40.0f;
+  const float horiz_scale = 0.01f;
+  return heigh_scale * 
+    perlin_generator_.GetValue(x*horiz_scale, z*horiz_scale, 0.5);
 }
 
 //****************************************************************************80
