@@ -55,9 +55,9 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  e_collision_ = 0.5f;
-  mu_static_ = 0.35f;
-  mu_dynamic_ = 0.7f;
+  e_collision_ = 0.2f;
+  mu_static_ = 0.2f;
+  mu_dynamic_ = 0.35f;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -151,6 +151,19 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   afterburner_.SetRollOff(0.2f);
   afterburner_.SetReferenceDistance(20.0f);
   afterburner_.Play();
+  
+  // Determine which joystick to use 
+  // TODO move this...
+  joystick_id_ = -1;
+  const char* joystick_name = "Saitek";
+  for (int i = 0; i < GLFW_JOYSTICK_LAST; ++i) {
+    if (glfwGetJoystickName(i)) {
+      if (std::strstr(glfwGetJoystickName(i), joystick_name)) {
+        joystick_id_ = i;
+        std::cout << "Using controller " << glfwGetJoystickName(i) << std::endl;
+      }
+    }
+  }
 }
 
 //****************************************************************************80
@@ -219,11 +232,10 @@ void Aircraft::Draw(const Sky& sky,
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Check for joystick to determine input mode
-  auto joystick_id = GLFW_JOYSTICK_1;
-  if (glfwJoystickPresent(joystick_id) == GL_TRUE) {
+  if (glfwJoystickPresent(joystick_id_) == GL_TRUE) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
-    const float* axes = glfwGetJoystickAxes(joystick_id, &num_axes);
+    const float* axes = glfwGetJoystickAxes(joystick_id_, &num_axes);
     aileron_position_  = axes[0] * aileron_position_max_;
     elevator_position_ = -axes[1] * elevator_position_max_;
     throttle_position_ = 0.5f * (1.0f - axes[2]);

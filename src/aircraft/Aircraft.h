@@ -229,6 +229,7 @@ class Aircraft {
   const float elevator_position_max_ = 0.7f;
   const float aileron_position_max_ = 0.5f;
   float throttle_position_; // between 0.0 and 1.0
+  int joystick_id_;
 
   // Longitudinal coefficients
   std::vector<float> CL_; // lift coefficient vs alpha
