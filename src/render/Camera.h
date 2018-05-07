@@ -82,14 +82,17 @@ class Camera {
     return rinv;
   }
   
-  // Returns the view matrix in world coordinates
-  inline glm::mat4 GetViewMatrixWorld() const {
-    return glm::lookAt((glm::vec3)position_, (glm::vec3)position_+front_, up_);
+  // Returns the view matrix in periodic world coordinates
+  inline glm::mat4 GetViewMatrixPeriodic(float period) const {
+    glm::dvec3 pos_per(std::fmod(position_.x, period), 
+        position_.y, 
+        std::fmod(position_.z, period));
+    return glm::lookAt((glm::vec3)pos_per, (glm::vec3)pos_per+front_, up_);
   }
   
-  // Returns the inverse of the view matrix in world coordinates
-  inline glm::mat4 GetInverseViewMatrixWorld() const {
-    glm::mat4 view = GetViewMatrixWorld();
+  // Returns the inverse of the view matrix in periodic world coordinates
+  inline glm::mat4 GetInverseViewMatrixPeriodic(float period) const {
+    glm::mat4 view = GetViewMatrixPeriodic(period);
     glm::mat4 tinv, rinv;
     // Negate the translation part
     for (int j = 0; j < 3; ++j)

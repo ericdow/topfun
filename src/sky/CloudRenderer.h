@@ -63,12 +63,12 @@ class CloudRenderer {
   glm::mat4 proj_view_prev_; // needed for temporal anti-aliasing
 
   // Cloud texture data
-  NoiseCube detail_;
-  float detail_scale_; // world space dimensions of the detail texture
-  NoiseCube shape_;
-  float shape_scale_; // world space dimensions of the shape texture
   GLuint weather_; // 2D texture with coverage/height/altitude
   float weather_scale_; // world space dimensions of the weather texture
+  NoiseCube shape_;
+  float shape_scale_; // world space dimensions of the shape texture
+  NoiseCube detail_;
+  float detail_scale_; // world space dimensions of the detail texture
 
   //**************************************************************************80
   //! \brief SetShaderData - send the data to be rendered to the shader

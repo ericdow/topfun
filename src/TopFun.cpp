@@ -24,12 +24,12 @@ GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
 GLfloat terrain_size = 50000.0f;
-glm::vec3 start_pos(0.0, 50.0f, 0.0);
+glm::vec3 start_pos(0.0, 2000.0f, 0.0);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1], 
-    {0.002, 0.006, 0.02, 0.1, 0.4}, {0.002, 0.005, 0.007, 0.010, 0.010});
+    {0.001, 0.003, 0.02, 0.1, 0.4}, {0.001, 0.002, 0.002, 0.010, 0.020});
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 

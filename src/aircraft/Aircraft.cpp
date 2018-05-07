@@ -56,8 +56,8 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
   e_collision_ = 0.2f;
-  mu_static_ = 0.2f;
-  mu_dynamic_ = 0.35f;
+  mu_static_ = 0.4f;
+  mu_dynamic_ = 0.6f;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -129,7 +129,14 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   float dCm_LD_dalpha = (M_LD1-M_LD0)/(alpha1-alpha0)/q/wetted_area_/ chord_;
   float dCm_dalpha = 8.0f * dCm_LD_dalpha; // increasing this causes nose up
   float Cm0 = -M_LD0 / q / wetted_area_ / chord_ - dCm_dalpha * alpha0;
-  Cm_ = {Cm0 - dCm_dalpha * (float)M_PI, Cm0, Cm0 + dCm_dalpha * (float)M_PI};
+  int npts = 180/15;
+  Cm_.resize(2*npts + 1);
+  Cm_[npts] = Cm0;
+  for (int i = 0; i < npts; ++i) {
+    float slope_factor = std::pow(1.0f - 0.9 * i / npts, 3.0);
+    Cm_[npts-i-1] = Cm_[npts-i] - slope_factor * dCm_dalpha * (float)M_PI / npts;
+    Cm_[npts+i+1] = Cm_[npts+i] + slope_factor * dCm_dalpha * (float)M_PI / npts;
+  }
 
   // Set up the data for drawing the exhaust
   delta_exhaust_ = {0.637885f, -6.717596f, -0.562625f};
@@ -386,7 +393,7 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   // Calculate response if collision is detected
   if (max_penetration > 0.0f) {
     // Displace by penetration amount
-    position_[1] += 0.8 * std::max(max_penetration - 0.1, 0.0);
+    position_[1] += 0.2 * std::max(max_penetration - 0.1, 0.0);
     
     // Compute reaction impulse
     auto r_cross_n = glm::cross(r_contact, n_contact);
@@ -413,7 +420,7 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
     auto v_dot_t = glm::dot(v_contact, t_contact);
     float j_f;
     auto m_v_dot_t = mass_ * v_dot_t;
-    if (std::abs(v_dot_t) < 1.0 && m_v_dot_t < j_s) {
+    if (m_v_dot_t < j_s) {
       j_f = -m_v_dot_t; // static friction case
     }
     else {

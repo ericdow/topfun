@@ -144,7 +144,7 @@ void ShadowCascadeRenderer::UpdateLightSpaceMatrices(const Camera& camera,
           v_max[d] = v[d];
       }
     }
-    std::array<glm::vec3,8> bb_vertices = {
+    std::array<glm::vec3,8> bb_vertices = {{
       glm::vec3(v_min.x, v_min.y, v_min.z), 
       glm::vec3(v_max.x, v_min.y, v_min.z), 
       glm::vec3(v_max.x, v_max.y, v_min.z), 
@@ -152,7 +152,7 @@ void ShadowCascadeRenderer::UpdateLightSpaceMatrices(const Camera& camera,
       glm::vec3(v_min.x, v_min.y, v_max.z), 
       glm::vec3(v_max.x, v_min.y, v_max.z), 
       glm::vec3(v_max.x, v_max.y, v_max.z), 
-      glm::vec3(v_min.x, v_max.y, v_max.z)}; 
+      glm::vec3(v_min.x, v_max.y, v_max.z)}}; 
     glm::vec3 vls_min(std::numeric_limits<float>::max());
     glm::vec3 vls_max(std::numeric_limits<float>::lowest());
     for (const auto& v : bb_vertices) {

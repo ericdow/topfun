@@ -21,13 +21,10 @@ boost::unordered_map<NeighborLoD, std::vector<GLuint>>
 //****************************************************************************80
 TerrainTile::TerrainTile(const Shader& shader, GLfloat x0, GLfloat z0) : 
   lods_(0,0,0,0,0), lods_prev_(0,0,0,0,0),
-  neighbor_tiles_({nullptr, nullptr, nullptr, nullptr}) {
+  neighbor_tiles_({{nullptr, nullptr, nullptr, nullptr}}) {
 
   // Set up vertices and normals
   std::vector<Vertex> vertices = SetupVertices(x0, z0);
-
-  // Construct the bounding box
-  // TODO  
  
   // Set up attribute and buffer objects
   GLuint VBO;
@@ -178,7 +175,7 @@ std::vector<TerrainTile::Vertex> TerrainTile::SetupVertices(GLfloat x0,
   }
 
   // Set the texture coordinates based on largest tile size
-  GLuint nrepeat = 40; // number of texture repetitions per largest tile
+  GLuint nrepeat = 100; // number of texture repetitions per largest tile
   GLuint denom = std::pow(2, num_lod_ - nrepeat + 1);
   denom = std::max(denom, 1u);
   for (int i = 0; i < nv; ++i) {

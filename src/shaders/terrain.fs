@@ -35,14 +35,22 @@ void main() {
   vec3 specular = CalcSpecular(norm, lightDir, viewDir, light.specular, 
     material.specular, material.shiny);
 
-  vec4 base = texture(grassTexture0, TexCoord);
+  float highlight0 = 1.0f; 
+  vec4 highlight1 = texture(grassTexture2, TexCoord);
 
-  vec4 highlight0 = texture(grassTexture1, TexCoord)*pow(abs(norm.z), 1.0f/10) +
-    base*(1.0f - pow(abs(norm.z), 1.0f/10));
+  // TODO use normals to set weights
+  float wt = max(1.0, 3 * texture(grassTexture2, 0.0625 * TexCoord).r);
+  wt *= 20.0 * (norm.y - 0.95);
+  // float wt2 = max(1.0, 3 * texture(grassTexture1, 0.1 * TexCoord).g);
+  highlight1 = wt * highlight1 + (1.0 - wt) * texture(grassTexture1, TexCoord);
+  // highlight1 = wt * highlight1 + wt2 * texture(grassTexture0, TexCoord);
+  //   (1.0 - wt - wt2) * texture(grassTexture1, TexCoord);
+  // highlight1 *= 0.666;
   
-  vec4 highlight1 = texture(grassTexture2, TexCoord)*pow(abs(norm.x), 1.0f/10) +
-    base*(1.0f - pow(abs(norm.x), 1.0f/10));
-  
+  highlight1 = texture(grassTexture0, TexCoord);
+  highlight1.rgb *= texture(grassTexture0, -0.25 * TexCoord).rgb;
+  highlight1.rgb *= texture(grassTexture0, -0.09 * TexCoord).rgb;
+ 
   // Shadow
   int cascade_idx = GetCascadeIndex(FragPos);
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 

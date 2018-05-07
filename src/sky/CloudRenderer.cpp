@@ -14,15 +14,15 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   raymarch_shader_("shaders/clouds.vs", "shaders/clouds_raymarch.fs"),
   blend_shader_("shaders/clouds.vs", "shaders/clouds_blend.fs"),
   depth_map_renderer_(map_width, map_height),
-  cloud_start_end_({{2000.0f, 3000.0f}}), l_stop_max_(25000.0f), 
+  cloud_start_end_({{4000.0f, 5000.0f}}), l_stop_max_(25000.0f), 
   max_cloud_height_((cloud_start_end_[1] - cloud_start_end_[0])),
-  detail_({{32,32,32}}, 
-  "detail", {{1,1,1},{2,2,2},{3,3,3}}),
-  detail_scale_(1.0f / 350.0f),
+  weather_scale_(1.0f / 10000.0f),
   shape_({{128, 32, 128}}, 
   "shape", {{{20, 6.0, 0.3}},{4,4,4},{3,3,3},{2,2,2}}), 
-  shape_scale_(1.0f / 3000.0f),
-  weather_scale_(1.0f / 10000.0f) {
+  shape_scale_(weather_scale_ * 4.0f),
+  detail_({{32,32,32}}, 
+  "detail", {{1,1,1},{2,2,2},{3,3,3}}),
+  detail_scale_(weather_scale_ * 30.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {
@@ -161,11 +161,12 @@ void CloudRenderer::BlendWithScene() const {
 void CloudRenderer::SetShaderData(const Sky& sky, Camera const& camera) {
   raymarch_shader_.Use();
   // Camera related data
+  float period = 1.0f / weather_scale_;
   glm::mat4 proj_view = camera.GetProjectionMatrix() * 
-    camera.GetViewMatrixWorld();
+    camera.GetViewMatrixPeriodic(period);
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "projview"), 1, GL_FALSE, glm::value_ptr(proj_view));
-  glm::mat4 inv_proj_view = camera.GetInverseViewMatrixWorld() * 
+  glm::mat4 inv_proj_view = camera.GetInverseViewMatrixPeriodic(period) * 
     camera.GetInverseProjectionMatrix();
   glUniformMatrix4fv(glGetUniformLocation(raymarch_shader_.GetProgram(), 
         "inv_projview"), 1, GL_FALSE, glm::value_ptr(inv_proj_view));
