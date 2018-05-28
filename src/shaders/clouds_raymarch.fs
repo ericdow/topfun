@@ -46,7 +46,7 @@ const float eps_density = 0.001;
 const float eps_extinction = 0.01;
 
 // Define some constants for gradual transparency
-const float d_start_trans = 0.7;
+const float d_start_trans = 0.9;
 
 // Parabolic density multiplier
 float GetHeightAttenuation(float h_frac) {

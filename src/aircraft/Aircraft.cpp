@@ -56,8 +56,8 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
   e_collision_ = 0.2f;
-  mu_static_ = 0.4f;
-  mu_dynamic_ = 0.6f;
+  mu_static_ = 1.0f;
+  mu_dynamic_ = 1.2f;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -393,7 +393,7 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   // Calculate response if collision is detected
   if (max_penetration > 0.0f) {
     // Displace by penetration amount
-    position_[1] += 0.2 * std::max(max_penetration - 0.1, 0.0);
+    position_[1] += 0.2 * std::max(max_penetration - 0.01, 0.0);
     
     // Compute reaction impulse
     auto r_cross_n = glm::cross(r_contact, n_contact);

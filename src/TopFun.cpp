@@ -24,7 +24,7 @@ GLFWwindow* window = GLEnvironment::SetUp(screen_size);
 
 // Set up objects that can be modified by input callbacks
 GLfloat terrain_size = 50000.0f;
-glm::vec3 start_pos(0.0, 2000.0f, 0.0);
+glm::vec3 start_pos(0.0, 200.0f, 0.0);
 glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
