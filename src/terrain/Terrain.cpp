@@ -118,9 +118,9 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 
 //****************************************************************************80
 float Terrain::GetHeight(float x, float z) {
-  const float heigh_scale = 100.0f;
+  const float height_scale = 100.0f;
   const float horiz_scale = 0.01f;
-  return heigh_scale * 
+  return height_scale * 
     perlin_generator_.GetValue(x*horiz_scale, z*horiz_scale, 0.5);
 }
 

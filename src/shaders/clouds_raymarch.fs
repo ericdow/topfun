@@ -146,6 +146,9 @@ float CalcSunExtinction(in vec3 position) {
 vec4 RayMarch(Ray ray, vec2 start_stop, inout vec3 cloud_position) {
   // Ray-march to compute scattering and extinction
   int n_steps = 64;
+  if (ray.origin.y > cloud_start && ray.origin.y < cloud_end) {
+    n_steps = 128;
+  }
   float l_total = start_stop.y - start_stop.x;
   float step_size_fine = l_total / n_steps;
   vec3 dposition_fine = step_size_fine * ray.dir;

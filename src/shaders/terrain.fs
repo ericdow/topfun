@@ -4,8 +4,10 @@
 #include "material.glsl"
 #include "fog.glsl"
 #include "shadow.glsl"
+#include "noise.glsl"
 
 in vec3 FragPos;  
+in vec3 Position;  
 in vec3 Normal;  
 in vec2 TexCoord;
 in vec4 FragPosEyeSpace;
@@ -35,6 +37,7 @@ void main() {
   vec3 specular = CalcSpecular(norm, lightDir, viewDir, light.specular, 
     material.specular, material.shiny);
 
+  /*
   float highlight0 = 1.0f; 
   vec4 highlight1 = texture(grassTexture2, TexCoord);
 
@@ -50,17 +53,18 @@ void main() {
   highlight1 = texture(grassTexture0, TexCoord);
   highlight1.rgb *= texture(grassTexture0, -0.25 * TexCoord).rgb;
   highlight1.rgb *= texture(grassTexture0, -0.09 * TexCoord).rgb;
+  */
  
   // Shadow
   int cascade_idx = GetCascadeIndex(FragPos);
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 
     cascade_idx, shadow_bias[cascade_idx], lightDir, norm);
   
-  color = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f)
-    * highlight0 * highlight1;
+  color = vec4(0.2, 0.3, 0.1, 1.0);
+  color.rgb -= 0.03 * filtered_octave_snoise2D(Position.xz, 3, 0.75, 0.005);
+  color *= vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f);
 
   // Fog
   float FogCoord = abs(FragPosEyeSpace.z/FragPosEyeSpace.w);
-
   color = mix(color, vec4(fog.Color, 1.0f), CalcFogFactor(fog, FogCoord));
 } 

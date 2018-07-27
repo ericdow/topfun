@@ -55,7 +55,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  e_collision_ = 0.2f;
+  e_collision_ = 0.3f;
   mu_static_ = 1.0f;
   mu_dynamic_ = 1.2f;
   wetted_area_ = 316.0f;
@@ -96,7 +96,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   CL_de_ = 0.12f; 
   CD_de_ = 0.08f; 
   CY_dr_ = 0.12f; 
-  Cm_de_ = -0.2f; 
+  Cm_de_ = -0.4f; 
   Cl_da_ = 0.02f; 
   Cn_da_ = 0.06f; 
   Cl_dr_ = -0.001f; 
@@ -393,12 +393,18 @@ void Aircraft::CollideWithTerrain(std::vector<double>& state) {
   // Calculate response if collision is detected
   if (max_penetration > 0.0f) {
     // Displace by penetration amount
-    position_[1] += 0.2 * std::max(max_penetration - 0.01, 0.0);
+    auto slop = 0.001;
+    position_[1] += 0.05 * std::max(max_penetration - slop, 0.0);
     
     // Compute reaction impulse
     auto r_cross_n = glm::cross(r_contact, n_contact);
     auto v_dot_n = glm::dot(v_contact, n_contact);
-    auto j_r = -(1.0f + e_collision_) * v_dot_n / (inv_mass_ + 
+    auto e = e_collision_;
+    float resting_tol = 0.01;
+    if (-v_dot_n < std::sqrt(2.0 * 9.81 * resting_tol)) {
+      e = 0.0;
+    }
+    auto j_r = -(1.0f + e) * v_dot_n / (inv_mass_ + 
        glm::dot(glm::cross(inv_inertia_w*r_cross_n, r_contact), n_contact));
 
     // Compute friction impulse
