@@ -15,9 +15,6 @@ in vec4 FragPosLightSpace[MAX_NUM_CASCADES];
   
 out vec4 color;
 
-uniform sampler2D grassTexture0;
-uniform sampler2D grassTexture1;
-uniform sampler2D grassTexture2;
 uniform vec3 viewPos;  
 uniform Material material;
 uniform Light light;
@@ -26,9 +23,37 @@ uniform Fog fog;
 void main() {
   // Ambient
   vec3 ambient = CalcAmbient(light.ambient, material.specular);
+
+  // Generate bump map
+  const int oct = 1;
+  const float pers = 0.5;
+  const float freq = 0.3;
+  float h = octave_snoise2D(vec2(Position.x, 0.3*Position.z), oct, pers, freq);
+  mat2 duv_dxy;
+  duv_dxy[0] = dFdx(Position.xz);
+  duv_dxy[1] = dFdy(Position.xz);
+  vec2 dh_duv = inverse(duv_dxy) * vec2(dFdx(h), dFdy(h));
+  vec3 norm_bump = normalize(vec3(-dh_duv.x, 1.0, -dh_duv.y));
+ 
+  // Generate grass texture 
+  vec4 grass = vec4(0.2, 0.3, 0.1, 1.0);
+  grass.r -= 0.07 * filtered_octave_snoise2D(Position.xz, 4, 0.5, 0.01, 4, 0.125);
+
+  // Add dirt highlights
+  vec4 dirt = vec4(0.61, 0.46, 0.33, 1.0);
+  dirt -= 0.1 * filtered_octave_snoise2D(Position.xz, 6, 0.5, 0.005, 4, 0.125);
+  
+  vec3 norm;
+  if (dirt.a < 0.95) {
+    color = grass;
+    norm = normalize(normalize(Normal) + 0.1 * norm_bump);
+  }
+  else {
+    color = dirt;
+    norm = normalize(normalize(Normal) + norm_bump);
+  }
 	
   // Diffuse 
-  vec3 norm = normalize(Normal);
   vec3 lightDir = normalize(-light.direction);  
   vec3 diffuse = CalcDiffuse(norm, lightDir, light.diffuse, material.specular);
   
@@ -36,32 +61,14 @@ void main() {
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 specular = CalcSpecular(norm, lightDir, viewDir, light.specular, 
     material.specular, material.shiny);
-
-  /*
-  float highlight0 = 1.0f; 
-  vec4 highlight1 = texture(grassTexture2, TexCoord);
-
-  // TODO use normals to set weights
-  float wt = max(1.0, 3 * texture(grassTexture2, 0.0625 * TexCoord).r);
-  wt *= 20.0 * (norm.y - 0.95);
-  // float wt2 = max(1.0, 3 * texture(grassTexture1, 0.1 * TexCoord).g);
-  highlight1 = wt * highlight1 + (1.0 - wt) * texture(grassTexture1, TexCoord);
-  // highlight1 = wt * highlight1 + wt2 * texture(grassTexture0, TexCoord);
-  //   (1.0 - wt - wt2) * texture(grassTexture1, TexCoord);
-  // highlight1 *= 0.666;
-  
-  highlight1 = texture(grassTexture0, TexCoord);
-  highlight1.rgb *= texture(grassTexture0, -0.25 * TexCoord).rgb;
-  highlight1.rgb *= texture(grassTexture0, -0.09 * TexCoord).rgb;
-  */
+  // TODO
+  specular *= 0.0;
  
   // Shadow
   int cascade_idx = GetCascadeIndex(FragPos);
   float shadow = ShadowCalculation(FragPos, FragPosLightSpace[cascade_idx], 
     cascade_idx, shadow_bias[cascade_idx], lightDir, norm);
-  
-  color = vec4(0.2, 0.3, 0.1, 1.0);
-  color.rgb -= 0.03 * filtered_octave_snoise2D(Position.xz, 3, 0.75, 0.005);
+
   color *= vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0f);
 
   // Fog

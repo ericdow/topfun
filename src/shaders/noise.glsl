@@ -32,7 +32,7 @@ float octave_snoise2D(vec2 v, int octaves, float persistence, float frequency) {
   float total = 0;
   float amplitude = 1;
   float maxValue = 0;  // Used for normalizing result to 0.0 - 1.0
-  for(int i=0; i < octaves; i++) {
+  for(int i = 0; i < octaves; ++i) {
     total += snoise2D(v * frequency) * amplitude;
     maxValue += amplitude;
     amplitude *= persistence;
@@ -42,22 +42,20 @@ float octave_snoise2D(vec2 v, int octaves, float persistence, float frequency) {
 }
 
 // sample a procedural texture with filtering
-float filtered_octave_snoise2D(vec2 uv, int octaves, float persistence, float frequency) {
+float filtered_octave_snoise2D(vec2 uv, int octaves, float persistence, 
+    float frequency, int max_samples, float detail) {
   vec2 ddx_uv = dFdx(uv);
   vec2 ddy_uv = dFdy(uv);
-  const int max_samples = 4;
-  int sx = 1 + int(clamp(4.0*length(ddx_uv), 0.0, float(max_samples-1)));
-  int sy = 1 + int(clamp(4.0*length(ddy_uv), 0.0, float(max_samples-1)));
+  int sx = 1 + int(clamp(detail*length(ddx_uv), 0.0, float(max_samples-1)));
+  int sy = 1 + int(clamp(detail*length(ddy_uv), 0.0, float(max_samples-1)));
 
   float no = 0.0;
-  for(int j = 0; j < max_samples; j++) {
-    for(int i = 0; i < max_samples; i++) {
-      if(j < sy && i < sx) {
-        vec2 st = vec2(float(i), float(j)) / vec2(float(sx), float(sy));
-        no += octave_snoise2D(uv + st.x*(ddx_uv) + st.y*(ddy_uv), octaves, 
-          persistence, frequency);
-      }
+  for(int j = 0; j < sy; j++) {
+    for(int i = 0; i < sx; i++) {
+      vec2 st = vec2(float(i), float(j)) / vec2(float(sx), float(sy));
+      no += octave_snoise2D(uv + st.x*(ddx_uv) + st.y*(ddy_uv), octaves, 
+        persistence, frequency);
     }
-  }	
+  }
   return no / float(sx*sy);
 }

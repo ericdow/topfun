@@ -29,7 +29,7 @@ Terrain::Terrain(float l, int ntile, const std::array<float,2>& xz_center0) :
   perlin_generator_.SetPersistence(0.5);
   
   // Load the textures
-  LoadTextures();
+  // LoadTextures();
     
   // Set up the tiles
   TerrainTile::SetTileLength(ltile_);
@@ -195,7 +195,7 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
   glUniform3f(glGetUniformLocation(shader_.GetProgram(), 
         "material.specular"), 1.0f, 1.0f, 1.0f);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), 
-        "material.shiny"), 1.0f);
+        "material.shiny"), 0.01f);
 
   // Set lighting uniforms
   const glm::vec3& sun_dir = sky.GetSunDirection();
@@ -226,6 +226,7 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
       0.0f, 0.0f, 0.0f);
     
   // Bind the texture data
+  /*
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textures_[0]);
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture0"), 0);
@@ -235,6 +236,7 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, textures_[2]);
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "grassTexture2"), 2);
+  */
   
   // Set the shadow data
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "num_cascades"), 
