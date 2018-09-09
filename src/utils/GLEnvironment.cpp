@@ -8,7 +8,7 @@ namespace GLEnvironment {
 //****************************************************************************80
 GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   // Initialize GLFW
-  glfwInit(); // TODO this leaks apparently...
+  glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

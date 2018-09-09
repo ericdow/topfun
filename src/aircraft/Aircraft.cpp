@@ -19,11 +19,9 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
     canopy_shader_("shaders/aircraft.vs", "shaders/canopy.fs"),
     exhaust_shader_("shaders/exhaust.vs", "shaders/exhaust.fs"),
      model_("../../../assets/models/FA-22_Raptor/FA-22_Raptor.obj"),
-    //model_("../../../assets/models/Box/FA-22_Raptor.obj"),
     collision_model_(
          "../../../assets/models/FA-22_Raptor/FA-22_Raptor_Convex_Hull.obj",
          true),
-        //"../../../assets/models/Box/FA-22_Raptor_Convex_Hull.obj", true),
     position_(position), orientation_(orientation), 
     lin_momentum_(AircraftToWorld(glm::vec3(27000.0f * 150.0f, 0.0f, 0.0f), 
           orientation)), 
@@ -77,7 +75,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
 
   // Define the aerodynamic performance coefficients
   CL_ = {0.26, 0.1, 0.2, 0.24, 0.07, 0.0, // (-pi/2, 0] 
-    -0.03, -0.14, -0.2, -0.1, -0.2, 0.0, // (0, pi/2]
+    -0.03, -0.14, -0.2, -0.1, -0.2, -0.3, // (0, pi/2]
     0.0, 0.55, 0.45, 0.3, 0.14, 0.07, 0.0, // (pi/2, pi]
     -0.07, -0.14, -0.2, -0.1, -0.2, 0.0};
   CD_ = {0.03, 0.11, 0.2, 0.4, 0.6, 0.8, 
@@ -121,7 +119,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   float lift0 = CalcLift(alpha0, 0.0f, omega, vt, 0.0f, q, 0.0f);
   float drag0 = CalcDrag(lift0, alpha0, vt, 0.0f, q, 0.0f);
   float M_LD0 = dx_cg_x_ax_ * chord_ * (lift0*cos(alpha0) + drag0*sin(alpha0));
-  float alpha1 = alpha0 + glm::radians(1.0f);
+  float alpha1 = alpha0 + glm::radians(0.01f);
   float lift1 = CalcLift(alpha1, 0.0f, omega, vt, 0.0f, q, 0.0f);
   float drag1 = CalcDrag(lift1, alpha1, vt, 0.0f, q, 0.0f);
   float M_LD1 = dx_cg_x_ax_ * chord_ * (lift1*cos(alpha1) + drag1*sin(alpha1));
@@ -350,18 +348,12 @@ void Aircraft::DoPhysicsStep(float t, float dt) {
   ang_momentum_ += torques_ * dt;
 
   // Get the current set of contacts
-  for (int i = 0; i < 3; ++i)
-    state[i] += lin_momentum_[i] * inv_mass_ * dt;
-  {
-  glm::vec3 omega = GetAngularVelocity(orientation_, ang_momentum_);
-  glm::quat omega_quat(0.0f, omega);
-  glm::quat spin = 0.5f * omega_quat * orientation_;
-  state[3] += spin.w * dt;
-  state[4] += spin.x * dt;
-  state[5] += spin.y * dt;
-  state[6] += spin.z * dt;
-  }
   auto contacts = GetContacts(state, dt);
+
+  // Only need to accumulate impulses if "resting" contact
+  bool accumulate = false;
+  if (glm::length(lin_momentum_ * inv_mass_) < 10.0)
+    accumulate = true;
 
   // Iterate to solve for the new velocities
   const int max_iter = 20;
@@ -373,9 +365,15 @@ void Aircraft::DoPhysicsStep(float t, float dt) {
             ang_momentum_), contacts[c].r);
       auto vn = glm::dot(v, contacts[c].n);
       float dj_n = contacts[c].mass_n * (-vn + contacts[c].bias);
-      float j_n0 = j_n;
-      j_n = std::max(j_n0 + dj_n, 0.0f);
-      dj_n = j_n - j_n0;
+      if (accumulate) {
+        float j_n0 = j_n;
+        j_n = std::max(j_n0 + dj_n, 0.0f);
+        dj_n = j_n - j_n0;
+      }
+      else {
+        dj_n = std::max(0.0f, dj_n);
+        j_n += dj_n;
+      }
       lin_momentum_ += dj_n * contacts[c].n;
       ang_momentum_ += dj_n * glm::cross(contacts[c].r, contacts[c].n);
 
@@ -778,7 +776,7 @@ std::vector<Aircraft::Contact> Aircraft::GetContacts(
       if (v_dot_n < 0.0f) {
         // Damp bounciness when object is "resting"
         if (-v_dot_n < 2.0 * 9.81 * dt * (1.0 + e * e))
-          e = 0.0;
+          e = 0.0f;
         bias -= e * v_dot_n;
       }
       contacts.push_back({d, n, t, v, r, mass_n, mass_t, bias});
