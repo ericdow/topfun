@@ -13,7 +13,7 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-  glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_SAMPLES, 4); // controls msaa
 
   // Create the window
   GLFWwindow* window = glfwCreateWindow(screen_size[0], screen_size[1], 
@@ -23,9 +23,6 @@ GLFWwindow* SetUp(std::array<GLuint,2> const& screen_size) {
   // Set the required callback functions
   glfwSetKeyCallback(window, KeyCallback);
   glfwSetCursorPosCallback(window, MouseCallback);
-
-  // Make sure cursor is hidden and stays in window
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
   // Initialize GLEW to setup the OpenGL Function pointers
   glewExperimental = GL_TRUE;
@@ -54,6 +51,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
   // Close by pressing escape key
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
+  
+  // Toggle cursor lock on F6
+  if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
+    int cursor_mode = glfwGetInputMode(window, GLFW_CURSOR);
+    if (cursor_mode == GLFW_CURSOR_DISABLED)
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
+    else
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+  }
 
   CallBackWorld* callback_world = 
     reinterpret_cast<CallBackWorld*>(glfwGetWindowUserPointer(window));

@@ -11,7 +11,7 @@ CallBackWorld::CallBackWorld(Camera& camera, DebugOverlay& debug_overlay,
   first_mouse_(true), last_mouse_pos_({{(double)screen_size[0]/2, 
   (double)screen_size[1]/2}}), key_state_(1024,false), fps_locked_(true), 
   w_double_pressed_(false), last_w_press_time_(-100.0f), 
-  look_type_(LookType::follow), camera_(camera), debug_overlay_(debug_overlay), 
+  look_type_(LookType::follow), camera_(camera), debug_overlay_(debug_overlay),
   shadow_renderer_(shadow_renderer) {}
 
 //****************************************************************************80

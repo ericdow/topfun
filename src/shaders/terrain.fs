@@ -25,6 +25,7 @@ void main() {
   vec3 ambient = CalcAmbient(light.ambient, material.specular);
 
   // Generate bump map
+  /*
   const int oct = 1;
   const float pers = 0.5;
   const float freq = 0.3;
@@ -34,14 +35,17 @@ void main() {
   duv_dxy[1] = dFdy(Position.xz);
   vec2 dh_duv = inverse(duv_dxy) * vec2(dFdx(h), dFdy(h));
   vec3 norm_bump = normalize(vec3(-dh_duv.x, 1.0, -dh_duv.y));
+  */
+  // TODO
+  vec3 norm_bump = vec3(0.0);
  
   // Generate grass texture 
   vec4 grass = vec4(0.2, 0.3, 0.1, 1.0);
-  grass.r -= 0.07 * filtered_octave_snoise2D(Position.xz, 4, 0.5, 0.01, 4, 0.125);
+  grass.r -= 0.07 * filtered_octave_snoise2D(Position.xz, 2, 0.5, 0.01, 4, 0.125);
 
   // Add dirt highlights
   vec4 dirt = vec4(0.61, 0.46, 0.33, 1.0);
-  dirt -= 0.1 * filtered_octave_snoise2D(Position.xz, 6, 0.5, 0.005, 4, 0.125);
+  dirt -= 0.1 * filtered_octave_snoise2D(Position.xz, 5, 0.5, 0.005, 4, 0.125);
   
   vec3 norm;
   if (dirt.a < 0.95) {

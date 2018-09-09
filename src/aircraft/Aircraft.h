@@ -144,8 +144,18 @@ class Aircraft {
     orientation_ = normalize(orientation_);
 
     // Update the audio source positions/velocities
-    engine_idle_.SetPosition((glm::vec3)position_);
-    afterburner_.SetPosition((glm::vec3)position_);
+    glm::mat4 model = glm::translate(glm::mat4(), (glm::vec3)position_);
+    model = glm::translate(model, delta_center_of_mass_);
+    model *= glm::toMat4(orientation_);
+    model *= glm::toMat4(glm::angleAxis(glm::radians(90.0f), 
+          glm::vec3(0.0f, 0.0f, 1.0f)));
+    model *= glm::toMat4(glm::angleAxis(glm::radians(180.0f), 
+          glm::vec3(1.0f, 0.0f, 0.0f)));
+    model = glm::translate(model, -delta_center_of_mass_);
+    glm::vec3 tmp(0.0, delta_flame_.y, delta_flame_.z);
+    glm::vec4 sound_pos = model * glm::vec4(tmp, 1.0f);    
+    engine_idle_.SetPosition((glm::vec3)sound_pos);
+    afterburner_.SetPosition((glm::vec3)sound_pos);
     engine_idle_.SetVelocity(GetVelocity());
     afterburner_.SetVelocity(GetVelocity());
   }
@@ -184,19 +194,21 @@ class Aircraft {
   }
   
   //**************************************************************************80
-  //! \brief operator() - evaluate the derivative of the state vector
+  //! \brief GetStateDerivative - evaluate the derivative of the state vector
   //! \param[in] state - current state vector
-  //! \param[out] deriv - the derivative of the state vector
   //! \param[in] t - the current time
+  //! \returns deriv - the derivative of the state vector
   //**************************************************************************80
-  void operator()(const std::vector<double>& state, std::vector<double>& deriv, 
+  std::vector<double> GetStateDerivative(const std::vector<double>& state, 
       float t);
-
+  
   //**************************************************************************80
-  //! \brief COllideWithTerrain - detect collisions with terrain and resolve
-  //! forces/moments due to collision
+  //! \brief DoPhysicsStep - perform integration of accelerations/velocities,
+  //! update velocities/positions and resolve terrain collisions
+  //! \param[in] t - the current time
+  //! \param[in] dt - physics timestep
   //**************************************************************************80
-  void CollideWithTerrain(std::vector<double>& state);
+  void DoPhysicsStep(float t, float dt);
 
  private:
   const Camera& camera_;
@@ -632,6 +644,26 @@ class Aircraft {
   //! \brief UpdateEngineSounds - update the engine sounds based on throttle
   //**************************************************************************80
   void UpdateEngineSounds();
+
+  struct Contact {
+    float d; // penetration amount
+    glm::vec3 n; // contact normal
+    glm::vec3 t; // contact tangent
+    glm::vec3 v; // contact velocity
+    glm::vec3 r; // vector from CM to contact point
+    float mass_n; // normal mass
+    float mass_t; // tangent mass
+    float bias; // velocity bias
+  };
+
+  //**************************************************************************80
+  //! \brief GetContacts - get the set of contacts
+  //! param[in] state - state vector
+  //! \param[in] dt - physics timestep
+  //! \returns vector of contact points
+  //**************************************************************************80
+  std::vector<Contact> GetContacts(const std::vector<double>& state,
+      float dt) const;
 
 };
 } // End namespace TopFun

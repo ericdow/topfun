@@ -2,8 +2,6 @@
 #include <chrono>
 #include <thread>
 
-#include <boost/numeric/odeint.hpp>
-
 #include "utils/GLEnvironment.h"
 #include "input/CallBackWorld.h"
 #include "render/Camera.h"
@@ -29,7 +27,7 @@ glm::vec3 scene_center(terrain_size/2, 0.0f, terrain_size/2);
 Camera camera(screen_size, start_pos);
 DebugOverlay debug_overlay(screen_size);
 ShadowCascadeRenderer shadow_renderer(4*screen_size[0], 4*screen_size[1], 
-    {0.001, 0.003, 0.02, 0.1, 0.4}, {0.001, 0.002, 0.002, 0.010, 0.020});
+    {0.001, 0.003, 0.01, 0.05, 0.1}, {0.002, 0.003, 0.005, 0.05, 0.1});
 CallBackWorld callback_world(camera, debug_overlay, shadow_renderer, 
     screen_size);
 
@@ -55,9 +53,6 @@ int main(int /* argc */, char** /* argv */) {
 
   // Point callback to correct location  
   GLEnvironment::SetCallback(window, callback_world);
-
-  // Set up ODE integrator
-  boost::numeric::odeint::runge_kutta4<std::vector<double>> integrator;
   
   // Game loop
   GLfloat last_loop_time = glfwGetTime();
@@ -82,10 +77,8 @@ int main(int /* argc */, char** /* argv */) {
     aircraft.UpdateControls(callback_world.GetKeyState());
     while (t_accumulator >= dt_physics) {
       previous_state = current_state;
-      integrator.do_step(boost::ref(aircraft), current_state, t_physics, 
-          dt_physics);
-      aircraft.CollideWithTerrain(current_state);
-      aircraft.SetState(current_state);
+      aircraft.DoPhysicsStep(t_physics, dt_physics);
+      current_state = aircraft.GetState();
       t_physics += dt_physics;
       t_accumulator -= dt_physics;
     }

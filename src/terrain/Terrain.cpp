@@ -120,6 +120,8 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 float Terrain::GetHeight(float x, float z) {
   const float height_scale = 100.0f;
   const float horiz_scale = 0.01f;
+  // TODO
+  // return 0.0;
   return height_scale * 
     perlin_generator_.GetValue(x*horiz_scale, z*horiz_scale, 0.5);
 }
@@ -135,11 +137,12 @@ float Terrain::GetBoundingHeight(float x, float z) const {
 
 //****************************************************************************80
 glm::vec3 Terrain::GetNormal(float x, float z) {
-  float eps = 1.0e-5f;
+  float eps = 1.0e-2f;
+  float h0 = Terrain::GetHeight(x,z);
   return glm::normalize(glm::vec3(
-        (Terrain::GetHeight(x+eps,z) - Terrain::GetHeight(x,z))/eps,
+        (h0 - Terrain::GetHeight(x+eps,z)) / eps,
         1.0f,
-        (Terrain::GetHeight(x,z+eps) - Terrain::GetHeight(x,z))/eps));
+        (h0 - Terrain::GetHeight(x,z+eps)) / eps));
 }
 
 //****************************************************************************80

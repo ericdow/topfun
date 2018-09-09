@@ -28,8 +28,8 @@ GLint TextureFromFile(const char* path, const std::string& directory);
 class Model {
  public:
   // Constructor, expects a filepath to a 3D model
-  Model(const std::string& path) {
-    LoadModel(path);
+  Model(const std::string& path, bool join_verts = false) {
+    LoadModel(path, join_verts);
     // Default: draw meshes in order of appearance in .obj file
     draw_order_.resize(meshes_.size());
     std::iota(draw_order_.begin(), draw_order_.end(), 0);
@@ -96,12 +96,14 @@ class Model {
   GLuint num_textures_; 
 
   // Loads a model with supported ASSIMP extensions from file
-  void LoadModel(const std::string& path) {
+  void LoadModel(const std::string& path, bool join_verts) {
     // Read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = 
-      importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | 
-          aiProcess_CalcTangentSpace);
+    auto pp_steps = aiProcess_Triangulate | aiProcess_FlipUVs | 
+          aiProcess_CalcTangentSpace;
+    if (join_verts)
+      pp_steps = aiProcess_JoinIdenticalVertices;
+    const aiScene* scene = importer.ReadFile(path, pp_steps);
     // Check for errors
     if (!scene || 
         scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || 
@@ -160,16 +162,18 @@ class Model {
       }
       else
         vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-      // tangent
-      vector.x = mesh->mTangents[i].x;
-      vector.y = mesh->mTangents[i].y;
-      vector.z = mesh->mTangents[i].z;
-      vertex.Tangent = vector;
-      // bitangent
-      vector.x = mesh->mBitangents[i].x;
-      vector.y = mesh->mBitangents[i].y;
-      vector.z = mesh->mBitangents[i].z;
-      vertex.Bitangent = vector;
+      if (mesh->HasTangentsAndBitangents()) {
+        // tangent
+        vector.x = mesh->mTangents[i].x;
+        vector.y = mesh->mTangents[i].y;
+        vector.z = mesh->mTangents[i].z;
+        vertex.Tangent = vector;
+        // bitangent
+        vector.x = mesh->mBitangents[i].x;
+        vector.y = mesh->mBitangents[i].y;
+        vector.z = mesh->mBitangents[i].z;
+        vertex.Bitangent = vector;
+      }
       vertices.push_back(vertex);
     }
     // Walk through each mesh face and retrieve corresponding vertex indices
@@ -242,7 +246,7 @@ class Model {
 };
 
 inline GLint TextureFromFile(const char* path, const std::string& directory) {
-  //Generate texture ID and load texture data 
+  // Generate texture ID and load texture data 
   std::string filename = std::string(path);
   filename = directory + '/' + filename;
   GLuint textureID;
