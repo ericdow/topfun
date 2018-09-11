@@ -22,7 +22,7 @@ CloudRenderer::CloudRenderer(GLuint map_width, GLuint map_height) :
   shape_scale_(weather_scale_ * 4.0f),
   detail_({{32,32,32}}, 
   "detail", {{1,1,1},{2,2,2},{3,3,3}}),
-  detail_scale_(weather_scale_ * 30.0f) {
+  detail_scale_(weather_scale_ * 25.0f) {
 
   // Check that the start and end heights of the clouds are valid
   if (cloud_start_end_[0] > cloud_start_end_[1]) {

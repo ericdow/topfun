@@ -26,7 +26,7 @@ Terrain::Terrain(float l, int ntile, const std::array<float,2>& xz_center0) :
   // Set the noise parameters
   perlin_generator_.SetOctaveCount(3);
   perlin_generator_.SetFrequency(0.04);
-  perlin_generator_.SetPersistence(0.5);
+  perlin_generator_.SetPersistence(0.75);
   
   // Load the textures
   // LoadTextures();
@@ -119,7 +119,7 @@ void Terrain::Draw(Camera const& camera, const Sky& sky,
 //****************************************************************************80
 float Terrain::GetHeight(float x, float z) {
   const float height_scale = 100.0f;
-  const float horiz_scale = 0.01f;
+  const float horiz_scale = 0.003f;
   // TODO
   // return 0.0;
   return height_scale * 
@@ -137,7 +137,7 @@ float Terrain::GetBoundingHeight(float x, float z) const {
 
 //****************************************************************************80
 glm::vec3 Terrain::GetNormal(float x, float z) {
-  float eps = 1.0e-2f;
+  float eps = 1.0e-1f;
   float h0 = Terrain::GetHeight(x,z);
   return glm::normalize(glm::vec3(
         (h0 - Terrain::GetHeight(x+eps,z)) / eps,
@@ -221,6 +221,8 @@ void Terrain::SetShaderData(Camera const& camera, const Sky& sky,
       fog_start_end[0]);
   glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.End"), 
       fog_start_end[1]);
+  glUniform1f(glGetUniformLocation(shader_.GetProgram(), "fog.Density"), 
+      sky.GetFogDensity());
   glUniform1i(glGetUniformLocation(shader_.GetProgram(), "fog.Equation"), 
       sky.GetFogEquation());
   

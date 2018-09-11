@@ -1,4 +1,5 @@
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/ext.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <limits>
@@ -57,9 +58,9 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   inertia_[2][2] = 178000.0f;      // I_zz
   inertia_[0][2] = -2874.0f;       // I_xz
   inertia_[2][0] = inertia_[0][2]; // I_zx
-  e_collision_ = 0.2f;
+  e_collision_ = 0.1f;
   mu_static_ = 1.0f;
-  mu_dynamic_ = 0.3f;
+  mu_dynamic_ = 0.5f;
   wetted_area_ = 316.0f;
   chord_ = 5.75f;
   span_ = 13.56f;
@@ -168,13 +169,6 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
       }
     }
   }
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  lin_momentum_ *= 0.0;
-  position_.y = 10.0;
-  throttle_position_ = 0.0;
 }
 
 //****************************************************************************80
@@ -350,14 +344,8 @@ void Aircraft::DoPhysicsStep(float t, float dt) {
   // Get the current set of contacts
   auto contacts = GetContacts(state, dt);
 
-  // Only need to accumulate impulses if "resting" contact
-  bool accumulate = false;
-  if (glm::length(lin_momentum_ * inv_mass_) < 10.0)
-    accumulate = true;
-
   // Iterate to solve for the new velocities
   const int max_iter = 20;
-  float j_n(0.0f), j_t(0.0f); // no warm-starting
   for (int i = 0; i < max_iter; ++i) {
     for (std::size_t c = 0; c < contacts.size(); ++c) {
       // Apply normal impulse
@@ -365,15 +353,9 @@ void Aircraft::DoPhysicsStep(float t, float dt) {
             ang_momentum_), contacts[c].r);
       auto vn = glm::dot(v, contacts[c].n);
       float dj_n = contacts[c].mass_n * (-vn + contacts[c].bias);
-      if (accumulate) {
-        float j_n0 = j_n;
-        j_n = std::max(j_n0 + dj_n, 0.0f);
-        dj_n = j_n - j_n0;
-      }
-      else {
-        dj_n = std::max(0.0f, dj_n);
-        j_n += dj_n;
-      }
+      float j_n0 = contacts[c].j_n;
+      contacts[c].j_n = std::max(j_n0 + dj_n, 0.0f);
+      dj_n = contacts[c].j_n - j_n0;
       lin_momentum_ += dj_n * contacts[c].n;
       ang_momentum_ += dj_n * glm::cross(contacts[c].r, contacts[c].n);
 
@@ -382,10 +364,10 @@ void Aircraft::DoPhysicsStep(float t, float dt) {
             ang_momentum_), contacts[c].r);
       auto vt = glm::dot(v, contacts[c].t);
       float dj_t = contacts[c].mass_t * -vt;
-      float j_t_max = mu_dynamic_ * j_n;
-      float j_t0 = j_t;
-      j_t = std::min(std::max(j_t0 + dj_t, -j_t_max), j_t_max);
-      dj_t = j_t - j_t0;
+      float j_t_max = mu_dynamic_ * contacts[c].j_n;
+      float j_t0 = contacts[c].j_t;
+      contacts[c].j_t = std::min(std::max(j_t0 + dj_t, -j_t_max), j_t_max);
+      dj_t = contacts[c].j_t - j_t0;
       lin_momentum_ += dj_t * contacts[c].t;
       ang_momentum_ += dj_t * glm::cross(contacts[c].r, contacts[c].t);
     }
@@ -476,6 +458,8 @@ void Aircraft::SetShaderData(const Sky& sky,
         fog_start_end[0]);
     glUniform1f(glGetUniformLocation(s->GetProgram(), "fog.End"), 
         fog_start_end[1]);
+    glUniform1f(glGetUniformLocation(s->GetProgram(), "fog.Density"), 
+        sky.GetFogDensity());
     glUniform1i(glGetUniformLocation(s->GetProgram(), "fog.Equation"), 
         sky.GetFogEquation());
   }
@@ -779,7 +763,7 @@ std::vector<Aircraft::Contact> Aircraft::GetContacts(
           e = 0.0f;
         bias -= e * v_dot_n;
       }
-      contacts.push_back({d, n, t, v, r, mass_n, mass_t, bias});
+      contacts.push_back({d, n, t, v, r, mass_n, mass_t, bias, 0.0, 0.0});
     }
   }
   return contacts;

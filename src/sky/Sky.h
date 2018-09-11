@@ -73,6 +73,11 @@ class Sky {
   inline void SetFogStartEnd(const std::array<float,2>& fog_start_end) {
     fog_start_end_ = fog_start_end;
   }
+ 
+  //**************************************************************************80
+  //! \brief GetFogDensity - gets the density of the fog
+  //**************************************************************************80
+  inline float GetFogDensity() const { return fog_density_; }
   
   //**************************************************************************80
   //! \brief GetFogEquation - gets the equation index used to compute fog
@@ -92,6 +97,7 @@ class Sky {
   glm::vec3 sun_color_; // color of sunlight
   glm::vec3 fog_color_; // color of fog
   std::array<float,2> fog_start_end_; // start and end distances of fog
+  float fog_density_; // density of fog
   GLuint fog_eq_; // equation index used to compute fog
 
   //**************************************************************************80

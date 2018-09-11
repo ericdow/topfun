@@ -237,8 +237,8 @@ class Aircraft {
   float rudder_position_;
   float elevator_position_;
   float aileron_position_;
-  const float rudder_position_max_ = 0.7f;
-  const float elevator_position_max_ = 0.7f;
+  const float rudder_position_max_ = 0.5f;
+  const float elevator_position_max_ = 0.4f;
   const float aileron_position_max_ = 0.5f;
   float throttle_position_; // between 0.0 and 1.0
   int joystick_id_;
@@ -654,6 +654,8 @@ class Aircraft {
     float mass_n; // normal mass
     float mass_t; // tangent mass
     float bias; // velocity bias
+    float j_n; // accumulated normal impulse
+    float j_t; // accumulated tangent impulse
   };
 
   //**************************************************************************80
