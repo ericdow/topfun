@@ -8,7 +8,7 @@ set(SOURCES
 set(libs_to_link 
   ${OPENGL_LIBRARIES} 
   ${GLUT_LIBRARY} 
-  ${GLEW_LIBRARY} 
+  ${GLEW_LIBRARIES} 
   ${GLFW_LIBRARIES} 
   ${SOIL_LIBRARY} 
   shader

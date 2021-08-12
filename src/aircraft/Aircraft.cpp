@@ -161,7 +161,7 @@ Aircraft::Aircraft(const glm::dvec3& position, const glm::quat& orientation,
   // TODO move this...
   joystick_id_ = -1;
   const char* joystick_name = "Saitek";
-  for (int i = 0; i < GLFW_JOYSTICK_LAST; ++i) {
+  for (int i = GLFW_JOYSTICK_1; i <= GLFW_JOYSTICK_LAST; ++i) {
     if (glfwGetJoystickName(i)) {
       if (std::strstr(glfwGetJoystickName(i), joystick_name)) {
         joystick_id_ = i;
@@ -237,7 +237,7 @@ void Aircraft::Draw(const Sky& sky,
 //****************************************************************************80
 void Aircraft::UpdateControls(std::vector<bool> const& keys) {
   // Check for joystick to determine input mode
-  if (glfwJoystickPresent(joystick_id_) == GL_TRUE) {
+  if (joystick_id_ >= 0) {
     // Grab joystick state and set control surfaces/throttle
     int num_axes;
     const float* axes = glfwGetJoystickAxes(joystick_id_, &num_axes);

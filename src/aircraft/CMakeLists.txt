@@ -7,7 +7,7 @@ set(libs_to_link
   terrain 
   ${OPENGL_LIBRARIES} 
   ${GLUT_LIBRARY} 
-  ${GLEW_LIBRARY} 
+  ${GLEW_LIBRARIES} 
   ${GLFW_LIBRARIES} 
   ${SOIL_LIBRARY}
   ${ASSIMP_LIBRARIES} 
