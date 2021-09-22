@@ -1,5 +1,7 @@
 ![alt text](https://github.com/ericdow/topfun/blob/master/topfun_logo.png)
 
+![alt text](https://github.com/ericdow/topfun/blob/master/screenshot.png)
+
 # TopFun
 
 A flight simulator written in C++. The goal of this project was to learn as much about rendering, physics and game development as possible.
