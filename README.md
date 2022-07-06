@@ -54,7 +54,7 @@ A flight simulator written in C++. The goal of this project was to learn as much
 
 [Temporal Reprojection Anti-Aliasing](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf)
 
-**Shaddow Maps**
+**Shadow Maps**
 
 [Cascaded Shadow Mapping](https://ogldev.org/www/tutorial49/tutorial49.html)
 
